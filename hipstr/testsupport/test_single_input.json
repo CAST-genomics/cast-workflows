@@ -1,0 +1,8 @@
+{
+  "run_HipSTR_single.genome": "/Users/yang/Desktop/CAST_repository/cast-workflows/hipstr/testsupport/references/chr11_test.fa",
+  "run_HipSTR_single.bam": "/Users/yang/Desktop/CAST_repository/cast-workflows/hipstr/testsupport/cram_files/HG01802_CBL_sorted.cram",
+  "run_HipSTR_single.str_ref": "/Users/yang/Desktop/CAST_repository/cast-workflows/hipstr/testsupport/references/hipref_test.bed",
+  "run_HipSTR_single.bam_index": "/Users/yang/Desktop/CAST_repository/cast-workflows/hipstr/testsupport/cram_files/HG01802_CBL_sorted.crai",
+  "run_HipSTR_single.stutter_model": "/Users/yang/Desktop/CAST_repository/cast-workflows/hipstr/testsupport/references/stutter_models.txt"
+}
+
