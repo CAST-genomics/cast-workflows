@@ -8,27 +8,15 @@ RUN apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get install -qqy \
     make gcc g++ \
     unzip \
     libfuse-dev fuse \
-    curl \
-    wget
+    git-all
 
 # Install HipSTR
-#RUN wget  https://github.com/gymrek-lab/HipSTR/archive/refs/heads/main.zip -O HipSTR.zip
-#RUN unzip  HipSTR.zip 
-#WORKDIR HipSTR-main/
-#RUN make
-#RUN cp HipSTR /usr/local/bin/
-#WORKDIR ..
-
-# Install HipSTR
-RUN wget https://github.com/tfwillems/HipSTR/archive/v0.7.tar.gz
-RUN tar -xzvf v0.7.tar.gz
-WORKDIR HipSTR-0.7/
+RUN git clone -b v1.0.0 https://github.com/gymrek-lab/HipSTR.git 
+WORKDIR HipSTR/
+RUN make version
 RUN make
 RUN cp HipSTR /usr/local/bin/
 WORKDIR ..
-
-
-
 
 CMD ["/bin/bash"]
 
