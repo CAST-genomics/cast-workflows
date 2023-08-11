@@ -56,6 +56,9 @@ task hipstr {
     
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/hipstr-gymreklab:latest"
+	memory: "16 GB"
+        cpu: "1"
+        disks: "local-disk 30 HDD"
     }
 
     output {

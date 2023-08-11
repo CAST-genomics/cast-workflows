@@ -71,6 +71,7 @@ task hipstr {
         docker: "gcr.io/ucsd-medicine-cast/hipstr-gymreklab"
         memory: "16 GB"
         cpu: 1
+	disks: "local-disk 50 HDD"
     }
 
     output {
