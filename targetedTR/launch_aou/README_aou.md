@@ -26,7 +26,7 @@ sdk install java 11.0.14-tem
 
 3. Copy the `manifest.csv` file with the CRAM paths to the launch directory.
 ```
-gsutil -u $GOOGLE_PROJECT cp gs://fc-aou-datasets-controlled/v6/wgs/cram/manifest.csv .
+gsutil -u $GOOGLE_PROJECT cp gs://fc-aou-datasets-controlled/v7/wgs/cram/manifest.csv .
 ```
 
 4. Run a test job:
@@ -37,7 +37,7 @@ gsutil -u $GOOGLE_PROJECT cp gs://fc-aou-datasets-controlled/v6/wgs/cram/manifes
   --period 5 \
   --refcopies 7.0 \
   --name CSTB-mini \
-  --batch-size 1 \
+  --batch-size 2 \
   --batch-num 2 \
   --file-list manifest.csv
 ```
