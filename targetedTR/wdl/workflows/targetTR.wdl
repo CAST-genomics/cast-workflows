@@ -55,7 +55,7 @@ workflow targetTR {
 	### Zip and index the VCF ###
 	call sort_index {
 		input :
-			vcf=dumpstr.outvcf
+			vcf=dumpstr.outfile
 	}
 
 	### Output files ####
