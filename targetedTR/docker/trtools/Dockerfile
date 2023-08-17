@@ -6,4 +6,13 @@ RUN apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get install -qqy \
 
 RUN pip3 install --upgrade pip
 RUN pip3 install pandas
-RUN pip3 install trtools==5.0.1
+RUN git clone  -b conf_ref  https://github.com/gymreklab/TRTools
+WORKDIR TRTools/
+RUN pip install --upgrade pip
+RUN pip install -e .
+
+
+
+
+
+
