@@ -1,5 +1,5 @@
 # Definitions
-repository = mgymrek
+repository = gcr.io/ucsd-medicine-cast
 identifier = ensembletr
 version = 0.0.0
 git_commit ?= $(shell git log --pretty=oneline -n 1 | cut -f1 -d " ")
