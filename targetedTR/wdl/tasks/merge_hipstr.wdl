@@ -13,7 +13,7 @@ workflow merge_hipstr {
           vcf_indexes=vcf_indexes,
           out_prefix=out_prefix+".merged"
     }
-
+# call mergefix only when there are multiple records for one repeat and change outfile in the output, cant have two output have the same name
     #call mergefix {
     #    input :
     #      vcf=mergestr.outvcf,
