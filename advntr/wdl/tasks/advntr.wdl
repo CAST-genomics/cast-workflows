@@ -3,16 +3,14 @@ version 1.0
 workflow run_advntr {
 
     input {
-        File bam = "/nucleus/projects/saraj/vntr/data/advntr_simulated_test_data/CSTB_2_5_testdata.bam"
-        File bam_index = "/nucleus/projects/saraj/vntr/data/advntr_simulated_test_data/CSTB_2_5_testdata.bam.bai"
-        File vntr_db = "/nucleus/projects/saraj/vntr/sources/COH_analysis/databases/illumina_vntr_db_used_for_probe_design/hg38_selected_VNTRs_Illumina.db"
+        String bam_file
+        String bam_index
     }
 
     call advntr {
         input :
-            bam = bam,
+            bam_file = bam_file,
             bam_index = bam_index,
-            vntr_db = vntr_db,
     }
 
     output {
@@ -20,6 +18,7 @@ workflow run_advntr {
         File filtering_out_file = advntr.filtering_out_file
         File keywords_file = advntr.keywords_file
         File unmapped_file = advntr.unmapped_file
+        File genotype_output = advntr.genotype_output
     }
 
     meta {
@@ -29,37 +28,57 @@ workflow run_advntr {
 
 task advntr {
     input {
-        File bam
+        File bam_file
         File bam_index
-        File vntr_db
     }
 
-    String working_directory = "./working_directory"
-    String bam_basename = sub(basename(bam), ".bam", "")
+    parameter_meta {
+        bam_file: {
+          description: "Input bam file",
+          localization_optional: true,
+          stream: true
+        }
+        bam_index: {
+          description: "Input bam index file",
+          localization_optional: true,
+          stream: true
+        }
+    }
 
-    String logging = "~{working_directory}/log_~{bam_basename}.bam.log"
-    String filtering_out = "~{working_directory}/filtering_out_~{bam_basename}.unmapped.fasta.txt"
-    String keywords = "~{working_directory}/keywords_~{bam_basename}.unmapped.fasta.txt"
-    String unmapped = "~{working_directory}/~{bam_basename}.unmapped.fasta"
+    # all output files except for the vcf file are generated in the work_dir.
+    String work_dir = "./work_dir"
+    String bam_basename = sub(basename(bam_file), ".bam", "")
+
+    String logging = "~{work_dir}/log_~{bam_basename}.bam.log"
+    String filtering_out = "~{work_dir}/filtering_out_~{bam_basename}.unmapped.fasta.txt"
+    String keywords = "~{work_dir}/keywords_~{bam_basename}.unmapped.fasta.txt"
+    String unmapped = "~{work_dir}/~{bam_basename}.unmapped.fasta"
+    String genotype_output = "./~{bam_basename}.genotype.vcf"
+
+    # VNTR_db is placed in the docker file. So the path is within the docker image.
+    String vntr_db = "/adVNTR-1.5.0/vntr_db/hg38_VNTRs_by_TRF.db"
+
+
+    # Set VNTR ids for genotyping based on input.
+    # Two options right now: VNTR in the ACAN gene or the list of 52 phenotype associated VNTRs.
+    #String vids = "$(cat /adVNTR-1.5.0/vntr_db/phenotype_associated_vntrs_comma.txt)"
+    String vids = "290964"
 
     command <<<
-        echo "Working_directory: ~{working_directory}"
-        echo "Input bam file: ~{bam}"
-        echo "VNTR database: ~{vntr_db}"
-        echo "Output Log file: ~{logging}"
-        echo "Output filtering file: ~{filtering_out}"
-        echo "Output keywords file: ~{keywords}"
-        echo "Output unmapped file: ~{unmapped}"
-        mkdir ~{working_directory}
-        advntr genotype \
-            --alignment_file ~{bam} \
-            --models ~{vntr_db} \
-            --working_directory ~{working_directory} \
-            --disable_logging
+        mkdir ~{work_dir}
+        export TMPDIR=/tmp
+        advntr genotype  \
+        --alignment_file ~{bam_file} \
+        --models ~{vntr_db}  \
+        --working_directory ~{work_dir} \
+        -vid ~{vids} \
+        --outfmt vcf \
+        --disable_logging \
+        --pacbio > ~{genotype_output}
     >>>
 
     runtime {
-        docker:"sarajava/advntr:1.5.0"
+        docker:"sarajava/advntr-1.5.0:db"
     }
 
     output {
@@ -67,5 +86,6 @@ task advntr {
         File filtering_out_file = "~{filtering_out}"
         File keywords_file = "~{keywords}"
         File unmapped_file = "~{unmapped}"
+        File genotype_output = "~{genotype_output}"
     }
 }
