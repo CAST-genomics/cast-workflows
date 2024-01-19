@@ -5,12 +5,14 @@ workflow run_advntr {
     input {
         String bam_file
         String bam_index
+        String output_dir
     }
 
     call advntr {
         input :
             bam_file = bam_file,
             bam_index = bam_index,
+            output_dir = output_dir
     }
 
     output {
@@ -30,6 +32,7 @@ task advntr {
     input {
         File bam_file
         File bam_index
+        String output_dir
     }
 
     parameter_meta {
@@ -46,7 +49,7 @@ task advntr {
     }
 
     # all output files except for the vcf file are generated in the work_dir.
-    String work_dir = "./work_dir"
+    String work_dir = "~{output_dir}/work_dir"
     String bam_basename = sub(basename(bam_file), ".bam", "")
 
     String logging = "~{work_dir}/log_~{bam_basename}.bam.log"
@@ -64,8 +67,10 @@ task advntr {
     #String vids = "$(cat /adVNTR-1.5.0/vntr_db/phenotype_associated_vntrs_comma.txt)"
     String vids = "290964"
 
+    # Mkdir only needed on the genomequery. On the gcloud there is no need to mkdir.
+    #mkdir ~{work_dir}
+
     command <<<
-        mkdir ~{work_dir}
         export TMPDIR=/tmp
         advntr genotype  \
         --alignment_file ~{bam_file} \
