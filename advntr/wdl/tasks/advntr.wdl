@@ -84,6 +84,8 @@ task advntr {
 
     runtime {
         docker:"sarajava/advntr-1.5.0:db"
+        cpu: "4"
+        memory: "10G"
     }
 
     output {
