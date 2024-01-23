@@ -27,10 +27,9 @@ def select_samples(sample_count):
     return selected_samples[["grch38-bam", "grch38-bai"]]
 
 # Write input json file based on selected sample(s) bam files.
-def write_input_json(input_json_filename, sample_df, output_dir):
+def write_input_json(input_json_filename, sample_df):
     data = {"run_advntr.bam_file": sample_df["grch38-bam"],
-            "run_advntr.bam_index": sample_df["grch38-bai"],
-            "run_advntr.output_dir": output_dir}
+            "run_advntr.bam_index": sample_df["grch38-bai"]}
     with open(input_json_filename, "w+") as input_json_file:
         json.dump(data, input_json_file)
 
@@ -62,18 +61,25 @@ def run_wdl_command(target_samples_df, output_name):
         # Write input json file based on selected sample(s) bam files.
         input_json = "aou_inputs.json"
         write_input_json(input_json_filename=input_json,
-                         sample_df=target_sample,
-                         output_dir=output_path_gcloud)
-
-        command = "java  -jar -Dconfig.file={} ".format(config_file) + \
-                  "cromwell-{}.jar ".format(cromwell_version) + \
-                  "run advntr.wdl --inputs {} ".format(input_json) + \
-                  "--options {} ".format(options_json) + \
-                  "&> wdl_output.txt"
-        subprocess.call(command, shell=True)
+                         sample_df=target_sample)
+        command = ["java", "-jar",
+                   "-Dconfig.file={}".format(config_file),
+                  "cromwell-{}.jar".format(cromwell_version),
+                  "run",
+                  "advntr.wdl",
+                  "--inputs", "{}".format(input_json),
+                  "--options", "{}".format(options_json),
+                  ]
+        process = subprocess.run(command)
+        if process.stdout is not None:
+            with open("wdl_stdout.txt", "w+") as wdl_out:
+                wdl_out.write(process.stdout)
+        if process.stderr is not None:
+            with open("wdl_stderr.txt", "w+") as wdl_err:
+                wdl_out.write(process.stderr)
 
 def parse_input_args():
-	parser = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
                     prog='advntr_wdl_aou',
                     description='Runs adVNTR wdl workflow based on provided '+ \
                                 'input files and output directory. ' + \
