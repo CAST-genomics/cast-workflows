@@ -3,21 +3,29 @@ version 1.0
 workflow run_advntr {
 
     input {
-        String bam_file
-        String bam_index
+        File bam_file
+        String bam_file_advntr_path
+        File bam_index
+        String output_dir
+        String gcloud_token
+        String sample_id
     }
 
     call advntr {
         input :
             bam_file = bam_file,
+            bam_file_advntr_path = bam_file_advntr_path,
             bam_index = bam_index,
+            output_dir = output_dir,
+            gcloud_token = gcloud_token,
+            sample_id = sample_id,
     }
 
     output {
-        File log_file = advntr.log_file
-        File filtering_out_file = advntr.filtering_out_file
-        File keywords_file = advntr.keywords_file
-        File unmapped_file = advntr.unmapped_file
+        File? log_file = advntr.log_file
+        File? filtering_out_file = advntr.filtering_out_file
+        File? keywords_file = advntr.keywords_file
+        File? unmapped_file = advntr.unmapped_file
         File genotype_output = advntr.genotype_output
     }
 
@@ -26,73 +34,72 @@ workflow run_advntr {
     }
 }
 
+
 task advntr {
     input {
         File bam_file
+        String bam_file_advntr_path
         File bam_index
+        String output_dir
+        String gcloud_token
+        String sample_id
     }
 
     parameter_meta {
         bam_file: {
           description: "Input bam file",
-          localization_optional: true,
-          stream: true
         }
         bam_index: {
           description: "Input bam index file",
-          localization_optional: true,
-          stream: true
         }
     }
+    # This is the target region for target VNTRs.
+    # It is passed to Samtools to minimize file copying.
+    String region = "chr15:88854000-88859000"
 
     # all output files except for the vcf file are generated in the work_dir.
-    # Update: I had difficulty creating directories in GCP as the hierarchy is flat in GCP.
-    # So I set work_dir as the current dir. This way all the intermediate files can be created
-    # by the AdVNTR automatically without any error on GCP.
     String work_dir = "."
-    String bam_basename = sub(basename(bam_file), ".bam", "")
 
-    String logging = "~{work_dir}/log_~{bam_basename}.bam.log"
-    String filtering_out = "~{work_dir}/filtering_out_~{bam_basename}.unmapped.fasta.txt"
-    String keywords = "~{work_dir}/keywords_~{bam_basename}.unmapped.fasta.txt"
-    String unmapped = "~{work_dir}/~{bam_basename}.unmapped.fasta"
-    String genotype_output = "./~{bam_basename}.genotype.vcf"
+    String logging = "~{work_dir}/log_~{sample_id}.bam.log"
+    String filtering_out = "~{work_dir}/filtering_out_~{sample_id}.unmapped.fasta.txt"
+    String keywords = "~{work_dir}/keywords_~{sample_id}.unmapped.fasta.txt"
+    String unmapped = "~{work_dir}/~{sample_id}.unmapped.fasta"
+    String genotype_output = "./~{sample_id}.genotype.vcf"
 
     # VNTR_db is placed in the docker file. So the path is within the docker image.
-    String vntr_db = "/adVNTR-1.5.0/vntr_db/hg38_VNTRs_by_TRF.db"
+    String vntr_db = "/adVNTR/vntr_db/hg38_VNTRs_by_TRF.db"
 
 
     # Set VNTR ids for genotyping based on input.
     # Two options right now: VNTR in the ACAN gene or the list of 52 phenotype associated VNTRs.
-    #String vids = "$(cat /adVNTR-1.5.0/vntr_db/phenotype_associated_vntrs_comma.txt)"
+    #String vids = "$(cat /adVNTR/vntr_db/phenotype_associated_vntrs_comma.txt)"
     String vids = "290964"
-
-    # Mkdir only needed on the genomequery. On the gcloud there is no need to mkdir.
-    #mkdir ~{work_dir}
 
     command <<<
         export TMPDIR=/tmp
-        advntr genotype  \
-        --alignment_file ~{bam_file} \
+        ls -lh ~{work_dir}
+        ls -lh ~{work_dir}/fc-secure*/*/*
+        /usr/bin/time -v advntr genotype  \
+        --alignment_file ~{bam_file_advntr_path} \
         --models ~{vntr_db}  \
         --working_directory ~{work_dir} \
         -vid ~{vids} \
         --outfmt vcf \
-        --disable_logging \
         --pacbio > ~{genotype_output}
+        ls -lh ~{work_dir}
     >>>
 
     runtime {
-        docker:"sarajava/advntr-1.5.0:db"
+        docker:"sarajava/advntr:1.5.0_db"
         cpu: "4"
-        memory: "10G"
+        memory: "18G"
     }
 
     output {
-        File log_file = "~{logging}"
-        File filtering_out_file = "~{filtering_out}"
-        File keywords_file = "~{keywords}"
-        File unmapped_file = "~{unmapped}"
+        File? log_file = "~{logging}"
+        File? filtering_out_file = "~{filtering_out}"
+        File? keywords_file = "~{keywords}"
+        File? unmapped_file = "~{unmapped}"
         File genotype_output = "~{genotype_output}"
     }
 }
