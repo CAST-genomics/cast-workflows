@@ -7,7 +7,6 @@ workflow run_advntr {
         String bam_file_advntr_path
         File bam_index
         String output_dir
-        String gcloud_token
         String sample_id
     }
 
@@ -17,7 +16,6 @@ workflow run_advntr {
             bam_file_advntr_path = bam_file_advntr_path,
             bam_index = bam_index,
             output_dir = output_dir,
-            gcloud_token = gcloud_token,
             sample_id = sample_id,
     }
 
@@ -41,7 +39,6 @@ task advntr {
         String bam_file_advntr_path
         File bam_index
         String output_dir
-        String gcloud_token
         String sample_id
     }
 
@@ -53,9 +50,6 @@ task advntr {
           description: "Input bam index file",
         }
     }
-    # This is the target region for target VNTRs.
-    # It is passed to Samtools to minimize file copying.
-    String region = "chr15:88854000-88859000"
 
     # all output files except for the vcf file are generated in the work_dir.
     String work_dir = "."
