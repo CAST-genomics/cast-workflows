@@ -42,7 +42,6 @@ def write_input_json(input_json_filename, sample_df, output_dir, bucket, sample_
             "run_advntr.bam_file_advntr_path": bam_file_advntr_path,
             "run_advntr.bam_index": bam_index,
             "run_advntr.output_dir": output_dir,
-            "run_advntr.gcloud_token": token,
             "run_advntr.sample_id": sample_id}
     with open(input_json_filename, "w+") as input_json_file:
         json.dump(data, input_json_file)
@@ -63,17 +62,6 @@ def run_single_command(command):
         with open("wdl_stderr.txt", "w+") as wdl_err:
             wdl_out.write(process.stderr)
 
-def extract_region(alignment_file, region):
-    #command = 'export GCS_OAUTH_TOKEN="$(gcloud auth application-default print-access-token)"'
-    #command = 'export HTSLIB_CONFIGURE_OPTIONS="--enable-gs";' + \
-    #    'export GCS_REQUESTER_PAYS_PROJECT="$GOOGLE_PROJECT";'
-    #subprocess.run(command)
-
-    #command = 'export HTSLIB_CONFIGURE_OPTIONS="--enable-gs";'
-    #"mkfifo target_region.sam"
-    command = "samtools view -o {} {} {}".format(
-                "target_region.sam", alignment_file, region)
-    subprocess.run(command)
 
 # Calls the wdl workflow based on input sample filenames
 def run_wdl_command(target_samples_df, output_name, region):
@@ -89,7 +77,6 @@ def run_wdl_command(target_samples_df, output_name, region):
 
     # Config file includes gcloud file system setup.
     config_file = "/home/jupyter/cromwell.conf"
-    #config_file = "cromwell.conf"
 
     # TODO: edit the WDL file to work with a batch instead of a single file.
 
@@ -105,8 +92,6 @@ def run_wdl_command(target_samples_df, output_name, region):
                          bucket=bucket,
                          sample_id=sample_id)
 
-        #extract_region(target_sample["grch38-bam"], region)
-        #return
         # Create a temporary file with only the target region
         # from the target input bam file.
         command = ["bash",
