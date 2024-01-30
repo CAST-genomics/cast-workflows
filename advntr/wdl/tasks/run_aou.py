@@ -27,10 +27,23 @@ def select_samples(sample_count):
     return selected_samples[["grch38-bam", "grch38-bai"]]
 
 # Write input json file based on selected sample(s) bam files.
-def write_input_json(input_json_filename, sample_df, output_dir):
-    data = {"run_advntr.bam_file": sample_df["grch38-bam"],
-            "run_advntr.bam_index": sample_df["grch38-bai"],
-            "run_advntr.output_dir": output_dir}
+# target_region.sam file should be present before calling this function.
+# The file is automatically created by calling extract_target_region.sh.
+def write_input_json(input_json_filename, sample_df, output_dir, bucket, sample_id):
+    token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
+    capture_output=True, check=True, encoding='utf-8')
+    token = str.strip(token_fetch_command.stdout)
+
+    bam_file = "{}/saraj/data/target_input.bam".format(bucket)
+    bam_index = bam_file + ".bai"
+    bam_file_advntr_path = bam_file.replace("gs://", "")
+    
+    data = {"run_advntr.bam_file": bam_file,
+            "run_advntr.bam_file_advntr_path": bam_file_advntr_path,
+            "run_advntr.bam_index": bam_index,
+            "run_advntr.output_dir": output_dir,
+            "run_advntr.gcloud_token": token,
+            "run_advntr.sample_id": sample_id}
     with open(input_json_filename, "w+") as input_json_file:
         json.dump(data, input_json_file)
 
@@ -40,8 +53,30 @@ def write_options_json(options_json_filename, output_path_gcloud):
     with open(options_json_filename, "w+") as options_json_file:
         json.dump(data, options_json_file)
 
+
+def run_single_command(command):
+    process = subprocess.run(command)
+    if process.stdout is not None:
+        with open("wdl_stdout.txt", "w+") as wdl_out:
+            wdl_out.write(process.stdout)
+    if process.stderr is not None:
+        with open("wdl_stderr.txt", "w+") as wdl_err:
+            wdl_out.write(process.stderr)
+
+def extract_region(alignment_file, region):
+    #command = 'export GCS_OAUTH_TOKEN="$(gcloud auth application-default print-access-token)"'
+    #command = 'export HTSLIB_CONFIGURE_OPTIONS="--enable-gs";' + \
+    #    'export GCS_REQUESTER_PAYS_PROJECT="$GOOGLE_PROJECT";'
+    #subprocess.run(command)
+
+    #command = 'export HTSLIB_CONFIGURE_OPTIONS="--enable-gs";'
+    #"mkfifo target_region.sam"
+    command = "samtools view -o {} {} {}".format(
+                "target_region.sam", alignment_file, region)
+    subprocess.run(command)
+
 # Calls the wdl workflow based on input sample filenames
-def run_wdl_command(target_samples_df, output_name):
+def run_wdl_command(target_samples_df, output_name, region):
 
     cromwell_version = "86"
 
@@ -54,26 +89,45 @@ def run_wdl_command(target_samples_df, output_name):
 
     # Config file includes gcloud file system setup.
     config_file = "/home/jupyter/cromwell.conf"
+    #config_file = "cromwell.conf"
 
     # TODO: edit the WDL file to work with a batch instead of a single file.
 
     for idx, target_sample in target_samples_df.iterrows():
+        # Get sample id from the BAM file.
+        sample_id = os.path.basename(target_sample["grch38-bam"]).replace(".bam", "").replace(".cram", "")
 
         # Write input json file based on selected sample(s) bam files.
         input_json = "aou_inputs.json"
         write_input_json(input_json_filename=input_json,
                          sample_df=target_sample,
-                         output_dir=output_path_gcloud)
+                         output_dir=output_path_gcloud,
+                         bucket=bucket,
+                         sample_id=sample_id)
 
-        command = "java  -jar -Dconfig.file={} ".format(config_file) + \
-                  "cromwell-{}.jar ".format(cromwell_version) + \
-                  "run advntr.wdl --inputs {} ".format(input_json) + \
-                  "--options {} ".format(options_json) + \
-                  "&> wdl_output.txt"
-        subprocess.call(command, shell=True)
+        #extract_region(target_sample["grch38-bam"], region)
+        #return
+        # Create a temporary file with only the target region
+        # from the target input bam file.
+        command = ["bash",
+                  "extract_target_region.sh",
+                  sample_id,
+                  region]
+        run_single_command(command)
+
+        workflow_command = [
+                   "java", "-jar",
+                   "-Dconfig.file={}".format(config_file),
+                  "cromwell-{}.jar".format(cromwell_version),
+                  "run",
+                  "advntr.wdl",
+                  "--inputs", "{}".format(input_json),
+                  "--options", "{}".format(options_json),
+                  ]
+        run_single_command(workflow_command)
 
 def parse_input_args():
-	parser = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
                     prog='advntr_wdl_aou',
                     description='Runs adVNTR wdl workflow based on provided '+ \
                                 'input files and output directory. ' + \
@@ -89,7 +143,13 @@ def parse_input_args():
                         required=True,
                         type=str,
                         help="The output directory name for this experiment.")
-
+    parser.add_argument("--region",
+                         type=str,
+                         default="chr15:88854000-88859000",
+                         help="The region(s) where VNTRs are located +- 1000bp. " + \
+                              "This is used to stream targeted region of the BAM file " + \
+                              "from the original location. This adds to efficiency. " + \
+                              "Default is the region for ACAN VNTR.")
     args = parser.parse_args()
     return args
 
@@ -102,4 +162,5 @@ if __name__ == "__main__":
 
     # Run WDL workflow based on input files and output name.
     run_wdl_command(target_samples_df=target_samples,
-                    output_name=args.output_name)
+                    output_name=args.output_name,
+                    region=args.region)
