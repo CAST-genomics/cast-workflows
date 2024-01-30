@@ -13,6 +13,7 @@ RUN apt-get install -qqy bzip2
 RUN apt-get install -qqy python python-pip
 RUN apt-get install -qqy libz-dev s3fs
 RUN apt-get install -qqy samtools muscle python-tk
+RUN apt-get install -qqy time
 
 # Download advntr
 RUN wget https://github.com/mehrdadbakhtiari/adVNTR/archive/1.5.0.tar.gz
