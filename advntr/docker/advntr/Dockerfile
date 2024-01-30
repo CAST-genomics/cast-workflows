@@ -16,9 +16,12 @@ RUN apt-get install -qqy samtools muscle python-tk
 RUN apt-get install -qqy time
 
 # Download advntr
-RUN wget https://github.com/mehrdadbakhtiari/adVNTR/archive/1.5.0.tar.gz
-RUN tar -xzvf 1.5.0.tar.gz
-WORKDIR adVNTR-1.5.0
+#RUN wget https://github.com/mehrdadbakhtiari/adVNTR/archive/1.5.0.tar.gz
+#RUN tar -xzvf 1.5.0.tar.gz
+# Download the latest updates on AdVNTR
+RUN apt-get install -qqy git
+RUN git clone https://github.com/mehrdadbakhtiari/adVNTR
+WORKDIR adVNTR
 RUN pwd
 
 # Install pip dependencies
@@ -40,8 +43,8 @@ COPY hg38_VNTRs_by_TRF.db vntr_db/hg38_VNTRs_by_TRF.db
 COPY disease_associated_all_vntrs_v4_comma.txt vntr_db/phenotype_associated_vntrs_comma.txt
 
 RUN ls -lh .
-RUN ls -lh /adVNTR-1.5.0
-RUN ls -lh /adVNTR-1.5.0/vntr_db/
+RUN ls -lh /adVNTR
+RUN ls -lh /adVNTR/vntr_db/
 
 # Install advntr
 RUN make; make install
