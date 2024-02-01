@@ -1,0 +1,7 @@
+{
+    "prancSTR.input_vcf": "../../tests/CEU_filtered.vcf.gz",
+    "prancSTR.vcftype": "hipstr",
+    "prancSTR.readfield": "MALLREADS",
+    "prancSTR.region": "chr21",
+    "prancSTR.out_prefix": "CEU_chr21"
+}
