@@ -76,6 +76,7 @@ RUN pip install tensorflow==1.13.2
 # Add VNTR database and hg38 reference genome for seemless usage.
 COPY hg38_VNTRs_by_TRF.db vntr_db/hg38_VNTRs_by_TRF.db
 COPY disease_associated_all_vntrs_v4_comma.txt vntr_db/phenotype_associated_vntrs_comma.txt
+COPY extract_target_region.py /adVNTR
 
 RUN ls -lh .
 RUN ls -lh /adVNTR
