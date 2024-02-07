@@ -26,23 +26,48 @@ def select_samples(sample_count):
     print("Selected {} random sample(s)".format(sample_count))
     return selected_samples[["grch38-bam", "grch38-bai"]]
 
+# Write a file indicating one target region per line.
+def write_region_file(regions, filename):
+    with open(filename, "w+") as region_file:
+        for region in regions:
+            region_file.write(region + "\n")
+
+# Write a file indicating gcloud path to one bam file  per line.
+def write_bam_list(bams, filename):
+    with open(filename, "w+") as bam_list_file:
+        for bam in bams:
+            bam_list_file.write(bam + "\n")
+
 # Write input json file based on selected sample(s) bam files.
 # target_region.sam file should be present before calling this function.
 # The file is automatically created by calling extract_target_region.sh.
-def write_input_json(input_json_filename, sample_df, output_dir, bucket, sample_id):
+def write_input_json(input_json_filename, sample_df, region, output_dir, bucket, sample_id):
     token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
     capture_output=True, check=True, encoding='utf-8')
     token = str.strip(token_fetch_command.stdout)
 
-    bam_file = "{}/saraj/data/target_input.bam".format(bucket)
-    bam_index = bam_file + ".bai"
-    bam_file_advntr_path = bam_file.replace("gs://", "")
+    # This is for the case where extract target region is called within the
+    # terminal environment and not Docker.
+    #bam_file = "{}/saraj/data/target_input.bam".format(bucket)
+
+    # Write a file indicating all bam files for genotyping. This will be passed to the docker.
+    #bam_list = "./bam_list.txt"
+    #write_bam_list(bams = [sample_df['grch38-bam']], filename=bam_list)
+
+    # Write a file indicating all regions for genotyping. This will be passed to the docker.
+    #region_file = "./regions.txt"
+    #target_regions = ["chr15:88855424-88857434"]
+    #write_region_file(regions=target_regions, filename=region_file)
+    bam_file_advntr_path = "target_region_{}.bam".format(sample_id)
     
-    data = {"run_advntr.bam_file": bam_file,
+    data = {"run_advntr.bam_file": sample_df['grch38-bam'],
+            "run_advntr.region": region,
             "run_advntr.bam_file_advntr_path": bam_file_advntr_path,
-            "run_advntr.bam_index": bam_index,
             "run_advntr.output_dir": output_dir,
-            "run_advntr.sample_id": sample_id}
+            "run_advntr.sample_id": sample_id,
+            "run_advntr.gcloud_token": token,
+            "run_advntr.google_project": bucket}
+
     with open(input_json_filename, "w+") as input_json_file:
         json.dump(data, input_json_file)
 
@@ -88,6 +113,7 @@ def run_wdl_command(target_samples_df, output_name, region):
         input_json = "aou_inputs.json"
         write_input_json(input_json_filename=input_json,
                          sample_df=target_sample,
+                         region=region,
                          output_dir=output_path_gcloud,
                          bucket=bucket,
                          sample_id=sample_id)
