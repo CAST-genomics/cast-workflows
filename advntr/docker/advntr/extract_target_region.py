@@ -45,7 +45,7 @@ def parse_args():
 
 def set_environment_variables(args):
     # Set flags for samtools to read over gcloud URL
-    os.environ["HTSLIB_CONFIGURE_OPTIONS"] ="--enable-gs"
+    os.environ["HTSLIB_CONFIGURE_OPTIONS"] ="--enable-gcs"
     os.environ["GCS_OAUTH_TOKEN"] = args.gcloud_token
     os.environ["GCS_REQUESTER_PAYS_PROJECT"] = args.google_project
 
