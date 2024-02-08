@@ -33,12 +33,12 @@ RUN python get-pip.py
 RUN apt-get install -qqy make
 RUN apt-get install -qqy libncurses-dev
 RUN apt-get install -qqy liblzma-dev
-RUN apt-get install -qqy autoconf
+RUN apt-get install -qqy autoconf libcurl4-openssl-dev
 # Download, configure and install
 RUN wget https://github.com/samtools/samtools/releases/download/1.13/samtools-1.13.tar.bz2
 RUN tar -vxjf samtools-1.13.tar.bz2
 WORKDIR samtools-1.13
-RUN bash ./configure
+RUN bash ./configure --enable-gcs --enable-libcurl
 RUN make; make install
 WORKDIR /
 
