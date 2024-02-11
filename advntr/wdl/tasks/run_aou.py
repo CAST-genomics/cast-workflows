@@ -41,7 +41,7 @@ def write_bam_list(bams, filename):
 # Write input json file based on selected sample(s) bam files.
 # target_region.sam file should be present before calling this function.
 # The file is automatically created by calling extract_target_region.sh.
-def write_input_json(input_json_filename, sample_df, region, output_dir, bucket, sample_id):
+def write_input_json(input_json_filename, sample_df, region, output_dir, google_project, sample_id):
     token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
     capture_output=True, check=True, encoding='utf-8')
     token = str.strip(token_fetch_command.stdout)
@@ -66,7 +66,7 @@ def write_input_json(input_json_filename, sample_df, region, output_dir, bucket,
             "run_advntr.output_dir": output_dir,
             "run_advntr.sample_id": sample_id,
             "run_advntr.gcloud_token": token,
-            "run_advntr.google_project": bucket}
+            "run_advntr.google_project": google_project}
 
     with open(input_json_filename, "w+") as input_json_file:
         json.dump(data, input_json_file)
@@ -96,6 +96,7 @@ def run_wdl_command(target_samples_df, output_name, region):
     # Write options file including output directory in the bucket.
     options_json = "aou_options.json"
     bucket = os.getenv("WORKSPACE_BUCKET")
+    google_project = os.getenv("GOOGLE_PROJECT")
     output_path_gcloud = os.path.join(bucket, "saraj", output_name)
     write_options_json(options_json_filename=options_json,
                        output_path_gcloud=output_path_gcloud)
@@ -115,7 +116,7 @@ def run_wdl_command(target_samples_df, output_name, region):
                          sample_df=target_sample,
                          region=region,
                          output_dir=output_path_gcloud,
-                         bucket=bucket,
+                         google_project=google_project,
                          sample_id=sample_id)
 
         # Create a temporary file with only the target region
