@@ -13,7 +13,8 @@ Usage example:
    --units blood \
    --range 0,250 \
    [--drugexposure-covariate-concept-ids 21601855:statin] \
-   [--sample samplefile.txt]
+   [--sample samplefile.txt] \
+   [--ppi]
 ```
 
 Required arguments: 
@@ -26,5 +27,6 @@ Required arguments:
 Optional arguments:
 * `--sample <FILE>`: file with list of samples to restrict to (one ID per line). Typically this would a list of samples that passed upstream sample-level QC info.
 * `--drugexposure-covariate-concept-ids <STR>`: List of conceptid:conceptname to use as drug exposure covariates.
+* `--ppi`: Indicate if the phenotype concept id is from the PPI or LOINC (default) tables. PPI are general physical measurements (e.g. hight) and include very limited concept ids.
 
 The output file will is a csv file named `${phenotype}_phenocovar.csv` with columns: "person_id", "phenotype", "age", plus an additional column for each drug exposure named by the "conceptname" provided for that drug. e.g. the example above will have columns "person_id", "phenotype", "age", "statin".
