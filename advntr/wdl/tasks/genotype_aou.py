@@ -42,28 +42,25 @@ def write_bam_list(bams, filename):
 # target_region.sam file should be present before calling this function.
 # The file is automatically created by calling extract_target_region.sh.
 def write_input_json(input_json_filename, sample_df, region, output_dir, google_project, sample_id):
-    token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
-    capture_output=True, check=True, encoding='utf-8')
-    token = str.strip(token_fetch_command.stdout)
+    try: # Running on AoU
+        token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
+            capture_output=True, check=True, encoding='utf-8')
+        token = str.strip(token_fetch_command.stdout)
+    except (TypeError, AttributeError, FileNotFoundError): # Running locally
+        token = ""
 
-    # This is for the case where extract target region is called within the
-    # terminal environment and not Docker.
-    #bam_file = "{}/saraj/data/target_input.bam".format(bucket)
 
-    # Write a file indicating all bam files for genotyping. This will be passed to the docker.
+    # TODO: Write a file indicating all bam files for genotyping. This will be passed to the WDL task.
     #bam_list = "./bam_list.txt"
     #write_bam_list(bams = [sample_df['grch38-bam']], filename=bam_list)
 
-    # Write a file indicating all regions for genotyping. This will be passed to the docker.
+    # TODO: Write a file indicating all regions for genotyping. This will be passed to the WDL task.
     #region_file = "./regions.txt"
     #target_regions = ["chr15:88855424-88857434"]
     #write_region_file(regions=target_regions, filename=region_file)
-    bam_file_advntr_path = "target_region_{}.bam".format(sample_id)
-    
+
     data = {"run_advntr.bam_file": sample_df['grch38-bam'],
             "run_advntr.region": region,
-            "run_advntr.bam_file_advntr_path": bam_file_advntr_path,
-            "run_advntr.output_dir": output_dir,
             "run_advntr.sample_id": sample_id,
             "run_advntr.gcloud_token": token,
             "run_advntr.google_project": google_project}
@@ -104,8 +101,6 @@ def run_wdl_command(target_samples_df, output_name, region):
     # Config file includes gcloud file system setup.
     config_file = "/home/jupyter/cromwell.conf"
 
-    # TODO: edit the WDL file to work with a batch instead of a single file.
-
     for idx, target_sample in target_samples_df.iterrows():
         # Get sample id from the BAM file.
         sample_id = os.path.basename(target_sample["grch38-bam"]).replace(".bam", "").replace(".cram", "")
@@ -118,14 +113,6 @@ def run_wdl_command(target_samples_df, output_name, region):
                          output_dir=output_path_gcloud,
                          google_project=google_project,
                          sample_id=sample_id)
-
-        # Create a temporary file with only the target region
-        # from the target input bam file.
-        command = ["bash",
-                  "extract_target_region.sh",
-                  sample_id,
-                  region]
-        run_single_command(command)
 
         workflow_command = [
                    "java", "-jar",
@@ -171,6 +158,8 @@ if __name__ == "__main__":
 
     # Find the selected set of samples we want to run the workflow on.
     target_samples = select_samples(args.sample_count)
+    # For test run on local server
+    #target_samples = pd.DataFrame({'grch38-bam':["./HG00438.bam"]})
 
     # Run WDL workflow based on input files and output name.
     run_wdl_command(target_samples_df=target_samples,
