@@ -156,7 +156,15 @@ def ConstructDrugExposureSQL(concept_id):
                 `""" + os.environ["WORKSPACE_CDR"] + """.concept` d_source_concept 
                     ON d_exposure.drug_source_concept_id = d_source_concept.concept_id"""
 
-def ConstructTraitSQL(concept_id):
+def ConstructTraitSQL(concept_id, ppi):
+    # PPI and LOINC queries are different in two places.
+    # Here we set the values based on PPI or LOINC (default).
+    if ppi:
+        measurement_concept_id = "measurement_source_concept_id"
+        is_standard = "0"
+    else:
+        measurement_concept_id = "measurement_concept_id"
+        is_standard = "1"
     return """
     SELECT
         measurement.person_id,
@@ -192,7 +200,7 @@ def ConstructTraitSQL(concept_id):
             `""" + os.environ["WORKSPACE_CDR"] + """.measurement` measurement 
         WHERE
             (
-                measurement_concept_id IN  (
+                """ + measurement_concept_id + """ IN  (
                     SELECT
                         DISTINCT c.concept_id 
                     FROM
@@ -218,7 +226,7 @@ def ConstructTraitSQL(concept_id):
                             '.%') 
                             OR c.path = a.id) 
                         WHERE
-                            is_standard = 1 
+                            is_standard = """ + is_standard + """
                             AND is_selectable = 1
                         )
                 )  

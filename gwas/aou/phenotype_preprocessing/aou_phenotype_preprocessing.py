@@ -146,13 +146,17 @@ def main():
     parser.add_argument("--drugexposure-covariate-concept-ids", help="Comma-separated list of conceptid:conceptname to use as drug exposure covariates", type=str)
     parser.add_argument("--units", help="Comma-separated list of acceptable units. Accepted shorthands: blood", type=str, required=True)
     parser.add_argument("--range", help="min, max acceptable phenotype values", type=str, required=True)
+    parser.add_argument("--ppi", help="Whether or not the phenotype is from the PPI measurements " + \
+                                      "as opposed to LOINC. Only physical measurements (e.g. height) " + \
+                                      "are in PPI.",
+                                      action="store_true", default=False)
 
     args = parser.parse_args()
     MSG("Processing %s"%args.phenotype)
 
     # Set up dataframes
     demog = SQLToDF(aou_queries.demographics_sql)
-    ptdata = SQLToDF(aou_queries.ConstructTraitSQL(args.concept_id))
+    ptdata = SQLToDF(aou_queries.ConstructTraitSQL(args.concept_id, args.ppi))
     data = pd.merge(ptdata, demog, on="person_id", how="inner")
     MSG("After merge, have %s data points"%data.shape[0])
 
@@ -215,4 +219,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-    
