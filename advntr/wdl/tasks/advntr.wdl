@@ -69,7 +69,7 @@ task download_input {
     >>>
 
     runtime {
-        docker:"sarajava/advntr:1.5.0_db_u18"
+        docker:"sarajava/samtools:1.13"
         cpu: "4"
         memory: "18G"
     }
