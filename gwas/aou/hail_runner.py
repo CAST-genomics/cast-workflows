@@ -16,7 +16,7 @@ class HailRunner:
 
         self.ptcovar = ptcovar
         self.region = region
-        self.covars = covars 
+        self.covars = covars
         self.sample_call_rate = sample_call_rate
         self.variant_call_rate = variant_call_rate
         self.MAF = MAF
