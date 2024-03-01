@@ -185,7 +185,7 @@ def main():
     # Set up GWAS method
     if args.method == "hail":
         from hail_runner import HailRunner
-        runner = HailRunner(data, region=args.region, norm = args.norm, covars=covars, sample_call_rate=args.sample_call_rate, variant_call_rate=args.variant_call_rate, MAF=args.MAF, HWE=args.HWE, GQ=args.GQ)
+        runner = HailRunner(data, region=args.region, covars=covars, sample_call_rate=args.sample_call_rate, variant_call_rate=args.variant_call_rate, MAF=args.MAF, HWE=args.HWE, GQ=args.GQ)
     elif args.method == "associaTR":
         from associatr_runner import AssociaTRRunner
         runner = AssociaTRRunner(data, args.tr_vcf, region=args.region, covars=covars)
