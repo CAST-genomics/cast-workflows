@@ -90,7 +90,7 @@ def NormalizeData(data, norm):
         data["phenotype"]  = stats.zscore(data[["phenotype"]])
         return data
     
-    else:
+    elif norm == "none":
         return data
 
 def main():
@@ -105,7 +105,7 @@ def main():
     parser.add_argument("--sharedcovars", help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male", type=str, default="sex_at_birth_Male")
     parser.add_argument("--tr-vcf", help="VCF file with TR genotypes. Required if running associaTR", type=str)
     parser.add_argument("--plot", help="Make a Manhattan plot", action="store_true")
-    parser.add_argument("--norm", help="Normalize phenotype either quantile or zscore,default: none",type=str)
+    parser.add_argument("--norm", help="Normalize phenotype either quantile or zscore",default="none",type=str)
     parser.add_argument("--norm-by-sex",
                         help="Apply the normalization for each sex separately. Default: False",
                         action="store_true")
