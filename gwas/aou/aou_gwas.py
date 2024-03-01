@@ -102,7 +102,7 @@ def main():
     parser.add_argument("--sharedcovars", help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male", type=str, default="sex_at_birth_Male")
     parser.add_argument("--tr-vcf", help="VCF file with TR genotypes. Required if running associaTR", type=str)
     parser.add_argument("--plot", help="Make a Manhattan plot", action="store_true")
-    parser.add_argument("--norm", help="Normalize phenotype either quantile or zscore",type=str)
+    parser.add_argument("--norm", help="Normalize phenotype either quantile or zscore,default: False",type=str,action="store_true")
     parser.add_argument("--norm-by-sex",
                         help="Apply the normalization for each sex separately. Default: False",
                         action="store_true")
@@ -140,6 +140,7 @@ def main():
     ancestry = LoadAncestry(args.ancestry_pred_path)
     data = pd.merge(data, ancestry[["person_id"]+pcols], on=["person_id"])
     data["person_id"] = data["person_id"].apply(str)
+
 
     # Add normalization. If indicated, normalize for each sex separately.
     if args.norm_by_sex:
