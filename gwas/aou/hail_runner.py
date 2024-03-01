@@ -12,7 +12,7 @@ SMALLNUM = 10e-400
 class HailRunner:
 
     import hail as hl
-    def __init__(self, ptcovar, region=None, covars=[], norm=None, sample_call_rate=None, variant_call_rate=None, MAF=None, HWE=None, GQ=None):
+    def __init__(self, ptcovar, region=None, covars=[], sample_call_rate=None, variant_call_rate=None, MAF=None, HWE=None, GQ=None):
 
         self.ptcovar = ptcovar
         self.region = region
