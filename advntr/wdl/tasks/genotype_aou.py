@@ -39,9 +39,7 @@ def write_bam_list(bams, filename):
             bam_list_file.write(bam + "\n")
 
 # Write input json file based on selected sample(s) bam files.
-# target_region.sam file should be present before calling this function.
-# The file is automatically created by calling extract_target_region.sh.
-def write_input_json(input_json_filename, sample_df, region, output_dir, google_project, sample_id):
+def write_input_json(input_json_filename, samples_df, region, output_dir, google_project):
     try: # Running on AoU
         token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
             capture_output=True, check=True, encoding='utf-8')
@@ -59,9 +57,8 @@ def write_input_json(input_json_filename, sample_df, region, output_dir, google_
     #target_regions = ["chr15:88855424-88857434"]
     #write_region_file(regions=target_regions, filename=region_file)
 
-    data = {"run_advntr.bam_file": sample_df['grch38-bam'],
+    data = {"run_advntr.bam_files": list(samples_df['grch38-bam']),
             "run_advntr.region": region,
-            "run_advntr.sample_id": sample_id,
             "run_advntr.gcloud_token": token,
             "run_advntr.google_project": google_project}
 
@@ -101,29 +98,28 @@ def run_wdl_command(target_samples_df, output_name, region):
     # Config file includes gcloud file system setup.
     config_file = "/home/jupyter/cromwell.conf"
 
-    for idx, target_sample in target_samples_df.iterrows():
-        # Get sample id from the BAM file.
-        sample_id = os.path.basename(target_sample["grch38-bam"]).replace(".bam", "").replace(".cram", "")
+    # Get sample id from the BAM file.
+    #sample_id = os.path.basename(target_sample["grch38-bam"]).replace(".bam", "").replace(".cram", "")
 
-        # Write input json file based on selected sample(s) bam files.
-        input_json = "aou_inputs.json"
-        write_input_json(input_json_filename=input_json,
-                         sample_df=target_sample,
-                         region=region,
-                         output_dir=output_path_gcloud,
-                         google_project=google_project,
-                         sample_id=sample_id)
+    # Write input json file based on selected sample(s) bam files.
+    input_json = "aou_inputs.json"
+    write_input_json(input_json_filename=input_json,
+                     samples_df=target_samples_df,
+                     region=region,
+                     output_dir=output_path_gcloud,
+                     google_project=google_project,
+                     )
 
-        workflow_command = [
-                   "java", "-jar",
-                   "-Dconfig.file={}".format(config_file),
-                  "cromwell-{}.jar".format(cromwell_version),
-                  "run",
-                  "advntr.wdl",
-                  "--inputs", "{}".format(input_json),
-                  "--options", "{}".format(options_json),
-                  ]
-        run_single_command(workflow_command)
+    workflow_command = [
+               "java", "-jar",
+               "-Dconfig.file={}".format(config_file),
+              "cromwell-{}.jar".format(cromwell_version),
+              "run",
+              "advntr.wdl",
+              "--inputs", "{}".format(input_json),
+              "--options", "{}".format(options_json),
+              ]
+    run_single_command(workflow_command)
 
 def parse_input_args():
     parser = argparse.ArgumentParser(
