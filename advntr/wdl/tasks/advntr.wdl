@@ -7,6 +7,7 @@ workflow run_advntr {
         String region
         String google_project
         String gcloud_token
+        String vntr_id
     }
 
     scatter (i in range(length(bam_files))) {
@@ -22,23 +23,75 @@ workflow run_advntr {
     
         call genotype {
             input :
+                vntr_id = vntr_id,
                 target_bam_file = download_input.target_bam_file,
                 target_bam_index_file = download_input.target_bam_index_file,
         }
+
+        call sort_index {
+            input :
+                vcf = genotype.genotype_output
+        }
     }
+
+    call merge_outputs {
+        input:
+            individual_vcfs = sort_index.outvcf,
+            individual_vcf_indexes = sort_index.outvcf_index
+    }
+
     output {
         #File target_bam_file = download_input.target_bam_file
         #File target_bam_index_file = download_input.target_bam_index_file
 
-        #Array[File?] log_file = genotype.log_file
-        #Array[File?] filtering_out_file = genotype.filtering_out_file
-        #Array[File?] keywords_file = genotype.keywords_file
-        #Array[File?] unmapped_file = genotype.unmapped_file
-        Array[File] genotype_output = genotype.genotype_output
+        #Array[File] genotype_output = genotype.genotype_output
+        File merged_vcfs = merge_outputs.merged_vcfs
     }
 
     meta {
         description: "This workflow calls adVNTR to genotype VNTRs"
+    }
+}
+
+task sort_index {
+  input {
+    File vcf
+  }
+
+  String basename = basename(vcf, ".vcf.gz")
+
+  command <<<
+    cat ~{vcf} | vcf-sort | bgzip -c > ~{basename}.sorted.vcf.gz && tabix -p vcf ~{basename}.sorted.vcf.gz
+  >>>
+
+  runtime {
+        docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
+    }
+
+  output {
+    File outvcf = "${basename}.sorted.vcf.gz"
+    File outvcf_index = "${basename}.sorted.vcf.gz.tbi"
+  }
+}
+
+task merge_outputs {
+    input {
+        Array[File] individual_vcfs
+        Array[File] individual_vcf_indexes
+    }
+
+    String out_prefix = "merged_samples"
+
+    command <<<
+        mergeSTR --vcfs ~{sep=',' individual_vcfs} --out ~{out_prefix}
+    >>>
+    runtime {
+        docker:"gcr.io/ucsd-medicine-cast/trtools-5.0.1:latest"
+        cpu: "4"
+        memory: "10G"
+    }
+    output {
+        File merged_vcfs = "~{out_prefix}.vcf"
     }
 }
 
@@ -82,6 +135,7 @@ task download_input {
 
 task genotype {
     input {
+        String vntr_id
         File target_bam_file
         File target_bam_index_file
     }
@@ -102,7 +156,6 @@ task genotype {
     # Set VNTR ids for genotyping based on input.
     # Two options right now: VNTR in the ACAN gene or the list of 52 phenotype associated VNTRs.
     #String vids = "$(cat /adVNTR/vntr_db/phenotype_associated_vntrs_comma.txt)"
-    String vids = "290964"
 
     command <<<
         ls -lh .
@@ -113,7 +166,7 @@ task genotype {
         --alignment_file ~{target_bam_file} \
         --models ~{vntr_db}  \
         --working_directory . \
-        -vid ~{vids} \
+        -vid ~{vntr_id} \
         --outfmt vcf \
         --log_pacbio_reads \
         --pacbio > ~{genotype_output}
