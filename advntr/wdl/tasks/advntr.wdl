@@ -23,6 +23,7 @@ workflow run_advntr {
     
         call genotype {
             input :
+                region = region,
                 vntr_id = vntr_id,
                 target_bam_file = download_input.target_bam_file,
                 target_bam_index_file = download_input.target_bam_index_file,
@@ -66,6 +67,8 @@ task sort_index {
 
   runtime {
         docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
+        cpu: "1"
+        memory: "2G"
     }
 
   output {
@@ -87,8 +90,8 @@ task merge_outputs {
     >>>
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/trtools-5.0.1:latest"
-        cpu: "4"
-        memory: "10G"
+        cpu: "1"
+        memory: "4G"
     }
     output {
         File merged_vcfs = "~{out_prefix}.vcf"
@@ -109,6 +112,7 @@ task download_input {
     String sorted_target_bam_index = "target_~{sample_id}.bam.bai"
     String sample_id = sub(basename(bam_file), ".bam", "")
 
+    #rm ~{unsorted_target_bam}
     command <<<
         ls -lh .
         export HTSLIB_CONFIGURE_OPTIONS="--enable-gcs"
@@ -117,13 +121,12 @@ task download_input {
         samtools view -hb -o ~{unsorted_target_bam} --use-index ~{bam_file} ~{region}
         samtools sort -o ~{sorted_target_bam} ~{unsorted_target_bam}
         samtools index ~{sorted_target_bam}
-        rm ~{unsorted_target_bam}
         ls -lh .
     >>>
 
     runtime {
         docker:"sarajava/samtools:1.13"
-        cpu: "4"
+        cpu: "2"
         memory: "18G"
     }
     output {
@@ -135,6 +138,7 @@ task download_input {
 
 task genotype {
     input {
+        String region
         String vntr_id
         File target_bam_file
         File target_bam_index_file
@@ -156,6 +160,7 @@ task genotype {
     # Set VNTR ids for genotyping based on input.
     # Two options right now: VNTR in the ACAN gene or the list of 52 phenotype associated VNTRs.
     #String vids = "$(cat /adVNTR/vntr_db/phenotype_associated_vntrs_comma.txt)"
+    #sleep 30
 
     command <<<
         ls -lh .
@@ -179,7 +184,7 @@ task genotype {
 
     runtime {
         docker:"sarajava/advntr:1.5.0_db_v3"
-        cpu: "4"
+        cpu: "2"
         memory: "18G"
     }
 
