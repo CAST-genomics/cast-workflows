@@ -47,7 +47,7 @@ RUN apt-get install -qqy muscle python-tk
 # Download advntr
 # Download the latest updates on AdVNTR
 RUN apt-get install -qqy git
-RUN git clone https://github.com/mehrdadbakhtiari/adVNTR
+RUN git clone -b aou_advntr https://github.com/mehrdadbakhtiari/adVNTR
 WORKDIR adVNTR
 RUN pwd
 
