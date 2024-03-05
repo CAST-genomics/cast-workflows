@@ -39,7 +39,9 @@ def write_bam_list(bams, filename):
             bam_list_file.write(bam + "\n")
 
 # Write input json file based on selected sample(s) bam files.
-def write_input_json(input_json_filename, samples_df, region, output_dir, google_project):
+def write_input_json(input_json_filename, samples_df,
+            region, vntr_id,
+            output_dir, google_project):
     try: # Running on AoU
         token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
             capture_output=True, check=True, encoding='utf-8')
@@ -59,6 +61,7 @@ def write_input_json(input_json_filename, samples_df, region, output_dir, google
 
     data = {"run_advntr.bam_files": list(samples_df['grch38-bam']),
             "run_advntr.region": region,
+            "run_advntr.vntr_id": vntr_id,
             "run_advntr.gcloud_token": token,
             "run_advntr.google_project": google_project}
 
@@ -83,7 +86,7 @@ def run_single_command(command):
 
 
 # Calls the wdl workflow based on input sample filenames
-def run_wdl_command(target_samples_df, output_name, region):
+def run_wdl_command(target_samples_df, output_name, region, vntr_id):
 
     cromwell_version = "86"
 
@@ -106,6 +109,7 @@ def run_wdl_command(target_samples_df, output_name, region):
     write_input_json(input_json_filename=input_json,
                      samples_df=target_samples_df,
                      region=region,
+                     vntr_id=vntr_id,
                      output_dir=output_path_gcloud,
                      google_project=google_project,
                      )
@@ -139,12 +143,15 @@ def parse_input_args():
                         type=str,
                         help="The output directory name for this experiment.")
     parser.add_argument("--region",
-                         type=str,
-                         default="chr15:88854000-88859000",
+                         type=str, required=True,
                          help="The region(s) where VNTRs are located +- 1000bp. " + \
                               "This is used to stream targeted region of the BAM file " + \
-                              "from the original location. This adds to efficiency. " + \
-                              "Default is the region for ACAN VNTR.")
+                              "from the original location. This adds to efficiency. ")
+    parser.add_argument("--vntr-id",
+                         type=str, required=True,
+                         help="The VNTR id used for this analysis. " + \
+                              "VNTR id should correspond to the region flag otherwise" + \
+                              "there will be no spanning reads.")
     args = parser.parse_args()
     return args
 
@@ -160,4 +167,5 @@ if __name__ == "__main__":
     # Run WDL workflow based on input files and output name.
     run_wdl_command(target_samples_df=target_samples,
                     output_name=args.output_name,
-                    region=args.region)
+                    region=args.region,
+                    vntr_id=args.vntr_id)
