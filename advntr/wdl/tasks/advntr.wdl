@@ -120,6 +120,7 @@ task download_input {
         export GCS_REQUESTER_PAYS_PROJECT="~{google_project}"
         samtools view -hb -o ~{unsorted_target_bam} --use-index ~{bam_file} ~{region}
         samtools sort -o ~{sorted_target_bam} ~{unsorted_target_bam}
+        sleep 60
         samtools index ~{sorted_target_bam}
         ls -lh .
     >>>
@@ -166,7 +167,7 @@ task genotype {
         ls -lh .
         echo "~{target_bam_file}"
         echo "num reads $(samtools view -c ~{target_bam_file})"
-        echo "num reads in region $(samtools view -c ~{target_bam_file} chr15:88855424-88857434) "
+        echo "num reads in region $(samtools view -c ~{target_bam_file} ~{region}) "
         /usr/bin/time -v advntr genotype  \
         --alignment_file ~{target_bam_file} \
         --models ~{vntr_db}  \
