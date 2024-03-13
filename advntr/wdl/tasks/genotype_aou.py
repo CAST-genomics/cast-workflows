@@ -12,19 +12,31 @@ def download_manifest_file(manifest_file):
     subprocess.call("mv manifest.csv {}".format(manifest_file))
 
 # Selects samples based on the counts and returs paths to bam files on gcloud.
-def select_samples(sample_count):
-    manifest_file = "manifest_lrwgs.csv"
-    if not os.path.exists(manifest_file):
-        print("Warning: The manifest file for long reads WGS is not present or not correctly named.")
-        download_manifest_file(manifest_file)
+def select_samples(sample_count, dataset):
+    if dataset == "lrwgs":
+        manifest_file = "manifest_lrwgs.csv"
+        selected_columns = ["grch38-bam", "grch38-bai"]
+        if not os.path.exists(manifest_file):
+            print("Warning: The manifest file for long reads WGS is not present or not correctly named.")
+            download_manifest_file(manifest_file)
+    elif dataset == "srwgs":
+        selected_columns = ["cram_uri", "cram_index_uri"]
+        manifest_file = "manifest_srwgs.csv"
+
 
     files_df = pd.read_csv(manifest_file)
     num_individuals = len(files_df)
     print("Working with manifest file of {} columns and {} samples".format(
             len(files_df.columns), num_individuals))
-    selected_samples = files_df.sample(n=sample_count, random_state=0)
+    selected_samples = files_df.sample(n=sample_count, random_state=1)
     print("Selected {} random sample(s)".format(sample_count))
-    return selected_samples[["grch38-bam", "grch38-bai"]]
+
+    selected_samples = selected_samples[selected_columns]
+    selected_samples = selected_samples.rename(columns={
+                            selected_columns[0] : "alignment_file",
+                            selected_columns[1] : "alignment_index_file"})
+
+    return selected_samples[["alignment_file", "alignment_index_file"]]
 
 # Write a file indicating one target region per line.
 def write_region_file(regions, filename):
@@ -39,9 +51,12 @@ def write_bam_list(bams, filename):
             bam_list_file.write(bam + "\n")
 
 # Write input json file based on selected sample(s) bam files.
-def write_input_json(input_json_filename, samples_df,
-            region, vntr_id,
-            output_dir, google_project):
+def write_input_json(input_json_filename,
+                     samples_files,
+                     region,
+                     vntr_id,
+                     output_dir,
+                     google_project):
     try: # Running on AoU
         token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
             capture_output=True, check=True, encoding='utf-8')
@@ -59,7 +74,7 @@ def write_input_json(input_json_filename, samples_df,
     #target_regions = ["chr15:88855424-88857434"]
     #write_region_file(regions=target_regions, filename=region_file)
 
-    data = {"run_advntr.bam_files": list(samples_df['grch38-bam']),
+    data = {"run_advntr.bam_files": samples_files,
             "run_advntr.region": region,
             "run_advntr.vntr_id": vntr_id,
             "run_advntr.gcloud_token": token,
@@ -106,8 +121,9 @@ def run_wdl_command(target_samples_df, output_name, region, vntr_id):
 
     # Write input json file based on selected sample(s) bam files.
     input_json = "aou_inputs.json"
+    samples_files = list(target_samples_df['alignment_file'])
     write_input_json(input_json_filename=input_json,
-                     samples_df=target_samples_df,
+                     samples_files=samples_files,
                      region=region,
                      vntr_id=vntr_id,
                      output_dir=output_path_gcloud,
@@ -132,6 +148,11 @@ def parse_input_args():
                                 'input files and output directory. ' + \
                                 'Currently working with lrWGS samples.',
                     )
+    parser.add_argument("--dataset", required=True,
+                        choices=["lrwgs", "srwgs"],
+                        type=str,
+                        help="Which dataset to get the aligned reads from.")
+
     parser.add_argument("--sample-count",
                         required=True,
                         type=int,
@@ -160,7 +181,7 @@ if __name__ == "__main__":
     args = parse_input_args()
 
     # Find the selected set of samples we want to run the workflow on.
-    target_samples = select_samples(args.sample_count)
+    target_samples = select_samples(args.sample_count, dataset=args.dataset)
     # For test run on local server
     #target_samples = pd.DataFrame({'grch38-bam':["./HG00438.bam"]})
 
