@@ -1,38 +1,51 @@
+import argparse
 import pandas as pd
 import numpy as np
 import sys
 import os
 
 
-infile = sys.argv[1]
-outfile = sys.argv[2]
-pval_cutoff = -np.log10(float(sys.argv[3])) #e.g. 5e-08
-pval_col = "P"
-if len(sys.argv) == 5:
-    pval_col = sys.argv[4]
+def main():
+    parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument("--infile", help="gwas file name", type=str, required=True)
+    parser.add_argument("--outfile", help="output file name", type=str, required=True)
+    parser.add_argument("--pval_cutoff", help="sig pvalue cutoff", type=float, default=5e-08)
+    parser.add_argument("--pval_col", help="name of p value column", type=str, default="P")
+    parser.add_argument("--pos_col", help="name of pos column", type=str, default="POS")
+    parser.add_argument("--chr_col", help="name of chrom column", type=str, default="#CHROM")
 
-df = pd.read_csv(infile, sep="\t")
+    args = parser.parse_args()
 
-df["logp"] = -np.log10(df[pval_col])
+    pval_cutoff = -np.log10(args.pval_col)
+    pval_col = args.pval_col
+    pos_col = args.pos_col
+    chr_col = args.chr_col
 
-df.sort_values(by="logp", inplace=True, ascending=False)
+    df = pd.read_csv(args.infile, sep="\t")
 
-peak_centers = [df.index[0]]
+    df["logp"] = -np.log10(df[pval_col])
 
-w = 250000
-iter = 0
-for i in df.index[1:]:
-  iter += 1
-  if iter % 10000 == 0:
-    print("10000 done")
-  df_sig = df.loc[peak_centers]
-  pos = df.loc[i]['POS']
-  pval = df.loc[i]["P"]
-  logp = df.loc[i]["logp"]
-  if (logp <= pval_cutoff):
-    break
-  nearby_sig = df_sig[ (df_sig['POS'] <= pos+w) & (df_sig['POS'] >= pos-w)]
-  if nearby_sig.shape[0] == 0:
-    peak_centers.append(i)
+    df.sort_values(by="logp", inplace=True, ascending=False)
 
-df.loc[peak_centers].sort_values(by=['#CHROM','POS']).to_csv(outfile, index=False)
+    peak_centers = [df.index[0]]
+
+    w = 250000
+    iter = 0
+    for i in df.index[1:]:
+        iter += 1
+        if iter % 10000 == 0:
+            print("10000 done")
+        df_sig = df.loc[peak_centers]
+        pos = df.loc[i][pos_col]
+        pval = df.loc[i][pval_col]
+        logp = df.loc[i]["logp"]
+        if (logp <= pval_cutoff):
+            break
+        nearby_sig = df_sig[ (df_sig[pos_col] <= pos+w) & (df_sig[pos_col] >= pos-w)]
+        if nearby_sig.shape[0] == 0:
+            peak_centers.append(i)
+
+    df.loc[peak_centers].sort_values(by=[chr_col,pos_col]).to_csv(outfile, index=False)
+
+if __name__ == "__main__":
+    main()
