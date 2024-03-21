@@ -34,7 +34,7 @@ phenotype,concept_id,units,outlier_sd,min,max,drugcovars
 #mean_corpuscular_haemoglobin_concentration,3009744,"gram per deciliter,gram per deciliter calculated",5,0,70,
 #urate,3037556,milligram per deciliter,5,0,50,
 sodium,3019550,"millimole per liter,no value",5,0,500,
-chloride,3014576"millimole per liter,no value",5,0,300,
+chloride,3014576,"millimole per liter,no value",5,0,300,
 urea_nitrogen,3013682,"milligram per deciliter,no value,No unit",5,0,200,
 potassium,3023103"milimole per liter",5,0,50,
 heart_rate,3027018,"% REF,per minute,minute,counts per minute,heartbeat",5,0,300,
