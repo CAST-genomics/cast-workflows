@@ -55,7 +55,6 @@ def write_input_json(input_json_filename,
                      samples_files,
                      region,
                      vntr_id,
-                     output_dir,
                      google_project):
     try: # Running on AoU
         token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
@@ -109,9 +108,7 @@ def run_wdl_command(target_samples_df, output_name, region, vntr_id):
     options_json = "aou_options.json"
     bucket = os.getenv("WORKSPACE_BUCKET")
     google_project = os.getenv("GOOGLE_PROJECT")
-    output_path_gcloud = os.path.join(bucket, "saraj", output_name)
-    write_options_json(options_json_filename=options_json,
-                       output_path_gcloud=output_path_gcloud)
+    output_path_gcloud = os.path.join(bucket, "saraj", "genotype_output", output_name)
 
     # Config file includes gcloud file system setup.
     config_file = "/home/jupyter/cromwell.conf"
@@ -121,25 +118,35 @@ def run_wdl_command(target_samples_df, output_name, region, vntr_id):
 
     # Write input json file based on selected sample(s) bam files.
     input_json = "aou_inputs.json"
-    samples_files = list(target_samples_df['alignment_file'])
-    write_input_json(input_json_filename=input_json,
-                     samples_files=samples_files,
-                     region=region,
-                     vntr_id=vntr_id,
-                     output_dir=output_path_gcloud,
-                     google_project=google_project,
-                     )
+    num_batches = int(args.sample_count / args.batch_size) + 1
+    for batch_idx in range(num_batches):
+        # Get the indexes of samples in the current batch.
+        # Then call the wdl workflow for only one batch at a time.
+        first_sample_idx = batch_idx * args.batch_size
+        last_sample_idx = min((batch_idx + 1) * args.batch_size, args.sample_count)
+        samples_files = list(target_samples_df['alignment_file'])[first_sample_idx:last_sample_idx]
+        # Write output directory in options file.
+        output_dir = output_path_gcloud + "_" + str(batch_idx)
+        write_options_json(options_json_filename=options_json,
+                       output_path_gcloud=output_dir)
+        # Gcloud token is updated every time write_input_json is called.
+        write_input_json(input_json_filename=input_json,
+                         samples_files=samples_files,
+                         region=region,
+                         vntr_id=vntr_id,
+                         google_project=google_project,
+                         )
 
-    workflow_command = [
-               "java", "-jar",
-               "-Dconfig.file={}".format(config_file),
-              "cromwell-{}.jar".format(cromwell_version),
-              "run",
-              "advntr.wdl",
-              "--inputs", "{}".format(input_json),
-              "--options", "{}".format(options_json),
-              ]
-    run_single_command(workflow_command)
+        workflow_command = [
+                   "java", "-jar",
+                   "-Dconfig.file={}".format(config_file),
+                  "cromwell-{}.jar".format(cromwell_version),
+                  "run",
+                  "advntr.wdl",
+                  "--inputs", "{}".format(input_json),
+                  "--options", "{}".format(options_json),
+                  ]
+        run_single_command(workflow_command)
 
 def parse_input_args():
     parser = argparse.ArgumentParser(
@@ -159,6 +166,13 @@ def parse_input_args():
                         help="The number of samples randomly selected from the " + \
                              "lrWGS data. Max value on v7 data is 1027.")
 
+    parser.add_argument("--batch-size",
+                        default=20,
+                        type=int,
+                        help="The batch size for running genotype on. " +\
+                             "The batch size should be such that downloading " + \
+                             "inputs can finish under 1 hour that is when gcloud " + \
+                             "token expires [default=20].")
     parser.add_argument("--output-name",
                         required=True,
                         type=str,

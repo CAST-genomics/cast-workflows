@@ -13,23 +13,23 @@ workflow advntr_single_sample {
 
     call download_input {
         input :
-    	bam_file = bam_file,
-    	region = region,
-    	google_project = google_project,
+        bam_file = bam_file,
+        region = region,
+        google_project = google_project,
         gcloud_token = gcloud_token,
     }
     call genotype {
         input :
-    	region = region,
-    	vntr_id = vntr_id,
-    	target_bam_file = download_input.target_bam_file,
-    	target_bam_index_file = download_input.target_bam_index_file,
-    	sleep_seconds = sleep_seconds
+        region = region,
+        vntr_id = vntr_id,
+        target_bam_file = download_input.target_bam_file,
+        target_bam_index_file = download_input.target_bam_index_file,
+        sleep_seconds = sleep_seconds
     }
     
     call sort_index {
         input :
-    	vcf = genotype.genotype_output
+        vcf = genotype.genotype_output
     }
 
     output {
@@ -64,7 +64,7 @@ task download_input {
         String bam_file
         String region
         String google_project
-    	String gcloud_token
+        String gcloud_token
     }
 
 
@@ -73,13 +73,16 @@ task download_input {
     String sorted_target_bam = "target_~{sample_id}.bam"
     String sorted_target_bam_index = "target_~{sample_id}.bam.bai"
     String sample_id = sub(basename(bam_file), ".bam", "")
-    #./google-cloud-sdk/bin/gcloud init
-    #export gcloud_token=$(./google-cloud-sdk/bin/gcloud auth application-default print-access-token)
 
     command <<<
         ls -lh .
         export HTSLIB_CONFIGURE_OPTIONS="--enable-gcs"
-        export GCS_OAUTH_TOKEN="~{gcloud_token}"
+        echo "pwd $(pwd)"
+        /google-cloud-sdk/bin/gcloud --version
+        /google-cloud-sdk/bin/gcloud init
+        export gcloud_token=$(/google-cloud-sdk/bin/gcloud auth application-default print-access-token)
+        echo $gcloud_token
+        export GCS_OAUTH_TOKEN=${gcloud_token}
         export GCS_REQUESTER_PAYS_PROJECT="~{google_project}"
         samtools view -hb -o ~{unsorted_target_bam} --use-index ~{bam_file} ~{region}
         samtools sort -o ~{sorted_target_bam} ~{unsorted_target_bam}

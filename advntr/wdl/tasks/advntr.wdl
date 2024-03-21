@@ -11,7 +11,6 @@ workflow run_advntr {
         String gcloud_token
         String vntr_id
     }
-
     scatter (i in range(length(bam_files))) {
         String bam_file = bam_files[i]
         Int sleep_seconds = i
