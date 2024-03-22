@@ -50,6 +50,17 @@ def write_bam_list(bams, filename):
         for bam in bams:
             bam_list_file.write(bam + "\n")
 
+# Write the input json file for when results from all batches are being merged.
+def write_input_merge_json(input_json_filename,
+                     batch_vcf_filenames,
+                     batch_vcf_index_filenames,
+                        ):
+    data = {"run_merge_advntr.per_batch_vcfs": batch_vcf_filenames,
+            "run_merge_advntr.per_batch_vcf_indexes": batch_vcf_index_filenames}
+
+    with open(input_json_filename, "w+") as input_json_file:
+        json.dump(data, input_json_file)
+
 # Write input json file based on selected sample(s) bam files.
 def write_input_json(input_json_filename,
                      samples_files,
@@ -98,27 +109,117 @@ def run_single_command(command):
         with open("wdl_stderr.txt", "w+") as wdl_err:
             wdl_out.write(process.stderr)
 
+# Get the actual file path in gcloud from the template for vcf.
+def get_file_path_from_template(template, google_project):
+    process = subprocess.run(["gsutil", "-u", google_project, "ls", template],
+                         stdout=subprocess.PIPE)
+    filename = process.stdout.decode('utf-8').strip()
+    return filename
 
-# Calls the wdl workflow based on input sample filenames
-def run_wdl_command(target_samples_df, output_name, region, vntr_id):
-
-    cromwell_version = "86"
+def run_merge_command(num_batches, output_name, output_parent_dir):
 
     # Write options file including output directory in the bucket.
-    options_json = "aou_options.json"
+    options_json = "aou_merge_options.json"
     bucket = os.getenv("WORKSPACE_BUCKET")
     google_project = os.getenv("GOOGLE_PROJECT")
-    output_path_gcloud = os.path.join(bucket, "saraj", "genotype_output", output_name)
+    output_path_gcloud = os.path.join(bucket, "saraj", output_parent_dir, "merged_outputs")
 
     # Config file includes gcloud file system setup.
     config_file = "/home/jupyter/cromwell.conf"
 
-    # Get sample id from the BAM file.
-    #sample_id = os.path.basename(target_sample["grch38-bam"]).replace(".bam", "").replace(".cram", "")
+    # Write input json file based on selected sample(s) bam files.
+    input_json = "aou_merge_inputs.json"
+    # Write output directory in options file.
+    write_options_json(options_json_filename=options_json,
+                   output_path_gcloud=output_path_gcloud)
+    # Add a template for each merged file resulting from one batch.
+    # The wildcard is placed so that we do not have to know the
+    # cromwell workflow root directory.
+    batch_vcf_filenames = []
+    batch_vcf_index_filenames = []
+    for batch_idx in range(num_batches):
+        # Get the filename for vcf file
+        template = "{}".format(bucket) + \
+                "/saraj/{}/{}_{}/".format(output_parent_dir, output_name, batch_idx) + \
+                "run_advntr/*/call-sort_index/merged_samples.sorted.vcf.gz"
+        filename = get_file_path_from_template(template=template,
+                google_project=google_project)
+        if len(filename) > 0:
+            batch_vcf_filenames.append(filename)
+        else:
+            print("VCF file not added to the input file because file does not exist for template ",
+                    template)
+        # Get the filename for vcf index file
+        template = "{}".format(bucket) + \
+                "/saraj/{}/{}_{}/".format(output_parent_dir, output_name, batch_idx) + \
+                "run_advntr/*/call-sort_index/merged_samples.sorted.vcf.gz.tbi"
+        filename = get_file_path_from_template(template=template,
+                google_project=google_project)
+        if len(filename) > 0:
+            batch_vcf_index_filenames.append(filename)
+        else:
+            print("VCF Index file not added to the input file because file does not exist for template ",
+                    template)
+    # Gcloud token is updated every time write_input_json is called.
+    write_input_merge_json(input_json_filename=input_json,
+                     batch_vcf_filenames=batch_vcf_filenames,
+                     batch_vcf_index_filenames=batch_vcf_index_filenames)
+
+    workflow_command = [
+               "java", "-jar",
+               "-Dconfig.file={}".format(config_file),
+              "cromwell-86.jar",
+              "run",
+              "advntr_merge.wdl",
+              "--inputs", "{}".format(input_json),
+              "--options", "{}".format(options_json),
+              ]
+    run_single_command(workflow_command)
+
+def is_output_dir_empty(directory, google_project):
+    base_dir = os.path.basename(directory)
+    parent_directory = os.path.dirname(directory)
+    # If the directory does not exist, we'll get an exception.
+    # Therefore, we re-route the stderr to /dev/null to not see the exception
+    # in the output which might cause confusion.
+    #try:
+    process = subprocess.run(["gsutil", "-u", google_project, "ls", parent_directory],
+                         stdout=subprocess.PIPE)
+    #except Exception as e:
+    #    print("caught exception")
+    #    pass
+    filenames = process.stdout.decode('utf-8')
+    for filename in filenames.split():
+        # Removing the trailing slashes, so we can get the directory names 
+        # using basename function later.
+        filename = os.path.normpath(filename.strip())
+        if os.path.basename(filename) == base_dir:
+                return False
+    return True
+
+# Calls the wdl workflow based on input sample filenames
+def run_genotype_command(target_samples_df, output_name, output_parent_dir, region, vntr_id):
+
+    # Write options file including output directory in the bucket.
+    options_json = "aou_genotype_options.json"
+    bucket = os.getenv("WORKSPACE_BUCKET")
+    google_project = os.getenv("GOOGLE_PROJECT")
+    parent_path_gcloud = os.path.join(bucket, "saraj", output_parent_dir)
+    output_path_gcloud = os.path.join(parent_path_gcloud, output_name)
+
+    if not is_output_dir_empty(directory=parent_path_gcloud,
+                               google_project=google_project):
+        print("Error: Output directory should be empty before running the workflow "+ \
+              "in order to merge the files from the latest run properly. " + \
+              "i.e. make sure the vcf files from previous runs are not involved " + \
+              "when merging vcf files from this run.")
+        exit(1)
+    # Config file includes gcloud file system setup.
+    config_file = "/home/jupyter/cromwell.conf"
 
     # Write input json file based on selected sample(s) bam files.
-    input_json = "aou_inputs.json"
-    num_batches = int(args.sample_count / args.batch_size) + 1
+    input_json = "aou_genotype_inputs.json"
+    num_batches = get_num_batches(args)
     for batch_idx in range(num_batches):
         # Get the indexes of samples in the current batch.
         # Then call the wdl workflow for only one batch at a time.
@@ -140,7 +241,7 @@ def run_wdl_command(target_samples_df, output_name, region, vntr_id):
         workflow_command = [
                    "java", "-jar",
                    "-Dconfig.file={}".format(config_file),
-                  "cromwell-{}.jar".format(cromwell_version),
+                  "cromwell-86.jar",
                   "run",
                   "advntr.wdl",
                   "--inputs", "{}".format(input_json),
@@ -190,6 +291,10 @@ def parse_input_args():
     args = parser.parse_args()
     return args
 
+def get_num_batches(args):
+    from math import ceil
+    return ceil(args.sample_count / args.batch_size)
+
 if __name__ == "__main__":
     # Parse input arguments.
     args = parse_input_args()
@@ -198,9 +303,14 @@ if __name__ == "__main__":
     target_samples = select_samples(args.sample_count, dataset=args.dataset)
     # For test run on local server
     #target_samples = pd.DataFrame({'grch38-bam':["./HG00438.bam"]})
-
+    output_parent_dir = "genotype_output_1"
     # Run WDL workflow based on input files and output name.
-    run_wdl_command(target_samples_df=target_samples,
-                    output_name=args.output_name,
-                    region=args.region,
-                    vntr_id=args.vntr_id)
+    #run_genotype_command(target_samples_df=target_samples,
+    #                output_name=args.output_name,
+    #                output_parent_dir=output_parent_dir,
+    #                region=args.region,
+    #                vntr_id=args.vntr_id)
+    num_batches = get_num_batches(args)
+    run_merge_command(num_batches=num_batches,
+                      output_parent_dir=output_parent_dir,
+                      output_name=args.output_name)

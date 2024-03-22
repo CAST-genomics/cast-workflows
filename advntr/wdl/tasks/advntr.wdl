@@ -1,6 +1,6 @@
 version 1.0
 
-import "run_advntr_single.wdl" as run_advntr_single
+import "advntr_single.wdl" as advntr_single
 
 workflow run_advntr {
 
@@ -11,17 +11,17 @@ workflow run_advntr {
         String gcloud_token
         String vntr_id
     }
+
     scatter (i in range(length(bam_files))) {
         String bam_file = bam_files[i]
-        Int sleep_seconds = i
-        call run_advntr_single.advntr_single_sample as advntr_single_sample {
+        call advntr_single.advntr_single_sample as advntr_single_sample {
             input:
                 bam_file=bam_file,
                 region=region,
                 google_project=google_project,
                 gcloud_token=gcloud_token,
                 vntr_id=vntr_id,
-                sleep_seconds=sleep_seconds,
+                sleep_seconds=i,
         }
     }
 
@@ -31,15 +31,20 @@ workflow run_advntr {
             individual_vcf_indexes = advntr_single_sample.out_vcf_index
     }
 
+    call advntr_single.sort_index as sort_index {
+        input:
+            vcf=merge_outputs.merged_vcfs
+    }
+
     output {
-        File merged_vcfs = merge_outputs.merged_vcfs
+        File merged_vcf = sort_index.out_vcf
+        File merged_vcf_index = sort_index.out_vcf_index
     }
 
     meta {
-        description: "This workflow calls adVNTR to genotype VNTRs"
+        description: "This workflow calls adVNTR to genotype VNTRs for a single batch in parallel"
     }
 }
-
 
 task merge_outputs {
     input {
@@ -54,11 +59,8 @@ task merge_outputs {
     >>>
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/trtools-5.0.1:latest"
-        #cpu: "1"
-        #memory: "4G"
     }
     output {
         File merged_vcfs = "~{out_prefix}.vcf"
     }
 }
-

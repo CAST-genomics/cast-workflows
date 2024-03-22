@@ -10,7 +10,6 @@ workflow advntr_single_sample {
         String vntr_id
         Int sleep_seconds
     }
-
     call download_input {
         input :
         bam_file = bam_file,
@@ -31,19 +30,23 @@ workflow advntr_single_sample {
         input :
         vcf = genotype.genotype_output
     }
-
     output {
         File out_vcf = sort_index.out_vcf
         File out_vcf_index = sort_index.out_vcf_index
     }
+    meta {
+        description: "This workflow calls adVNTR to genotype VNTRs for a single sample"
+    }
 }
+
+
 
 task sort_index {
   input {
     File vcf
   }
 
-  String basename = basename(vcf, ".vcf.gz")
+  String basename = basename(vcf, ".vcf")
 
   command <<<
     cat ~{vcf} | vcf-sort | bgzip -c > ~{basename}.sorted.vcf.gz && tabix -p vcf ~{basename}.sorted.vcf.gz
