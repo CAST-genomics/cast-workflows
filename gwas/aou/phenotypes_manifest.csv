@@ -36,7 +36,7 @@ urate,3037556,"milligram per deciliter",5,0,50,nan,urate_phenocovar.csv,24931,9d
 sodium,3019550,"millimole per liter,no value",5,0,500,nan,sodium_phenocovar.csv,134002,e3aadb2eae8cd08f7190dc25bbc7bcf6
 chloride,3014576,"millimole per liter,no value",5,0,300,nan,chloride_phenocovar.csv,132898,206c1d7cd1ce939f89e998575602db1b
 urea_nitrogen,3013682,"milligram per deciliter,no value,No unit",5,0,200,nan,urea_nitrogen_phenocovar.csv,130343,4ded09dfbd54758c545b80cffb66401c
-potassium,3023103,"milimole per liter",5,0,50,nan,potassium_phenocovar.csv,0,52618a1b8df2ebeaf3092cd3fef1340d
+potassium,3023103,millimole per liter,5,0,50,nan,potassium_phenocovar.csv,131628,9bfba8ab23ced847814ab089bd95abb7
 heart_rate,3027018,"% REF,per minute,minute,counts per minute,heartbeat",5,0,300,nan,heart_rate_phenocovar.csv,223714,ac08fe02763230525436fc47cf6450ee
 body_temperature,3020891,"degree Celsius,degrees C,no value",5,30,50,nan,body_temperature_phenocovar.csv,90143,d8a9dadc53efb6104b85d452908c0078
 systolic_blood_pressure,3004249,"millimeter mercury column",5,0,250,nan,systolic_blood_pressure_phenocovar.csv,223516,26cf47cf816edf72fe4221441dcd442c
