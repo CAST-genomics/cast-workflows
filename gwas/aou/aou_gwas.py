@@ -111,7 +111,7 @@ def main():
     parser.add_argument("--HWE", help="Apply HWE p-value cutoff QC", type=float, default=1e-100)
     parser.add_argument("--GQ", help="Apply minimun genotype score QC", type=int, default=20)
     parser.add_argument("--regression", help="Select linear or logistic", type=str, default="linear")
-    parser.add_argument("--test", help="Select test for logistic regression: wald,lrt,score,firth. Default: False", type=str, action="store_true")
+    parser.add_argument("--test", help="Select test for logistic regression: wald,lrt,score,firth. Default: False", type=str)
     args = parser.parse_args()
 
     # Set up paths
