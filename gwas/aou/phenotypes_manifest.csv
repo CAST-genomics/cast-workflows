@@ -72,3 +72,5 @@ iron,3002400,microgram per deciliter,5,0,500,nan,iron_phenocovar.csv,28094,474dc
 ferritin,3001122,nanogram per milliliter,microgram per liter,5,0,1000,nan,ferritin_phenocovar.csv,35918,34a0e45ac69a4531e5ea2200c9244dca
 glucose_mean_value,3005131,milligram per deciliter,milligram per deciliter calculated,5,0,1000,nan,glucose_mean_value_phenocovar.csv,28257,cb4af6784e8905b459c1c9a83b84cb0f
 thyroxine,3008598,nanogram per deciliter,5,0,20,nan,thyroxine_phenocovar.csv,32556,d449ae8ec5b0f59878639bf76b482aca
+weight,903121,kilogram,5,0,300,nan,weight_phenocovar.csv,219614,2daedd69ac991c708df415dbdca10058
+height,903133,centimeter,5,0,250,nan,height_phenocovar.csv,220246,6962a16a1a47f40091327e2baac72596
