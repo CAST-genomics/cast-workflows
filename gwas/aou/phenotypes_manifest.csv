@@ -1,5 +1,5 @@
 phenotype,concept_id,units,sd,min,max,drugcovars,phenotype_file,numsamples,md5sum
-platelet_count,3024929,thousand per microliter,thousand per cubic millimeter,Kelvin per microliter,billion per liter,no value,Kelvin per cubic millimeter,nL,5,0,1000.0,nan,platelet_count_phenocovar.csv,94058,2f51f114ab868683012eaacb7a32fe88
+platelet_count,3024929,"thousand per microliter,thousand per cubic millimeter,Kelvin per microliter,billion per liter,no value,Kelvin per cubic millimeter,nL",5,0,1000.0,nan,platelet_count_phenocovar.csv,94058,2f51f114ab868683012eaacb7a32fe88
 alkaline_phosphatase,3035995,"unit per liter,international unit per liter",5,0,250,nan,alkaline_phosphatase_phenocovar.csv,94582,15d1b7bdd0f6678afba2144ecab37e4d
 aspartate_aminotransferase,3013721,"unit per liter,international unit per liter",5,0,90,nan,aspartate_aminotransferase_phenocovar.csv,94002,5c779a84b17a0a0e31cf6dd3847789e8
 calcium,3006906,"milligram per deciliter",5,0,30,nan,calcium_phenocovar.csv,129460,37a98d228e87762dd7cb05f28684df5e
