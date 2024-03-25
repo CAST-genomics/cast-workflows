@@ -33,3 +33,24 @@ eosinophil_count,3028615,thousand per microliter,thousand per cubic millimeter,K
 lymphocyte_count,3004327,thousand per microliter,thousand per cubic millimeter,Kelvin per cubic millimeter,billion per liter,Kelvin per microliter,5,0,25,nan,lymphocyte_count_phenocovar.csv,65056,5d0ca7654c04e6f28554ec175735dd4b
 mean_corpuscular_haemoglobin_concentration,3009744,gram per deciliter,gram per deciliter calculated,5,0,70,nan,mean_corpuscular_haemoglobin_concentration_phenocovar.csv,128562,15790927868d5a52dd3608a2bad363cf
 urate,3037556,milligram per deciliter,5,0,50,nan,urate_phenocovar.csv,24931,9df036083fd96958cd75e449f6a27d3e
+sodium,3019550,millimole per liter,no value,5,0,500,nan,sodium_phenocovar.csv,134002,e3aadb2eae8cd08f7190dc25bbc7bcf6
+chloride,3014576,millimole per liter,no value,5,0,300,nan,chloride_phenocovar.csv,132898,206c1d7cd1ce939f89e998575602db1b
+urea_nitrogen,3013682,milligram per deciliter,no value,No unit,5,0,200,nan,urea_nitrogen_phenocovar.csv,130343,4ded09dfbd54758c545b80cffb66401c
+potassium,3023103,milimole per liter,5,0,50,nan,potassium_phenocovar.csv,0,52618a1b8df2ebeaf3092cd3fef1340d
+heart_rate,3027018,% REF,per minute,minute,counts per minute,heartbeat,5,0,300,nan,heart_rate_phenocovar.csv,223714,ac08fe02763230525436fc47cf6450ee
+body_temperature,3020891,degree Celsius,degrees C,no value,5,30,50,nan,body_temperature_phenocovar.csv,90143,d8a9dadc53efb6104b85d452908c0078
+systolic_blood_pressure,3004249,millimeter mercury column,5,0,250,nan,systolic_blood_pressure_phenocovar.csv,223516,26cf47cf816edf72fe4221441dcd442c
+diastolic_blood_pressure,3012888,millimeter mercury column,5,0,200,nan,diastolic_blood_pressure_phenocovar.csv,223512,e281dc5f850fa379166c95968a4d9261
+carbon_dioxide,3015632,millimole per liter,milliequivalent per liter,no value,5,0,100,nan,carbon_dioxide_phenocovar.csv,113198,83edc06732c972fadc6d06abd5b52548
+respiratory_rate,3024171,counts per minute,per minute,5,0,100,nan,respiratory_rate_phenocovar.csv,55321,50b19cbdf47bbaca81a9e67e33d41556
+basophils_percent,3013869,percent,no value,percent of white blood cells,5,0,20,nan,basophils_percent_phenocovar.csv,84664,5cff40d0c123a6faf593e76e216b96d1
+monocytes_percent,3011948,3019069,percent,percent of white blood cells,5,0,50,nan,monocytes_percent_phenocovar.csv,105293,6dddbeebdea817e100da2d51dba1f9fc
+monocytes_count,3033575,thousand per microliter,thousand per cubic millimeter,Kelvin per cubic millimeter,billion per liter,Kelvin per microliter,5,0,10,nan,monocytes_count_phenocovar.csv,60533,7145e7a8cd8d81c721a2bfa9169757cb
+basophils_count,3013429,thousand per microliter,thousand per cubic millimeter,Kelvin per cubic millimeter,Kelvin per microliter,billion per liter,5,0,5,nan,basophils_count_phenocovar.csv,46597,ffd857157a6aa23cdbf5769b84fb6261
+urine_pH,3022621,pH,5,0,12,nan,urine_pH_phenocovar.csv,7264,963b7280a2fc4dc2848d422712dcbb76
+anion_gap,3045716,millimole per liter,milliequivalent per liter,5,0,100,nan,anion_gap_phenocovar.csv,50830,54097f1fb6c130cb438e6e7901136001
+thyrotropin,3009201,micro-international unit per milliliter,milliunit per liter,milli-international unit per liter,5,0,20,nan,thyrotropin_phenocovar.csv,21601,c9a4c264f2ca505c091d34f8d7e607ff
+hemoglobin_A1_percent,3004410,percent,5,0,100,nan,hemoglobin_A1_percent_phenocovar.csv,57986,800d309a8bc8913bc6ceb28a55fa591b
+INR,3022217,ratio,5,0,50,nan,INR_phenocovar.csv,9055,c625b4916fa7594c158e09664ded0401
+prothrombin_time,3034426,second,5,0,100,nan,prothrombin_time_phenocovar.csv,45044,d64c8e1a6af28170a4aa1d6b9a03d025
+magnesium,3001420,milligram per deciliter,5,0,20,nan,magnesium_phenocovar.csv,53641,e0b5b237f8796d3dcbff7642cb7f2b4a
