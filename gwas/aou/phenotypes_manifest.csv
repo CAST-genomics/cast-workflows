@@ -54,3 +54,8 @@ hemoglobin_A1_percent,3004410,percent,5,0,100,nan,hemoglobin_A1_percent_phenocov
 INR,3022217,ratio,5,0,50,nan,INR_phenocovar.csv,9055,c625b4916fa7594c158e09664ded0401
 prothrombin_time,3034426,second,5,0,100,nan,prothrombin_time_phenocovar.csv,45044,d64c8e1a6af28170a4aa1d6b9a03d025
 magnesium,3001420,milligram per deciliter,5,0,20,nan,magnesium_phenocovar.csv,53641,e0b5b237f8796d3dcbff7642cb7f2b4a
+cholesterol_total_in_cholesterol_HDL,3011163,ratio,5,0,20,nan,cholesterol_total_in_cholesterol_HDL_phenocovar.csv,17075,602860801f8655d1ace801174929e4db
+cholesterol_nonHDL,3044491,milligram per deciliter,milligram per deciliter calculated,no value,5,0,500,nan,cholesterol_nonHDL_phenocovar.csv,48094,24e85146c5caf711786e00bf04ea1ae9
+bilirubin_direct,3027597,milligram per deciliter,5,0,5,nan,bilirubin_direct_phenocovar.csv,50081,325247c615b826e685d240f5a2c6e066
+bilirubin_indirect,3007359,milligram per deciliter,milligram per deciliter calculated,5,0,10,nan,bilirubin_indirect_phenocovar.csv,33829,1094278ac275b3edf3037ee3684b8461
+nucleated_erythrocytes,3007238,thousand per microliter,Kelvin per microliter,billion per liter,5,0,10,nan,nucleated_erythrocytes_phenocovar.csv,2376,c462b53a5d0009b274effeb9a4be9022
