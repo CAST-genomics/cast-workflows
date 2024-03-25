@@ -43,8 +43,8 @@ phenotype,concept_id,units,outlier_sd,min,max,drugcovars,ppi
 #diastolic_blood_pressure,3012888,"millimeter mercury column",5,0,200,
 #carbon_dioxide,3015632,"millimole per liter,milliequivalent per liter,no value",5,0,100,
 #respiratory_rate,3024171,"counts per minute,per minute",5,0,100,
-weight,903121,"kilogram",5,0,300,ppi
-height,903133,"centimeter",5,0,250,ppi
+weight,903121,"kilogram",5,0,300, ,ppi
+height,903133,"centimeter",5,0,250, ,ppi
 #basophils_percent,3013869,"percent,no value,percent of white blood cells",5,0,20,
 #monocytes_percent,"3011948,3019069","percent,percent of white blood cells",5,0,50,
 #monocytes_count,3033575,"thousand per microliter,thousand per cubic millimeter,Kelvin per cubic millimeter,billion per liter,Kelvin per microliter",5,0,10,
