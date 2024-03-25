@@ -59,3 +59,16 @@ cholesterol_nonHDL,3044491,milligram per deciliter,milligram per deciliter calcu
 bilirubin_direct,3027597,milligram per deciliter,5,0,5,nan,bilirubin_direct_phenocovar.csv,50081,325247c615b826e685d240f5a2c6e066
 bilirubin_indirect,3007359,milligram per deciliter,milligram per deciliter calculated,5,0,10,nan,bilirubin_indirect_phenocovar.csv,33829,1094278ac275b3edf3037ee3684b8461
 nucleated_erythrocytes,3007238,thousand per microliter,Kelvin per microliter,billion per liter,5,0,10,nan,nucleated_erythrocytes_phenocovar.csv,2376,c462b53a5d0009b274effeb9a4be9022
+erythrocytes_urine,3035124,per high power field,5,0,50,nan,erythrocytes_urine_phenocovar.csv,15674,47406012476d2fd2932abbe83ac1fec7
+leukocytes_urine,3035583,per high power field,5,0,50,nan,leukocytes_urine_phenocovar.csv,16235,024eb60b80b463126b5a001676fa9b24
+epithelial_cells_urine,3001008,per high power field,5,0,50,nan,epithelial_cells_urine_phenocovar.csv,15177,f17102f82b6e431b17f06fac5784ea5c
+aPTT,3018677,second,5,0,200,nan,aPTT_phenocovar.csv,34155,969b505ec9e40387c32b7dd69d1be534
+lipase,3004905,unit per liter,5,0,250,nan,lipase_phenocovar.csv,21445,fad929fbd4696113bf2ee2680faac616
+vitamin_B12,3000593,picogram per milliliter,5,0,2000,nan,vitamin_B12_phenocovar.csv,34323,a6033e98fa8b23bbbde342318e4a6791
+immature_granulocytes,3040168,thousand per microliter,Kelvin per microliter,billion per liter,thousand per cubic millimeter,5,0,5,nan,immature_granulocytes_phenocovar.csv,19553,8f54de65bc3682c17c6a8694592a45a5
+urea_nitrogen_in_creatinine,3018311,milligram per milligram of creatinine,ratio,calculated,5,0,100,nan,urea_nitrogen_in_creatinine_phenocovar.csv,19922,c9e8e1d31216f450aabf0460f6b233a4
+25-hydroxyvitamin_D3,3020149,nanogram per milliliter,nanogram per milliliter and hour,5,0,200,nan,25-hydroxyvitamin_D3_phenocovar.csv,37863,e9816ab16a84bff499782a7d66244028
+iron,3002400,microgram per deciliter,5,0,500,nan,iron_phenocovar.csv,28094,474dca7078dd99d739d34181e2e2104a
+ferritin,3001122,nanogram per milliliter,microgram per liter,5,0,1000,nan,ferritin_phenocovar.csv,35918,34a0e45ac69a4531e5ea2200c9244dca
+glucose_mean_value,3005131,milligram per deciliter,milligram per deciliter calculated,5,0,1000,nan,glucose_mean_value_phenocovar.csv,28257,cb4af6784e8905b459c1c9a83b84cb0f
+thyroxine,3008598,nanogram per deciliter,5,0,20,nan,thyroxine_phenocovar.csv,32556,d449ae8ec5b0f59878639bf76b482aca
