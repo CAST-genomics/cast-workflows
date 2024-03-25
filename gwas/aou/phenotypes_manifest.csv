@@ -25,7 +25,7 @@ urea,3013682,"milligram per deciliter",5,0,100,nan,urea_phenocovar.csv,129100,0b
 albumin,3024561,"gram per liter",5,0,100,nan,albumin_phenocovar.csv,110128,280b79cd33f91666a602446eb49a603c
 hemoglobin,3000963,"gram per liter",5,0,250,nan,hemoglobin_phenocovar.csv,128446,00dd06b1f193ef69dd3023a62e31f6d4
 ALT,3006923,"blood",5,0,250,nan,ALT_phenocovar.csv,111582,5222526ba4e7a8891e3f0d1c3e966767
-eosinophil_percent,"3010457,3006504","percent",no value,5,0,100,nan,eosinophil_percent_phenocovar.csv,104288,3359813bd9cc6fe6d626203bc770547b
+eosinophil_percent,"3010457,3006504","percent,no value",5,0,100,nan,eosinophil_percent_phenocovar.csv,104288,3359813bd9cc6fe6d626203bc770547b
 neutrophil_count,3013650,"thousand per microliter,thousand per cubic millimeter,Kelvin per cubic millimeter,billion per liter,Kelvin per microliter",5,0,50,nan,neutrophil_count_phenocovar.csv,66824,c152421bf3566993b6cff14553dc5d15
 phosphate,3011904,"milligram per deciliter",5,0,15,nan,phosphate_phenocovar.csv,50152,bbb0b4bc64ef586fbc858b108e4c0f0f
 white_blood_cell_count,3000905,"thousand per microliter,thousand per cubic millimeter,Kelvin per microliter,billion per liter,Kelvin per cubic millimeter",5,0,100,nan,white_blood_cell_count_phenocovar.csv,89590,fa1c8a5513b121a2f90c8038b0d6f851
