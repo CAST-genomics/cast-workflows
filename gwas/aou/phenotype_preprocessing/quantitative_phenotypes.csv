@@ -56,7 +56,7 @@ phenotype,concept_id,units,outlier_sd,min,max,drugcovars
 #INR,3022217,"ratio",5,0,50,
 #prothrombin_time,3034426,"second",5,0,100,
 #magnesium,3001420,"milligram per deciliter",5,0,20,
-cholesterol_total/cholesterol_HDL,3011163,"ratio",5,0,20,
+cholesterol_total_in_cholesterol_HDL,3011163,"ratio",5,0,20,
 cholesterol_nonHDL,3044491,"milligram per deciliter,milligram per deciliter calculated,no value",5,0,500,
 bilirubin_direct,3027597,"milligram per deciliter",5,0,5,
 bilirubin_indirect,3007359,"milligram per deciliter,milligram per deciliter calculated",5,0,10,
