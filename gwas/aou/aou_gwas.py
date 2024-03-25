@@ -110,6 +110,8 @@ def main():
     parser.add_argument("--MAF", help="Apply minor allele frequency QC", type=float, default=0.01)
     parser.add_argument("--HWE", help="Apply HWE p-value cutoff QC", type=float, default=1e-100)
     parser.add_argument("--GQ", help="Apply minimun genotype score QC", type=int, default=20)
+    parser.add_argument("--regression", help="Select linear or logistic", type=str, default="linear")
+    parser.add_argument("--test", help="Select test for logistic regression: wald,lrt,score,firth. Default: False", type=str, action="store_true")
     args = parser.parse_args()
 
     # Set up paths
@@ -129,6 +131,8 @@ def main():
         ERROR("Must specify --tr-vcf for associaTR")
     if args.norm_by_sex and args.norm is None:
         ERROR("Must specify --norm if using --norm-by-sex")
+    if args.regression and args.test is None:
+        ERROR("Must specify --test if using --regression")
 
     # Get covarlist
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
@@ -182,7 +186,7 @@ def main():
     # Set up GWAS method
     if args.method == "hail":
         from hail_runner import HailRunner
-        runner = HailRunner(data, region=args.region, covars=covars, sample_call_rate=args.sample_call_rate, variant_call_rate=args.variant_call_rate, MAF=args.MAF, HWE=args.HWE, GQ=args.GQ)
+        runner = HailRunner(data, region=args.region, covars=covars, sample_call_rate=args.sample_call_rate, variant_call_rate=args.variant_call_rate, MAF=args.MAF, HWE=args.HWE, GQ=args.GQ, regression=args.regression, test=args.test)
     elif args.method == "associaTR":
         from associatr_runner import AssociaTRRunner
         runner = AssociaTRRunner(data, args.tr_vcf, region=args.region, covars=covars)

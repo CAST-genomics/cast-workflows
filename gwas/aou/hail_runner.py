@@ -6,13 +6,13 @@ import hail as hl
 import numpy as np
 import pandas as pd
 
-MT_WGS_PATH = 'gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/acaf_threshold/multiMT/hail.mt' 
+MT_WGS_PATH = 'gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/acaf_threshold_v7.1/multiMT/hail.mt' 
 SMALLNUM = 10e-400
 
 class HailRunner:
 
     import hail as hl
-    def __init__(self, ptcovar, region=None, covars=[], sample_call_rate=None, variant_call_rate=None, MAF=None, HWE=None, GQ=None):
+    def __init__(self, ptcovar, region=None, covars=[], sample_call_rate=None, variant_call_rate=None, MAF=None, HWE=None, GQ=None,regression=None,test=None):
 
         self.ptcovar = ptcovar
         self.region = region
@@ -21,7 +21,9 @@ class HailRunner:
         self.variant_call_rate = variant_call_rate
         self.MAF = MAF
         self.HWE = HWE
-        self.GQ = GQ  
+        self.GQ = GQ
+        self.regression = regression
+        self.test = test
         self.gwas = None
         self.data = None
         self.method = "hail"
@@ -57,13 +59,14 @@ class HailRunner:
         self.data = data
 
     def RunGWAS(self):
-        linear_r = hl.linear_regression_rows(
+        self.regression_r = hl.self.regression_regression_rows(
             y= self.data.ptcovar.phenotype,
             x= self.data.GT.n_alt_alleles(),
             covariates = [1.0] + [self.data.ptcovar[item] \
-            	for item in self.covars]
+            	for item in self.covars] \
+            test = self.test if self.test is not None 
         )
-        gwas = linear_r.annotate(p_value_str= hl.str(linear_r.p_value)).to_pandas()
+        gwas = self.regression_r.annotate(p_value_str= hl.str(self.regression_r.p_value)).to_pandas()
         gwas["chrom"] = gwas["locus"].apply(lambda x: str(x).split(":")[0])
         gwas["pos"] = gwas["locus"].apply(lambda x: int(str(x).split(":")[1]))
         gwas["p_value"] = gwas.apply(lambda x: float(x["p_value_str"])+SMALLNUM, 1)
