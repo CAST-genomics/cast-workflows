@@ -23,7 +23,7 @@ class HailRunner:
         self.HWE = HWE
         self.GQ = GQ
         self.regression = regression
-        #self.test = test
+        self.test = test
         self.gwas = None
         self.data = None
         self.method = "hail"
@@ -63,10 +63,8 @@ class HailRunner:
             y= self.data.ptcovar.phenotype,
             x= self.data.GT.n_alt_alleles(),
             covariates = [1.0] + [self.data.ptcovar[item] \
-            	for item in self.covars], \
-            if test is not None:
-                self.test=test
-            #test = self.test if test is not None else None
+                for item in self.covars], \
+            test = self.test 
         )
         gwas = self.regression_r.annotate(p_value_str= hl.str(self.regression_r.p_value)).to_pandas()
         gwas["chrom"] = gwas["locus"].apply(lambda x: str(x).split(":")[0])
