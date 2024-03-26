@@ -132,7 +132,7 @@ def main():
     if args.norm_by_sex and args.norm is None:
         ERROR("Must specify --norm if using --norm-by-sex")
     if args.logistic and args.test is None:
-        ERROR("Must specify --test if using --regression")
+        ERROR("Must specify --test if using --logistic")
 
     # Get covarlist
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
