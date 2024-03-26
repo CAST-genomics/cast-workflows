@@ -63,7 +63,7 @@ class HailRunner:
             y= self.data.ptcovar.phenotype,
             x= self.data.GT.n_alt_alleles(),
             covariates = [1.0] + [self.data.ptcovar[item] \
-            	for item in self.covars] \
+            	for item in self.covars], \
             test = self.test if self.test is not None 
         )
         gwas = self.regression_r.annotate(p_value_str= hl.str(self.regression_r.p_value)).to_pandas()
