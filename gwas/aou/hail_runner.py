@@ -59,14 +59,14 @@ class HailRunner:
         self.data = data
 
     def RunGWAS(self):
-        self.regression_r = hl.self.regression_regression_rows(
+        r = hl.self.regression_regression_rows(
             y= self.data.ptcovar.phenotype,
             x= self.data.GT.n_alt_alleles(),
             covariates = [1.0] + [self.data.ptcovar[item] \
                 for item in self.covars], \
             test = self.test 
         )
-        gwas = self.regression_r.annotate(p_value_str= hl.str(self.regression_r.p_value)).to_pandas()
+        gwas = r.annotate(p_value_str= hl.str(self.regression_r.p_value)).to_pandas()
         gwas["chrom"] = gwas["locus"].apply(lambda x: str(x).split(":")[0])
         gwas["pos"] = gwas["locus"].apply(lambda x: int(str(x).split(":")[1]))
         gwas["p_value"] = gwas.apply(lambda x: float(x["p_value_str"])+SMALLNUM, 1)
