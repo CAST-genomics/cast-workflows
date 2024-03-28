@@ -59,6 +59,7 @@ task merge_outputs {
     >>>
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/trtools-5.0.1:latest"
+        maxRetries: 3
     }
     output {
         File merged_vcfs = "~{out_prefix}.vcf"
