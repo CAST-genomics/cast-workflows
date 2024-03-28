@@ -1,6 +1,8 @@
 import os
 import subprocess
 import argparse
+from time import sleep
+from datetime import datetime
 
 import json
 import pandas as pd
@@ -95,7 +97,11 @@ def write_input_json(input_json_filename,
 
 # Write options file including output directory in the bucket.
 def write_options_json(options_json_filename, output_path_gcloud):
-    data = {"jes_gcs_root": output_path_gcloud}
+    data = {"jes_gcs_root": output_path_gcloud,
+            "workflow_failure_mode": "ContinueWhilePossible",
+            #"useDockerImageCache": true,
+            #"default_runtime_attributes": {"bootDiskSizeGb": 3},
+            }
     with open(options_json_filename, "w+") as options_json_file:
         json.dump(data, options_json_file)
 
@@ -125,7 +131,9 @@ def run_merge_command(num_batches, output_name, output_parent_dir):
     output_path_gcloud = os.path.join(bucket, "saraj", output_parent_dir, "merged_outputs")
 
     # Config file includes gcloud file system setup.
-    config_file = "/home/jupyter/cromwell.conf"
+    #config_file = "/home/jupyter/cromwell.conf"
+    # Number of concurrent jobs is set to 25 up from 10.
+    config_file = "cromwell.conf"
 
     # Write input json file based on selected sample(s) bam files.
     input_json = "aou_merge_inputs.json"
@@ -221,6 +229,7 @@ def run_genotype_command(target_samples_df, output_name, output_parent_dir, regi
     input_json = "aou_genotype_inputs.json"
     num_batches = get_num_batches(args)
     for batch_idx in range(num_batches):
+        start_time = datetime.now()
         # Get the indexes of samples in the current batch.
         # Then call the wdl workflow for only one batch at a time.
         first_sample_idx = batch_idx * args.batch_size
@@ -248,6 +257,9 @@ def run_genotype_command(target_samples_df, output_name, output_parent_dir, regi
                   "--options", "{}".format(options_json),
                   ]
         run_single_command(workflow_command)
+        duration = datetime.now() - start_time
+        print("Running batch {} finished in time {}".format(batch_idx, duration))
+        sleep(60)
 
 def parse_input_args():
     parser = argparse.ArgumentParser(
@@ -303,13 +315,13 @@ if __name__ == "__main__":
     target_samples = select_samples(args.sample_count, dataset=args.dataset)
     # For test run on local server
     #target_samples = pd.DataFrame({'grch38-bam':["./HG00438.bam"]})
-    output_parent_dir = "genotype_output_1"
+    output_parent_dir = "batch_genotyping/run_8"
     # Run WDL workflow based on input files and output name.
-    #run_genotype_command(target_samples_df=target_samples,
-    #                output_name=args.output_name,
-    #                output_parent_dir=output_parent_dir,
-    #                region=args.region,
-    #                vntr_id=args.vntr_id)
+    run_genotype_command(target_samples_df=target_samples,
+                    output_name=args.output_name,
+                    output_parent_dir=output_parent_dir,
+                    region=args.region,
+                    vntr_id=args.vntr_id)
     num_batches = get_num_batches(args)
     run_merge_command(num_batches=num_batches,
                       output_parent_dir=output_parent_dir,

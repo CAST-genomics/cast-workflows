@@ -54,6 +54,7 @@ task sort_index {
 
   runtime {
         docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
+         maxRetries: 3
     }
 
   output {
@@ -77,27 +78,26 @@ task download_input {
     String sorted_target_bam_index = "target_~{sample_id}.bam.bai"
     String sample_id = sub(basename(bam_file), ".bam", "")
 
+    #/google-cloud-sdk/bin/gcloud init --skip-diagnostics
     command <<<
         ls -lh .
         export HTSLIB_CONFIGURE_OPTIONS="--enable-gcs"
         echo "pwd $(pwd)"
         /google-cloud-sdk/bin/gcloud --version
-        /google-cloud-sdk/bin/gcloud init
-        export gcloud_token=$(/google-cloud-sdk/bin/gcloud auth application-default print-access-token)
-        echo $gcloud_token
+        /google-cloud-sdk/bin/gcloud config list --format='text(core.project)'
+        export gcloud_token=$(/google-cloud-sdk/bin/gcloud auth application-default print-access-token --project ~{google_project})
         export GCS_OAUTH_TOKEN=${gcloud_token}
         export GCS_REQUESTER_PAYS_PROJECT="~{google_project}"
         samtools view -hb -o ~{unsorted_target_bam} --use-index ~{bam_file} ~{region}
         samtools sort -o ~{sorted_target_bam} ~{unsorted_target_bam}
-        sleep 60
         samtools index ~{sorted_target_bam}
         ls -lh .
     >>>
 
     runtime {
         docker:"sarajava/samtools:1.13_gcli"
-        #cpu: "2"
-        #memory: "18G"
+        maxRetries: 3
+        memory: "4G"
     }
     output {
         File target_bam_file = "~{sorted_target_bam}"
@@ -133,8 +133,6 @@ task genotype {
 
     command <<<
         sleep ~{sleep_seconds}
-        ls -lh .
-        echo "~{target_bam_file}"
         echo "num reads $(samtools view -c ~{target_bam_file})"
         echo "num reads in region $(samtools view -c ~{target_bam_file} ~{region}) "
         /usr/bin/time -v advntr genotype  \
@@ -145,15 +143,12 @@ task genotype {
         --outfmt vcf \
         --log_pacbio_reads \
         --pacbio > ~{genotype_output}
-        cat ~{keywords}
-        cat ~{filtering_out}
-        ls -lh .
     >>>
 
     runtime {
         docker:"sarajava/advntr:1.5.0_v12"
-        #cpu: "2"
         memory: "4G"
+        maxRetries: 3
     }
 
     output {
