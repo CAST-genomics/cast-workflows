@@ -16,6 +16,7 @@ import argparse
 import numpy as np
 import os
 import pandas as pd
+import scipy.stats
 import trtools.utils.tr_harmonizer as trh
 import trtools.utils.utils as utils
 from utils import MSG, ERROR
@@ -26,6 +27,25 @@ SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
         "phenotypes", "%s_phenocovar.csv"%phenotype)
+
+
+#use jonanthan's to add CI, returns (mean prob, lower ci bound, upper ci bound)
+def weighted_binom_conf(weights, successes, confidence):
+    assert weights.shape == successes.shape
+    assert len(weights.shape) == 1
+    t = np.sum(weights)
+    phat = np.dot(weights, successes)/t
+    z = scipy.stats.norm.ppf(1 - confidence/2)
+    c = z * np.sqrt(np.dot(weights, weights))
+
+    divisor = 2 + 2*c**2/t**2
+    center = (2*phat + c**2/t**2)/divisor
+    interval_size = c/t*np.sqrt(4*phat*(1-phat) + c**2/t**2)/divisor
+
+    return (phat, center - interval_size, center + interval_size)
+
+
+
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
@@ -66,6 +86,8 @@ def main():
     df = pd.merge(data, trdf, on=["person_id"])
     pltdata = df.groupby("tr_dosage", as_index=False).agg(phenotype_mean=("phenotype", np.mean), n=("phenotype", len))
     pltdata = pltdata[pltdata["n"]>args.min_samples_per_dosage]
+
+    print(pltdata.head())
 
 	# Plot - TODO
     fig = plt.figure()
