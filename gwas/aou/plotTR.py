@@ -86,7 +86,14 @@ def main():
     df = pd.merge(data, trdf, on=["person_id"])
     pltdata = df.groupby("tr_dosage", as_index=False).agg(phenotype_mean=("phenotype", np.mean), n=("phenotype", len))
     pltdata = pltdata[pltdata["n"]>args.min_samples_per_dosage]
+
+    # compute CI
+    p, lower, upper = weighted_binom_conf(df['tr_dosage'], df['phenotype'], 0.05)
+  
+    df['len_'] = p
+    df['95_CI'] = (lower, upper)
     print(df)
+    
     print(pltdata.head())
 
 	# Plot - TODO
