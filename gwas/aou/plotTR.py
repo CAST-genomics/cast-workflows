@@ -91,12 +91,12 @@ def main():
     df = pd.merge(data, trdf, on=["person_id"])
     pltdata = df.groupby("tr_dosage", as_index=False).agg(phenotype_mean=("phenotype", np.mean), n=("phenotype", len))
     pltdata = pltdata[pltdata["n"]>args.min_samples_per_dosage]
-
+    df.save_csv('plot.csv',sep=',')
     # compute CI
     df['len_'],df['95_CI_lower'],df['95_CI_upper'] = df.apply(lambda x:  statsmodels.stats.proportion.proportion_confint(method='wilson')(x.tr_dosage,x.phenotype,0.05),axis=1)
 
     print(df)
-    print(pltdata.head())
+   # print(pltdata.head())
 
 	# Plot - TODO
     fig = plt.figure()
