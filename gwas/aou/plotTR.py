@@ -19,6 +19,11 @@ import pandas as pd
 import scipy.stats
 import trtools.utils.tr_harmonizer as trh
 import trtools.utils.utils as utils
+
+import statsmodels.api as sm
+from statsmodels.regression.linear_model import OLS
+import statsmodels.stats.weightstats
+
 from utils import MSG, ERROR
 
 SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
@@ -30,8 +35,8 @@ def GetPTCovarPath(phenotype):
 
 
 #use jonanthan's to add CI, returns (mean prob, lower ci bound, upper ci bound)
-def weighted_binom_conf(weights, successes, confidence):
-    assert weights.shape == successes.shape
+def weighted_binom_conf(data,weights, successes, confidence):
+    assert data[weights].shape == data[successes].shape
     assert len(weights.shape) == 1
     t = np.sum(weights)
     phat = np.dot(weights, successes)/t
@@ -88,7 +93,7 @@ def main():
     pltdata = pltdata[pltdata["n"]>args.min_samples_per_dosage]
 
     # compute CI
-    df['len_'],df['95_CI_lower'],df['95_CI_upper'] = df.apply(lambda x: weighted_binom_conf(x.tr_dosage,x.phenotype,0.05),axis=1)
+    df['len_'],df['95_CI_lower'],df['95_CI_upper'] = df.apply(lambda x:  statsmodels.stats.proportion.proportion_confint(method='wilson')(x.tr_dosage,x.phenotype,0.05),axis=1)
 
     print(df)
     print(pltdata.head())
