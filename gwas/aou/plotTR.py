@@ -86,7 +86,7 @@ def main():
     df = pd.merge(data, trdf, on=["person_id"])
     pltdata = df.groupby("tr_dosage", as_index=False).agg(phenotype_mean=("phenotype", np.mean), n=("phenotype", len))
     pltdata = pltdata[pltdata["n"]>args.min_samples_per_dosage]
-
+    print(df)
     print(pltdata.head())
 
 	# Plot - TODO
