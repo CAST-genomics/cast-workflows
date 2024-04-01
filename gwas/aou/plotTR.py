@@ -88,12 +88,9 @@ def main():
     pltdata = pltdata[pltdata["n"]>args.min_samples_per_dosage]
 
     # compute CI
-    p, lower, upper = weighted_binom_conf(df['tr_dosage'], df['phenotype'], 0.05)
-  
-    df['len_'] = p
-    df['95_CI'] = (lower, upper)
+    df['len_'],df['95_CI_lower'],df['95_CI_upper'] = df.apply(lambda x: weighted_binom_conf(x.tr_dosage,x.phenotype,0.05),axis=1)
+
     print(df)
-    
     print(pltdata.head())
 
 	# Plot - TODO
