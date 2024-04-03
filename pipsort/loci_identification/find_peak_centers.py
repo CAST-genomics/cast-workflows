@@ -16,12 +16,12 @@ def main():
 
     args = parser.parse_args()
 
-    pval_cutoff = -np.log10(args.pval_col)
+    pval_cutoff = -np.log10(args.pval_cutoff)
     pval_col = args.pval_col
     pos_col = args.pos_col
     chr_col = args.chr_col
 
-    df = pd.read_csv(args.infile, sep="\t")
+    df = pd.read_csv(args.infile, sep="\t", comment='#')
 
     df["logp"] = -np.log10(df[pval_col])
 
@@ -45,7 +45,7 @@ def main():
         if nearby_sig.shape[0] == 0:
             peak_centers.append(i)
 
-    df.loc[peak_centers].sort_values(by=[chr_col,pos_col]).to_csv(outfile, index=False)
+    df.loc[peak_centers].sort_values(by=[chr_col,pos_col]).to_csv(args.outfile, index=False)
 
 if __name__ == "__main__":
     main()
