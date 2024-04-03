@@ -39,7 +39,7 @@ def main():
 
     df1 = pd.read_csv(signals_eur)
     df2 = pd.read_csv(signals_afr)
-    df = pd.concat([df1, df2])
+    df = pd.concat([df1, df2], ignore_index=True)
 
     if args.chr_name_prefix != '':
         df[chr_col] = df[chr_col].apply(lambda c: c.removeprefix(args.chr_name_prefix)).astype('int')
@@ -53,7 +53,10 @@ def main():
         df[id_col] = df[id_cols].astype(str).agg('-'.join, axis=1)
 
     #deduplicate
+    print(df.shape[0])
     df = df.loc[df.groupby(id_col)[pval_col].idxmin()]
+    print("DEDUP")
+    print(df.shape[0])
 
 
     df.sort_values(by = [chr_col, pos_col], inplace=True)
