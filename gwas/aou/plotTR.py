@@ -73,7 +73,7 @@ def main():
     pltdata = pltdata[pltdata["n"]>args.min_samples_per_dosage]
     #df.to_csv('plot.csv',index=False,sep=',')
     # compute CI
-    pltdata['95_CI_lower'],pltdata['95_CI_upper'] = pltdata.apply(lambda x:st.norm.interval(alpha=0.90, loc=x['phenotype_mean'], scale=st.sem(x['phenotype_mean'])),axis=1)
+    pltdata['95_CI_lower'],pltdata['95_CI_upper'] = pltdata.apply(lambda x:st.norm.interval(alpha=0.95, loc=x['phenotype_mean'], scale=st.sem(x['phenotype_mean'])),axis=1)
     pltdata.to_csv('CI.csv',index=False,sep=',')
 
 
