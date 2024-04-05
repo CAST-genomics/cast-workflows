@@ -20,9 +20,7 @@ import scipy.stats
 import trtools.utils.tr_harmonizer as trh
 import trtools.utils.utils as utils
 
-import statsmodels.api as sm
-from statsmodels.regression.linear_model import OLS
-import statsmodels.stats.weightstats
+import scipy.stats as st 
 
 from utils import MSG, ERROR
 
@@ -32,24 +30,6 @@ SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
         "phenotypes", "%s_phenocovar.csv"%phenotype)
-
-
-#use jonanthan's to add CI, returns (mean prob, lower ci bound, upper ci bound)
-def weighted_binom_conf(data,weights, successes, confidence):
-    assert data[weights].shape == data[successes].shape
-    assert len(weights.shape) == 1
-    t = np.sum(weights)
-    phat = np.dot(weights, successes)/t
-    z = scipy.stats.norm.ppf(1 - confidence/2)
-    c = z * np.sqrt(np.dot(weights, weights))
-
-    divisor = 2 + 2*c**2/t**2
-    center = (2*phat + c**2/t**2)/divisor
-    interval_size = c/t*np.sqrt(4*phat*(1-phat) + c**2/t**2)/divisor
-
-    return (phat, center - interval_size, center + interval_size)
-
-
 
 
 def main():
@@ -91,12 +71,14 @@ def main():
     df = pd.merge(data, trdf, on=["person_id"])
     pltdata = df.groupby("tr_dosage", as_index=False).agg(phenotype_mean=("phenotype", np.mean), n=("phenotype", len))
     pltdata = pltdata[pltdata["n"]>args.min_samples_per_dosage]
-    df.to_csv('plot.csv',index=False,sep=',')
+    #df.to_csv('plot.csv',index=False,sep=',')
     # compute CI
-    df['95_CI_lower'],df['95_CI_upper'] = df.apply(lambda x:statsmodels.stats.proportion.proportion_confint(1,x.shape[1],alpha=0.05,method='wilson'),axis=1)
+    pltdata['95_CI_lower'],pltdata['95_CI_upper'] = pltdata.apply(lambda x:st.norm.interval(alpha=0.90, loc=x['phenotype_mean'], scale=st.sem(x['phenotype_mean'])),axis=1)
+    pltdata.to_csv('CI.csv',index=False,sep=',')
 
-    print(df)
-   # print(pltdata.head())
+
+    print(pltdata)
+
 
 	# Plot - TODO
     fig = plt.figure()
