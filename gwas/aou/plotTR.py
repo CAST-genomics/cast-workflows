@@ -21,6 +21,7 @@ import trtools.utils.tr_harmonizer as trh
 import trtools.utils.utils as utils
 
 from scipy.stats import sem
+import scipy.stats as st 
 
 from utils import MSG, ERROR
 
@@ -74,7 +75,7 @@ def main():
    
     # Compute CI
     print(pltdata)
-    pltdata['95_CI_lower'],pltdata['95_CI_upper'] = pltdata.apply(lambda x:sem.norm.interval(alpha=0.95, loc=x['phenotype_mean'], scale=x['sem']),axis=1)
+    pltdata['95_CI_lower'],pltdata['95_CI_upper'] = pltdata.apply(lambda x:st.norm.interval(alpha=0.95, loc=x['phenotype_mean'], scale=x['sem']),axis=1)
     print(pltdata)
     pltdata.to_csv('CI.csv',index=False,sep=',')
 
