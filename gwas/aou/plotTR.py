@@ -69,7 +69,7 @@ def main():
 
     # Merge phenotype and TR dosages
     df = pd.merge(data, trdf, on=["person_id"])
-    pltdata = df.groupby("tr_dosage", as_index=False).agg(phenotype_mean=("phenotype", np.mean), n=("phenotype", len),stdev=("phenotype",stats.sem("phenotype")))
+    pltdata = df.groupby("tr_dosage", as_index=False).agg(phenotype_mean=("phenotype", np.mean), n=("phenotype", len),stdev=("phenotype", np.std))
     pltdata = pltdata[pltdata["n"]>args.min_samples_per_dosage]
     #df.to_csv('plot.csv',index=False,sep=',')
     # compute CI
