@@ -75,7 +75,7 @@ def main():
    
     # Compute CI
     
-    pltdata.apply(lambda x:st.norm.interval(alpha=0.95, loc=x['phenotype_mean'], scale=x['sem']),axis=1)
+    pltdata['CI']= pltdata.apply(lambda x:st.norm.interval(alpha=0.95, loc=x['phenotype_mean'], scale=x['sem']),axis=1)
     #print(pltdata)
     #pltdata.to_csv('CI.csv',index=False,sep=',')
 
