@@ -20,7 +20,7 @@ import scipy.stats
 import trtools.utils.tr_harmonizer as trh
 import trtools.utils.utils as utils
 
-import scipy.stats as st 
+import scipy.stats 
 
 from utils import MSG, ERROR
 
@@ -69,12 +69,12 @@ def main():
 
     # Merge phenotype and TR dosages
     df = pd.merge(data, trdf, on=["person_id"])
-    pltdata = df.groupby("tr_dosage", as_index=False).agg(phenotype_mean=("phenotype", np.mean), n=("phenotype", len))
+    pltdata = df.groupby("tr_dosage", as_index=False).agg(phenotype_mean=("phenotype", np.mean), n=("phenotype", len),stdev=("phenotype",stats.sem(a)))
     pltdata = pltdata[pltdata["n"]>args.min_samples_per_dosage]
     #df.to_csv('plot.csv',index=False,sep=',')
     # compute CI
-    print(df)
-    pltdata['95_CI_lower'],pltdata['95_CI_upper'] = pltdata.apply(lambda x:st.norm.interval(alpha=0.95, loc=x['phenotype_mean'], scale=st.sem(x['phenotype_mean'])),axis=1)
+    print(pltdata)
+    #pltdata['95_CI_lower'],pltdata['95_CI_upper'] = pltdata.apply(lambda x:st.norm.interval(alpha=0.95, loc=x['phenotype_mean'], scale=st.sem(x['phenotype_mean'])),axis=1)
     pltdata.to_csv('CI.csv',index=False,sep=',')
 
 
