@@ -72,10 +72,10 @@ def main():
     df = pd.merge(data, trdf, on=["person_id"])
     pltdata = df.groupby("tr_dosage", as_index=False).agg(phenotype_mean=("phenotype", np.mean), n=("phenotype", len),sem=("phenotype", sem))
     pltdata = pltdata[pltdata["n"]>args.min_samples_per_dosage]
-   
+    pltdata.to_csv('CI.csv',index=False,sep=',')
     # Compute CI
     
-    pltdata['CI_lower'],pltdata['CI_upper']= pltdata.apply(lambda x:st.norm.interval(alpha=0.95, loc=x['phenotype_mean'], scale=x['sem']),axis=1)
+    #pltdata['CI_lower'],pltdata['CI_upper']= pltdata.apply(lambda x:st.norm.interval(alpha=0.95, loc=x['phenotype_mean'], scale=x['sem']),axis=1)
     #print(pltdata)
     #pltdata.to_csv('CI.csv',index=False,sep=',')
 
