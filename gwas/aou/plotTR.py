@@ -76,7 +76,7 @@ def main():
     pltdata.to_csv('CI.csv',index=False,sep=',')
     # Compute CI
     pltdata[['CI_lower','CI_upper']] = pltdata.apply(lambda x:st.norm.interval(alpha=0.95, loc=x['phenotype_mean'], scale=x['sem']),axis=1).tolist()
-    
+    pltdata = pltdata[pltdata["n"]>args.min_samples_per_dosage]
     #print(pltdata)
     #pltdata.to_csv('CI.csv',index=False,sep=',')
 
