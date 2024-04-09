@@ -133,6 +133,8 @@ def main():
         ERROR("Must specify --norm if using --norm-by-sex")
     if args.logistic and args.test is None:
         ERROR("Must specify --test if using --logistic")
+    if args.logistic and args.method == "associaTR":
+        ERROR("associaTR run on linear regression only")
 
     # Get covarlist
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
