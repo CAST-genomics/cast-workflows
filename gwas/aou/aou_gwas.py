@@ -131,10 +131,11 @@ def main():
         ERROR("Must specify --tr-vcf for associaTR")
     if args.norm_by_sex and args.norm is None:
         ERROR("Must specify --norm if using --norm-by-sex")
-    if args.logistic and args.test is None:
-        ERROR("Must specify --test if using --logistic")
     if args.logistic and args.method == "associaTR":
         ERROR("associaTR run on linear regression only")
+    if args.logistic and args.test is None:
+        ERROR("Must specify --test if using --logistic")
+    
 
     # Get covarlist
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
