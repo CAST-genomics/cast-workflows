@@ -5,6 +5,8 @@ Run GWAS on All of Us
 
 Example:
 ./aou_gwas.py --phenotype ALT --num-pcs 10 --region chr11:119206339-119308149
+./aou_gwas.py --phenotype ${WORKSPACE_BUCKET}/data/phenotypes/v7/type2_diabetes_phenotypes.csv --num-pcs 10 --region chr10:112948590-113048590 --logistic --test wald --plot
+
 """
 
 import argparse
