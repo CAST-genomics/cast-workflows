@@ -2,7 +2,7 @@
 
 """
 Run PheWAS on All of Us
-
+Example: ./aou_phewas.py --tr-vcf CBL_test.filtered.sorted.vcf.gz --region chr11:119206290-119206323
 """
 
 import argparse
