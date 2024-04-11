@@ -106,10 +106,8 @@ def main():
         ptdata = pd.merge(data, ptdata, on=["person_id"])
         ptdata["intercept"] = 1
         #Nichole added
-        intercept = ptdata[["intercept"]]
-        print(intercept)
         print(shared_covars)
-        covars = intercept + shared_covars + ptcovars 
+        covars = ["intercept"] + shared_covars + ptcovars 
     	# Regression
         #covars = intercept + shared_covars + ptcovars
     	# TODO - need to put a flag in manifest to know if something
