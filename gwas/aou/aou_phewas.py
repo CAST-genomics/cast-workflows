@@ -69,7 +69,7 @@ def main():
 
     # Load TR genotypes for the target locus to a df and merge with data
     # Genotype should be in a column labeled "genotype"
-    # TODO , try platelet count, which file to use??
+    # TODO , check in with Melissa, what genotype info to use, so far use allele_sum
 
     # Load TR genotypes
     invcf = utils.LoadSingleReader(args.tr_vcf, checkgz=True)
@@ -87,7 +87,10 @@ def main():
         ERROR("No matching TR records found")
     if nrecords > 1:
         ERROR("Multiple matching TR records found")
-    print(trdf.head())
+
+    #merge genotype with data
+    data = pd.merge(data, trdf, on=["person_id"])
+    print(data.head())
 
     # Process the phenotypes from manifest file one at a time
     manifest = pd.read_csv(args.manifest)
