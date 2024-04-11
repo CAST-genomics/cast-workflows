@@ -7,9 +7,13 @@ Run PheWAS on All of Us
 
 import argparse
 import pandas as pd
+import trtools.utils.tr_harmonizer as trh
+import trtools.utils.utils as utils
 from statsmodels.regression.linear_model import OLS
+import statsmodels.formula.api as smf
 import sys
 import os
+from utils import MSG, ERROR
 
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
 SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
@@ -66,7 +70,21 @@ def main():
     # Load TR genotypes for the target locus to a df and merge with data
     # Genotype should be in a column labeled "genotype"
     # TODO , try platelet count, which file to use??
-    #genotype = pd.read_csv(args.tr_vcf)
+
+    # Load TR genotypes
+    invcf = utils.LoadSingleReader(args.tr_vcf, checkgz=True)
+    samples = invcf.samples
+    region = invcf(args.region)
+    nrecords = 0
+    for record in region:
+        trrecord = trh.HarmonizeRecord(trh.VcfTypes["hipstr"], record)
+        afreqs = trrecord.GetAlleleFreqs()
+        genotypes = trrecord.GetLengthGenotypes()
+        nrecords += 1
+    if nrecords == 0:
+        ERROR("No matching TR records found")
+    if nrecords > 1:
+        ERROR("Multiple matching TR records found")
     #print(genotype.head())
 
     # Process the phenotypes from manifest file one at a time
@@ -86,15 +104,17 @@ def main():
         covars = shared_covars + ptcovars
     	# Regression
         #covars = intercept + shared_covars + ptcovars
-        print(covars)
     	# TODO - need to put a flag in manifest to know if something
-        #if args.logistic:
+        if args.logistic:
             #add logistic regression
-        #else:
-          #add linear regresssion
+            model = smf.logit(ptdata["phenotype"], ptdata[["genotype"]+covars])
+        else:
+            #add linear regresssion
+            model = OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
+          
     	# is case/control or quantitative. if case/control, use
     	# logistic regression instead
-        model = OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
+            
         reg_result = model.fit()
         pval = reg_result.pvalues[0]
         coef = reg_result.params[0]
