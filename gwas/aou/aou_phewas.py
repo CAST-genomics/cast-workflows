@@ -125,7 +125,7 @@ def main():
         coef = reg_result.params[0]
         se = reg_result.bse[0]
         outf.write("\t".join([phenotype, str(pval), str(coef), str(se)])+"\n")
-        outf.close()
+    outf.close()
 
 if __name__ == "__main__":
     main()
