@@ -80,12 +80,13 @@ def main():
         trrecord = trh.HarmonizeRecord(trh.VcfTypes["hipstr"], record)
         afreqs = trrecord.GetAlleleFreqs()
         genotypes = trrecord.GetLengthGenotypes()
+        trdf = pd.DataFrame({"person_id": samples, "genotype": genotypes})
         nrecords += 1
     if nrecords == 0:
         ERROR("No matching TR records found")
     if nrecords > 1:
         ERROR("Multiple matching TR records found")
-    #print(genotype.head())
+    print(trdf.head())
 
     # Process the phenotypes from manifest file one at a time
     manifest = pd.read_csv(args.manifest)
