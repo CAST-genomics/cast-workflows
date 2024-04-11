@@ -94,7 +94,6 @@ def main():
     data = pd.merge(data, trdf, on=["person_id"])
     
     # Process the phenotypes from manifest file one at a time
-    #outf = open("phewas_%s.tsv"%(args.out), "w")
     manifest = pd.read_csv(args.manifest)
     for index, row in manifest.iterrows():
         phenotype = row["phenotype"]
@@ -107,7 +106,8 @@ def main():
         ptdata = pd.merge(data, ptdata, on=["person_id"])
         ptdata["intercept"] = 1
         #Nichole added
-        covars = shared_covars + ptcovars
+        intercept = [item for item in ptdata.columns if item == intercept]
+        covars = intercept + shared_covars + ptcovars 
     	# Regression
         #covars = intercept + shared_covars + ptcovars
     	# TODO - need to put a flag in manifest to know if something
