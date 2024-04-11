@@ -78,15 +78,14 @@ def main():
         ptdata = pd.read_csv(ptfile)
         ptdata["person_id"] = ptdata["person_id"].apply(str)
         ptcovars = [item for item in ptdata.columns if item != phenotype]
-        print(ptcovars)
     	# Merge with genotypes. add intercept
         ptdata = pd.merge(data, ptdata, on=["person_id"])
         ptdata["intercept"] = 1
-        print(ptdata.head())
+
         #Nichole added
-        intercept = ptdata["intercept"]
+        covars = shared_covars + ptcovars
     	# Regression
-        covars = [intercept] + shared_covars + ptcovars
+        #covars = intercept + shared_covars + ptcovars
         print(covars)
     	# TODO - need to put a flag in manifest to know if something
         #if args.logistic:
