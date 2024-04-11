@@ -74,7 +74,7 @@ def main():
     for index, row in manifest.iterrows():
         phenotype = row["phenotype"]
     	# Load phenotype data
-        ptfile = os.path.join(os.environ["WORKSPACE_BUCKET"], row["phenotype_file"])
+        ptfile = os.path.join(os.environ["WORKSPACE_BUCKET"],"phenotypes", row["phenotype_file"])
         ptdata = pd.read_csv(ptfile)
         ptdata["person_id"] = ptdata["person_id"].apply(str)
         ptcovars = [item for item in ptdata.columns if item != phenotype]
