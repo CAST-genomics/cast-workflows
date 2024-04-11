@@ -16,6 +16,10 @@ SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
     "passing_samples_v7.csv")
 MANIFESTFILE = "https://github.com/CAST-genomics/cast-workflows/raw/main/gwas/aou/phenotypes_manifest.csv"
 
+def GetFloatFromPC(x):
+    x = x.replace("[","").replace("]","")
+    return float(x)
+
 def LoadAncestry(ancestry_pred_path):
     if ancestry_pred_path.startswith("gs://"):
         if not os.path.isfile("ancestry_preds.tsv"):
