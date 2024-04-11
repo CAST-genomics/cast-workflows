@@ -67,7 +67,7 @@ def main():
     # Genotype should be in a column labeled "genotype"
     # TODO , try platelet count
     genotype = pd.read_csv(args.tr_vcf)
-
+    print(genotype.head())
 
     # Process the phenotypes from manifest file one at a time
     manifest = pd.read_csv(args.manifest)
