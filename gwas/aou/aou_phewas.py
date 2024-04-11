@@ -108,6 +108,7 @@ def main():
         #Nichole added
         intercept = ptdata[["intercept"]]
         print(intercept)
+        print(shared_covars)
         covars = intercept + shared_covars + ptcovars 
     	# Regression
         #covars = intercept + shared_covars + ptcovars
