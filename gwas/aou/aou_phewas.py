@@ -80,7 +80,8 @@ def main():
         trrecord = trh.HarmonizeRecord(trh.VcfTypes["hipstr"], record)
         afreqs = trrecord.GetAlleleFreqs()
         genotypes = trrecord.GetLengthGenotypes()
-        trdf = pd.DataFrame({"person_id": samples, "genotype": genotypes})
+        allele_sum = [sum(item)for item in genotypes]
+        trdf = pd.DataFrame({"person_id": samples, "genotype": allele_sum})
         nrecords += 1
     if nrecords == 0:
         ERROR("No matching TR records found")
