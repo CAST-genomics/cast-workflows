@@ -47,7 +47,7 @@ def main():
 
     # Set up output file
     if args.out == "stdout":
-    	outf = sys.stdout
+        outf = sys.stdout
     else:
     	outf = open(args.out, "w")
 
@@ -60,14 +60,16 @@ def main():
 
     # Load TR genotypes for the target locus to a df and merge with data
     # Genotype should be in a column labeled "genotype"
-    # TODO
+    # TODO , try platelet count
+    genotype = pd.read_csv(args.tr_vcf)
+
 
     # Process the phenotypes from manifest file one at a time
     manifest = pd.read_csv(args.manifest)
     for index, row in manifest.iterrows():
     	phenotype = row["phenotype"]
     	# Load phenotype data
-    	ptfile = os.path.join(os.environ["WORKSPACE_BUCKET"], row["phenotype_file"])
+        ptfile = os.path.join(os.environ["WORKSPACE_BUCKET"], row["phenotype_file"])
     	ptdata = pd.read_csv(ptfile)
     	ptdata["person_id"] = ptdata["person_id"].apply(str)
     	ptcovars = [item for item in ptdata.columns if item != phenotype]
@@ -76,7 +78,12 @@ def main():
     	ptdata["intercept"] = 1
     	# Regression
     	covars = intercept + shared_covars + pt_covars
+        print(ptdata.head())
     	# TODO - need to put a flag in manifest to know if something
+        if args.logistic:
+            #add logistic regression
+        else:
+          #add linear regresssion
     	# is case/control or quantitative. if case/control, use
     	# logistic regression instead
     	model = OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
