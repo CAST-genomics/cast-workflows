@@ -105,7 +105,6 @@ def main():
     	# Merge with genotypes. add intercept
         ptdata = pd.merge(data, ptdata, on=["person_id"])
         ptdata["intercept"] = 1
-        print(ptdata["phenotype"],ptdata["genotype"])
         #Nichole added
         covars = shared_covars + ptcovars
     	# Regression
@@ -117,6 +116,7 @@ def main():
         #else:
             #add linear regresssion
        #model = OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
+        print(ptdata[["genotype"]+covars])
         model = sm.OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
     	# is case/control or quantitative. if case/control, use
     	# logistic regression instead
