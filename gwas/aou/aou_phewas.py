@@ -82,8 +82,9 @@ def main():
         ptdata = pd.merge(data, ptdata, on=["person_id"])
         ptdata["intercept"] = 1
     	# Regression
-        intercept = ptdata["intercept"]
-        covars = intercept + shared_covars + ptcovars
+        #Nichole added
+        #intercept = ptdata["intercept"]
+        #covars = intercept + shared_covars + ptcovars
         print(ptdata.head())
 
     	# TODO - need to put a flag in manifest to know if something
