@@ -43,6 +43,7 @@ def main():
     parser.add_argument("--num-pcs", help="Number of PCs to use as covariates", type=int, default=10)
     # Output options
     parser.add_argument("--out", help="Name of output file", type=str, default="stdout")
+    parser.add_argument("--logistic", help="Apply logistic regression",action="store_true", default=False)
     args = parser.parse_args()
 
     # Set up output file
@@ -53,8 +54,7 @@ def main():
 
     # Set up shared covariates
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
-    shared_covars = [item for item in args.sharedcovars.split(",") if item != ""] + \
-    	pcols
+    shared_covars = [item for item in args.sharedcovars.split(",") if item != ""] + pcols
     data = LoadAncestry(args.ancestry_pred_path)
     data["person_id"] = data["person_id"].apply(str)
 
@@ -67,28 +67,29 @@ def main():
     # Process the phenotypes from manifest file one at a time
     manifest = pd.read_csv(args.manifest)
     for index, row in manifest.iterrows():
-    	phenotype = row["phenotype"]
+        phenotype = row["phenotype"]
     	# Load phenotype data
         ptfile = os.path.join(os.environ["WORKSPACE_BUCKET"], row["phenotype_file"])
-    	ptdata = pd.read_csv(ptfile)
-    	ptdata["person_id"] = ptdata["person_id"].apply(str)
-    	ptcovars = [item for item in ptdata.columns if item != phenotype]
+        ptdata = pd.read_csv(ptfile)
+        ptdata["person_id"] = ptdata["person_id"].apply(str)
+        ptcovars = [item for item in ptdata.columns if item != phenotype]
     	# Merge with genotypes. add intercept
-    	ptdata = pd.merge(data, ptdata, on=["person_id"])
-    	ptdata["intercept"] = 1
+        ptdata = pd.merge(data, ptdata, on=["person_id"])
+        ptdata["intercept"] = 1
     	# Regression
-    	covars = intercept + shared_covars + pt_covars
+        covars = intercept + shared_covars + pt_covars
         print(ptdata.head())
+
     	# TODO - need to put a flag in manifest to know if something
-        if args.logistic:
+        #if args.logistic:
             #add logistic regression
-        else:
+        #else:
           #add linear regresssion
     	# is case/control or quantitative. if case/control, use
     	# logistic regression instead
-    	model = OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
-    	reg_result = model.fit()
-    	pval = reg_result.pvalues[0]
+        model = OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
+        reg_result = model.fit()
+        pval = reg_result.pvalues[0]
         coef = reg_result.params[0]
         se = reg_result.bse[0]
         outf.write("\t".join([phenotype, str(pval), str(coef), str(se)])+"\n")
