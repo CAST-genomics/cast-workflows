@@ -11,6 +11,7 @@ import trtools.utils.tr_harmonizer as trh
 import trtools.utils.utils as utils
 from statsmodels.regression.linear_model import OLS
 import statsmodels.formula.api as smf
+import statsmodels.api as sm
 import sys
 import os
 from utils import MSG, ERROR
@@ -90,7 +91,7 @@ def main():
 
     #merge genotype with data
     data = pd.merge(data, trdf, on=["person_id"])
-    print(data.head())
+    
 
     # Process the phenotypes from manifest file one at a time
     manifest = pd.read_csv(args.manifest)
@@ -104,19 +105,19 @@ def main():
     	# Merge with genotypes. add intercept
         ptdata = pd.merge(data, ptdata, on=["person_id"])
         ptdata["intercept"] = 1
-
+        print(data.head())
         #Nichole added
         covars = shared_covars + ptcovars
     	# Regression
         #covars = intercept + shared_covars + ptcovars
     	# TODO - need to put a flag in manifest to know if something
-        if args.logistic:
+        #if args.logistic:
             #add logistic regression
-            model = smf.logit(ptdata["phenotype"], ptdata[["genotype"]+covars])
-        else:
+        #    model = smf.logit(ptdata["phenotype"], ptdata[["genotype"]+covars])
+        #else:
             #add linear regresssion
-            model = OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
-          
+       #model = OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
+        model = sm.OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
     	# is case/control or quantitative. if case/control, use
     	# logistic regression instead
             
