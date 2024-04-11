@@ -93,6 +93,7 @@ def main():
     data = pd.merge(data, trdf, on=["person_id"])
     
     # Process the phenotypes from manifest file one at a time
+    outf = open("phewas_%s.tsv"%(args.out), "w")
     manifest = pd.read_csv(args.manifest)
     for index, row in manifest.iterrows():
         phenotype = row["phenotype"]
@@ -120,7 +121,6 @@ def main():
     	# logistic regression instead
             
         reg_result = model.fit()
-        print(reg_result )
         pval = reg_result.pvalues[0]
         coef = reg_result.params[0]
         se = reg_result.bse[0]
