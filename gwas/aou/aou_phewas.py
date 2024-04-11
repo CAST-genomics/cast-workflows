@@ -106,7 +106,8 @@ def main():
         ptdata = pd.merge(data, ptdata, on=["person_id"])
         ptdata["intercept"] = 1
         #Nichole added
-        intercept = [item for item in ptdata.columns if item == intercept]
+        intercept = ptdata[["intercept"]]
+        print(intercept)
         covars = intercept + shared_covars + ptcovars 
     	# Regression
         #covars = intercept + shared_covars + ptcovars
