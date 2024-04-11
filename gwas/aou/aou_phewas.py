@@ -92,7 +92,6 @@ def main():
     #merge genotype with data
     data = pd.merge(data, trdf, on=["person_id"])
     
-
     # Process the phenotypes from manifest file one at a time
     manifest = pd.read_csv(args.manifest)
     for index, row in manifest.iterrows():
@@ -110,22 +109,23 @@ def main():
     	# Regression
         #covars = intercept + shared_covars + ptcovars
     	# TODO - need to put a flag in manifest to know if something
-        #if args.logistic:
+        if args.logistic:
             #add logistic regression
-        #    model = smf.logit(ptdata["phenotype"], ptdata[["genotype"]+covars])
-        #else:
+            model = smf.logit(ptdata["phenotype"], ptdata[["genotype"]+covars].astype(float))
+        else:
             #add linear regresssion
        #model = OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
-        model = sm.OLS(ptdata["phenotype"], ptdata[["genotype"]+covars].astype(float))
+            model = sm.OLS(ptdata["phenotype"], ptdata[["genotype"]+covars].astype(float))
     	# is case/control or quantitative. if case/control, use
     	# logistic regression instead
             
         reg_result = model.fit()
+        print(reg_result )
         pval = reg_result.pvalues[0]
         coef = reg_result.params[0]
         se = reg_result.bse[0]
         outf.write("\t".join([phenotype, str(pval), str(coef), str(se)])+"\n")
-    outf.close()
+        outf.close()
 
 if __name__ == "__main__":
     main()
