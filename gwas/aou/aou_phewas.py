@@ -116,8 +116,7 @@ def main():
         #else:
             #add linear regresssion
        #model = OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
-        print(ptdata[["genotype"]+covars])
-        model = sm.OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
+        model = sm.OLS(ptdata["phenotype"], ptdata[["genotype"]+covars].astype(float))
     	# is case/control or quantitative. if case/control, use
     	# logistic regression instead
             
