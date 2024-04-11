@@ -54,7 +54,6 @@ def main():
     parser.add_argument("--num-pcs", help="Number of PCs to use as covariates", type=int, default=10)
     # Output options
     parser.add_argument("--out", help="Name of output file", type=str, default="stdout")
-    parser.add_argument("--logistic", help="Apply logistic regression",action="store_true", default=False)
     args = parser.parse_args()
 
     # Set up output file
@@ -105,19 +104,15 @@ def main():
     	# Merge with genotypes. add intercept
         ptdata = pd.merge(data, ptdata, on=["person_id"])
         ptdata["intercept"] = 1
-        #Nichole added
-        print(shared_covars)
+        # Regression
         covars = ["intercept"] + shared_covars + ptcovars 
-    	# Regression
-        #covars = intercept + shared_covars + ptcovars
-    	# TODO - need to put a flag in manifest to know if something
-        if args.logistic:
-            #add logistic regression
-            model = smf.logit(ptdata["phenotype"], ptdata[["genotype"]+covars].astype(float))
-        else:
+    	# TODO, redo - need to put a flag in manifest to know if something
+        #if logistic:
+            #model = smf.logit(ptdata["phenotype"], ptdata[["genotype"]+covars].astype(float))
+        #else:
             #add linear regresssion
        #model = OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
-            model = sm.OLS(ptdata["phenotype"], ptdata[["genotype"]+covars].astype(float))
+        model = sm.OLS(ptdata["phenotype"], ptdata[["genotype"]+covars].astype(float))
     	# is case/control or quantitative. if case/control, use
     	# logistic regression instead
             
