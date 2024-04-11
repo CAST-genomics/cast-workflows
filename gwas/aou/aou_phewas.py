@@ -82,7 +82,7 @@ def main():
         ptdata = pd.merge(data, ptdata, on=["person_id"])
         ptdata["intercept"] = 1
     	# Regression
-        intercept = 1
+        intercept = ptdata["intercept"]
         covars = intercept + shared_covars + ptcovars
         print(ptdata.head())
 
