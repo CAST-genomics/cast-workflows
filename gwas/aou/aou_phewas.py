@@ -9,6 +9,7 @@ import argparse
 import pandas as pd
 from statsmodels.regression.linear_model import OLS
 import sys
+import os
 
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
 SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
