@@ -65,7 +65,7 @@ def main():
 
     # Load TR genotypes for the target locus to a df and merge with data
     # Genotype should be in a column labeled "genotype"
-    # TODO , try platelet count
+    # TODO , try platelet count, which file to use??
     #genotype = pd.read_csv(args.tr_vcf)
     #print(genotype.head())
 
@@ -82,7 +82,8 @@ def main():
         ptdata = pd.merge(data, ptdata, on=["person_id"])
         ptdata["intercept"] = 1
     	# Regression
-        covars = intercept + shared_covars + pt_covars
+        intercept = 1
+        covars = intercept + shared_covars + ptcovars
         print(ptdata.head())
 
     	# TODO - need to put a flag in manifest to know if something
