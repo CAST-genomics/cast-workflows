@@ -2,7 +2,8 @@
 
 """
 Run PheWAS on All of Us
-Example: ./aou_phewas.py --tr-vcf CBL_test.filtered.sorted.vcf.gz --region chr11:119206290-119206323
+Example: 
+./aou_phewas.py --tr-vcf CBL_test.filtered.sorted.vcf.gz --region chr11:119206290-119206323 --out CBL_phewas
 """
 
 import argparse
@@ -19,7 +20,8 @@ from utils import MSG, ERROR
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
 SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
     "passing_samples_v7.csv")
-MANIFESTFILE ="https://raw.githubusercontent.com/CAST-genomics/cast-workflows/nichole/concept_id/gwas/aou/phenotypes_manifest.csv"
+#MANIFESTFILE ="https://raw.githubusercontent.com/CAST-genomics/cast-workflows/nichole/concept_id/gwas/aou/phenotypes_manifest.csv"
+MANIFESTFILE="https://github.com/CAST-genomics/cast-workflows/raw/ad65f7c94a9be781eecf828fc5d9e13278b33369/gwas/aou/phenotypes_manifest.csv"
 #MANIFESTFILE = "https://github.com/CAST-genomics/cast-workflows/raw/main/gwas/aou/phenotypes_manifest.csv"
 
 def GetFloatFromPC(x):
