@@ -7,7 +7,7 @@ calcium,3006906,"milligram per deciliter",5,0,30,nan,calcium_phenocovar.csv,1294
 cholesterol,3027114,"milligram per deciliter,no value",5,0,1000,nan,cholesterol_phenocovar.csv,94618,a6b279600dc5ae7f4412840e965c00fc
 creatinine,3016723,"milligram per deciliter",5,0,10,nan,creatinine_phenocovar.csv,129173,ae17e29544e75f91f2ad1dc2b8661dc8
 eosinophil_percent,"3010457,3006504","percent,no value",5,0,100,nan,eosinophil_percent_phenocovar.csv,104288,cfc2ba0136359a3a8b605637d53d9d19
-glucose,3004501,milligram per deciliter,5,0,500,nan,glucose_phenocovar.csv,128355,072199fcae06ba180377f3a2915ad46b
+glucose,3004501,"milligram per deciliter",5,0,500,nan,glucose_phenocovar.csv,128355,072199fcae06ba180377f3a2915ad46b
 glycated_haemoglobin,3004410,percent,5,0,50,nan,glycated_haemoglobin_phenocovar.csv,57982,745d86a4209a67c23ef94bd2911b8c52
 haematocrit,"3023314,3009542",percent,5,0,100,nan,haematocrit_phenocovar.csv,129340,3882727daa9b9c266fa12ad327fffb80
 hdl_cholesterol,3007070,"milligram per deciliter",5,0,200,nan,hdl_cholesterol_phenocovar.csv,90890,5276f60139d1a1473fc70ec0d5a27d84
