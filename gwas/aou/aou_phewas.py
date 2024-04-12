@@ -21,7 +21,7 @@ ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel
 SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
     "passing_samples_v7.csv")
 #MANIFESTFILE ="https://raw.githubusercontent.com/CAST-genomics/cast-workflows/nichole/concept_id/gwas/aou/phenotypes_manifest.csv"
-MANIFESTFILE="https://github.com/CAST-genomics/cast-workflows/blob/nichole/concept_id/gwas/aou/phenotypes_manifest.csv"
+MANIFESTFILE="https://github.com/CAST-genomics/cast-workflows/blob/5c2011355a57774354f3bd7e240cb69553b446b6/gwas/aou/phenotypes_manifest.csv"
 #MANIFESTFILE = "https://github.com/CAST-genomics/cast-workflows/raw/main/gwas/aou/phenotypes_manifest.csv"
 
 def GetFloatFromPC(x):
