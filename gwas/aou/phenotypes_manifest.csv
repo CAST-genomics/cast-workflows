@@ -41,7 +41,7 @@ body_temperature,3020891,"degree Celsius,degrees C,no value",5,30,50,nan,body_te
 systolic_blood_pressure,3004249,millimeter mercury column,5,0,250,nan,systolic_blood_pressure_phenocovar.csv,223516,c8f15e56ab4a900869eb6d140276e871
 diastolic_blood_pressure,3012888,millimeter mercury column,5,0,200,nan,diastolic_blood_pressure_phenocovar.csv,223512,116bfd30b248a45e5bb3ef100659a070
 carbon_dioxide,3015632,"millimole per liter,milliequivalent per liter,no value",5,0,100,nan,carbon_dioxide_phenocovar.csv,113198,70d820ac1c7bbc86088a838ae34208b4
-respiratory_rate,3024171,counts per minute,per minute,5,0,100,nan,respiratory_rate_phenocovar.csv,55321,0cc43fce3457fe0a575f6f0046a1140b
+respiratory_rate,3024171,"counts per minute,per minute",5,0,100,nan,respiratory_rate_phenocovar.csv,55321,0cc43fce3457fe0a575f6f0046a1140b
 weight,903121,kilogram,5,0,300,nan,weight_phenocovar.csv,219614,78c1331af1d880a88a1642c7f92b59be
 height,903133,centimeter,5,0,250,nan,height_phenocovar.csv,220246,46060475ad61e6eeb097408652ecb01d
 basophils_percent,3013869,"percent,no value,percent of white blood cells",5,0,20,nan,basophils_percent_phenocovar.csv,84664,37a380607f688d86bff9b0bd08fa2c74
