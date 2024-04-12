@@ -1,7 +1,6 @@
 phenotype,concept_id,units,outlier_sd,min,max,drugcovars,ppi
 #ALT,3006923,blood,5,0,250,,
-#platelet_count,3024929,"thousand per microliter,thousand per cubic millimeter,Kelvin per microliter,billion per liter,no value,Kelvin per cubic millimeter,nL",5,0,1000,,
-platelet_count,3024929,"thousand per microliter,thousand per cubic millimeter,no value",5,0,1000,,
+#platelet_count,3024929,"thousand per microliter,thousand per cubic millimeter,no value",5,0,1000,,
 #alkaline_phosphatase,3035995,"unit per liter,international unit per liter",5,0,250,,
 #aspartate_aminotransferase,3013721,"unit per liter,international unit per liter",5,0,90,,
 #calcium,3006906,"milligram per deciliter",5,0,30,,
