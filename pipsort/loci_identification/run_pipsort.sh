@@ -56,13 +56,15 @@ gwas_file_s1_pre=${phen}_hail_${s1_samples}
 gwas_file_s2_pre=${phen}_hail_${s2_samples}
 python subset_gwas_to_loci.py $chr $from $to ${gwas_file_s1_pre}.gwas.tab ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
 python subset_gwas_to_loci.py $chr $from $to ${gwas_file_s2_pre}.gwas.tab ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
-
+python add_rsid_col.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
+python add_rsid_col.py ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
 
 exit 0
 
-#3. subset to region I need
-plink2 --bfile acaf_threshold.chr${chr} --maf $maf --chr $chr --from-bp $from --to-bp $to --keep $s1_samples --make-bed --out s1_data --pheno ${phen}_phenocovar.csv --prune
-plink2 --bfile acaf_threshold.chr${chr} --maf $maf --chr $chr --from-bp $from --to-bp $to --keep $s2_samples --make-bed --out s2_data ${phen}_phenocovar.csv --prune
+#3. subset to snps and samples I need
+python extract_all_snps.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab union_snps.txt
+plink2 --bfile ${chr}_${from}_${to}_${phen}_plink --chr $chr --from-bp $from --to-bp $to --keep $s1_samples --make-bed --out s1_data --pheno ${phen}_phenocovar.csv --prune --extract union_snps.txt
+plink2 --bfile ${chr}_${from}_${to}_${phen}_plink --chr $chr --from-bp $from --to-bp $to --keep $s2_samples --make-bed --out s2_data ${phen}_phenocovar.csv --prune --extract union_snps.txt
 
 
 
