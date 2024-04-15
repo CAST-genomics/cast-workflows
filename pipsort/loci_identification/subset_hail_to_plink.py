@@ -7,7 +7,8 @@ bucket = os.getenv('WORKSPACE_BUCKET')
 chrom = sys.argv[1]
 from_bp = sys.argv[2]
 to_bp = sys.argv[3]
-outfile = bucket+"/pipsort/"+chrom+"_"+from_bp+"_"+to_bp+"_plink"
+phen = sys.argv[4]
+outfile = bucket+"/pipsort/plink/"+chrom+"_"+from_bp+"_"+to_bp+"_"+phen+"_plink"
 
 region = "chr"+chrom+":"+from_bp+"-"+to_bp
 
