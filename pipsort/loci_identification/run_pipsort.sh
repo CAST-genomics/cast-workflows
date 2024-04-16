@@ -34,14 +34,15 @@ else
 fi
 
 #1. get plink files
-#gsutil -q stat ${WORKSPACE_BUCKET}/pipsort/plink/${chr}_${from}_${to}_${phen}_plink.bed
-#status=$?
-#if [[ $status == 0 ]]; then
-#    echo "plink file exists"
-#else
-#    python subset_hail_to_plink.py $chr $from $to $phen
-#fi
-#gsutil cp "${WORKSPACE_BUCKET}/pipsort/plink/${chr}_${from}_${to}_${phen}_plink.*" ./
+gsutil -q stat ${WORKSPACE_BUCKET}/pipsort/plink/${chr}_${from}_${to}_${phen}_plink.bed
+status=$?
+if [[ $status == 0 ]]; then
+    echo "plink file exists"
+else
+    echo "plink file does not exist $chr $to $from $phen" >> $logfile
+    exit 1
+fi
+gsutil cp "${WORKSPACE_BUCKET}/pipsort/plink/${chr}_${from}_${to}_${phen}_plink.*" ./
 
 
 #2. get phenotype file for gwas
