@@ -28,7 +28,7 @@ else
     gsutil cp "${WORKSPACE_BUCKET}/samples/${s1_samples_file}" ./
 fi
 if [ -e "$s2_samples_file" ]; then
-    echo "sample file already exists"
+    echo "sample s2 file already exists"
 else
     gsutil cp "${WORKSPACE_BUCKET}/samples/${s2_samples_file}" ./
 fi
@@ -50,21 +50,25 @@ if [ -e "${phen}_phenocovar.csv" ]; then
 else
     gsutil cp "${WORKSPACE_BUCKET}/pipsort/phenotypes/${phen}_phenocovar.csv" ./
 fi
+python convert_phen_to_plink_format.py ${phen}_phenocovar.csv ${phen}_plink_format.tab
 
 #3. get gwas data and add rsid to gwas file
 gwas_file_s1_pre=${phen}_hail_${s1_samples}
 gwas_file_s2_pre=${phen}_hail_${s2_samples}
-python subset_gwas_to_loci.py $chr $from $to ${gwas_file_s1_pre}.gwas.tab ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
-python subset_gwas_to_loci.py $chr $from $to ${gwas_file_s2_pre}.gwas.tab ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
-python add_rsid_col.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
-python add_rsid_col.py ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
+#python subset_gwas_to_loci.py $chr $from $to ${gwas_file_s1_pre}.gwas.tab ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
+#python subset_gwas_to_loci.py $chr $from $to ${gwas_file_s2_pre}.gwas.tab ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
+#python add_rsid_col.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
+#python add_rsid_col.py ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
 
-exit 0
 
 #3. subset to snps and samples I need
+python convert_samples_to_plink_format.py $s1_samples_file plink_${s1_samples_file}
+python convert_samples_to_plink_format.py $s2_samples_file plink_${s2_samples_file}
+
+
 python extract_all_snps.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab union_snps.txt
-plink2 --bfile ${chr}_${from}_${to}_${phen}_plink --chr $chr --from-bp $from --to-bp $to --keep $s1_samples --make-bed --out s1_data --pheno ${phen}_phenocovar.csv --prune --extract union_snps.txt
-plink2 --bfile ${chr}_${from}_${to}_${phen}_plink --chr $chr --from-bp $from --to-bp $to --keep $s2_samples --make-bed --out s2_data ${phen}_phenocovar.csv --prune --extract union_snps.txt
+plink2 --bfile ${chr}_${from}_${to}_${phen}_plink --chr $chr --keep plink_$s1_samples_file --make-bed --out s1_data --pheno ${phen}_plink_format.tab --prune --extract union_snps.txt
+plink2 --bfile ${chr}_${from}_${to}_${phen}_plink --chr $chr --keep plink_$s2_samples_file --make-bed --out s2_data --pheno ${phen}_plink_format.tab --prune --extract union_snps.txt
 
 
 
