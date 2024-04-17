@@ -56,10 +56,23 @@ python convert_phen_to_plink_format.py ${phen}_phenocovar.csv ${phen}_plink_form
 #3. get gwas data and add rsid to gwas file
 gwas_file_s1_pre=${phen}_hail_${s1_samples}
 gwas_file_s2_pre=${phen}_hail_${s2_samples}
-#python subset_gwas_to_loci.py $chr $from $to ${gwas_file_s1_pre}.gwas.tab ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
-#python subset_gwas_to_loci.py $chr $from $to ${gwas_file_s2_pre}.gwas.tab ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
-#python add_rsid_col.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
-#python add_rsid_col.py ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
+
+if [ -e "$gwas_file_s1_pre}.gwas.tab" ]; then
+    echo "no need to copy gwas1"
+else
+    gsutil cp "${WORKSPACE_BUCKET}/pipsort/gwas/${gwas_file_s1_pre}.gwas.tab" ./
+fi
+if [ -e "$gwas_file_s2_pre}.gwas.tab" ]; then
+    echo "no need to copy gwas2"
+else
+    gsutil cp "${WORKSPACE_BUCKET}/pipsort/gwas/${gwas_file_s2_pre}.gwas.tab" ./
+fi
+
+
+python subset_gwas_to_loci.py $chr $from $to ${gwas_file_s1_pre}.gwas.tab ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
+python subset_gwas_to_loci.py $chr $from $to ${gwas_file_s2_pre}.gwas.tab ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
+python add_rsid_col.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
+python add_rsid_col.py ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
 
 
 #3. subset to snps and samples I need
@@ -70,6 +83,14 @@ python convert_samples_to_plink_format.py $s2_samples_file plink_${s2_samples_fi
 python extract_all_snps.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab union_snps.txt
 plink2 --bfile ${chr}_${from}_${to}_${phen}_plink --chr $chr --keep plink_$s1_samples_file --make-bed --out s1_data --pheno ${phen}_plink_format.tab --prune --extract union_snps.txt
 plink2 --bfile ${chr}_${from}_${to}_${phen}_plink --chr $chr --keep plink_$s2_samples_file --make-bed --out s2_data --pheno ${phen}_plink_format.tab --prune --extract union_snps.txt
+
+python sort_gwas_results.py --infile ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab --pos_col pos --rsid_col rsid
+python sort_gwas_results.py --infile ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab --pos_col pos --rsid_col rsid
+
+
+#exclude high p vals, outputs s1_snps.txt and s2_snps.txt
+python remove_high_pvals_not_common.py --gwas1 ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab --gwas2 ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab --fsl1 $fsl_s1 --fsl2 $fsl_s2 --pval_col p_value --rsid_col rsid
+
 
 
 
