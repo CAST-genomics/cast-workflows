@@ -91,5 +91,21 @@ python sort_gwas_results.py --infile ${gwas_file_s2_pre}_${chr}_${from}_${to}.gw
 #exclude high p vals, outputs s1_snps.txt and s2_snps.txt and s1_gwas_temp.txt and s2_gwas_temp.txt
 python remove_high_pvals_not_common.py --gwas1 ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab --gwas2 ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab --fsl1 $fsl_s1 --fsl2 $fsl_s2 --pval_col p_value --rsid_col rsid
 
-python get_gwas_data_in_mscaviar_style.py s1_gwas_temp.txt s1_ldl_gwas.txt
-python get_gwas_data_in_mscaviar_style.py s2_gwas_temp.txt s2_ldl_gwas.txt
+python get_gwas_data_in_mscaviar_style.py s1_gwas_temp.txt s1_ldl_gwas.txt --chr_col chr --pos_col pos --rsid_col rsid --ref_col alleles --alt_col alleles
+python get_gwas_data_in_mscaviar_style.py s2_gwas_temp.txt s2_ldl_gwas.txt --chr_col chr --pos_col pos --rsid_col rsid --ref_col alleles --alt_col alleles
+
+#LD
+plink2 --bfile s1_data  --extract s1_snps.txt --make-bed --out s1_remaining_snps
+plink2 --bfile s2_data  --extract s2_snps.txt --make-bed --out s2_remaining_snps
+plink2 --bfile s1_remaining_snps --r --square
+mv plink.ld s1_ldl.ld
+plink2 --bfile s2_remaining_snps --r --square
+mv plink.ld s2_ldl.ld
+
+#AFREQ
+plink2 --bfile s1_remaining_snps --freq
+mv plink2.afreq s1.afreq
+plink2 --bfile s2_remaining_snps --freq
+mv plink2.afreq s2.afreq
+
+echo $'s1_ldl.ld\ns2_ldl.ld' > ldfiles.txt
