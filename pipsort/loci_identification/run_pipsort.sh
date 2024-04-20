@@ -88,9 +88,8 @@ python sort_gwas_results.py --infile ${gwas_file_s1_pre}_${chr}_${from}_${to}.gw
 python sort_gwas_results.py --infile ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab --pos_col pos --rsid_col rsid
 
 
-#exclude high p vals, outputs s1_snps.txt and s2_snps.txt
+#exclude high p vals, outputs s1_snps.txt and s2_snps.txt and s1_gwas_temp.txt and s2_gwas_temp.txt
 python remove_high_pvals_not_common.py --gwas1 ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab --gwas2 ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab --fsl1 $fsl_s1 --fsl2 $fsl_s2 --pval_col p_value --rsid_col rsid
 
-
-
-
+python get_gwas_data_in_mscaviar_style.py s1_gwas_temp.txt s1_ldl_gwas.txt
+python get_gwas_data_in_mscaviar_style.py s2_gwas_temp.txt s2_ldl_gwas.txt
