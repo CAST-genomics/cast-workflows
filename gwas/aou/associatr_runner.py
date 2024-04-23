@@ -38,10 +38,10 @@ class AssociaTRRunner:
 
     def RunGWAS(self):
         # Set associaTR options
-        vcftype = None
+        vcftype = "advntr" # None
         same_samples = False
         sample_list = None
-        non_major_cutoff = 20
+        non_major_cutoff = 10 #20
         beagle_dosages = False
         plotting_phenotype = None
         paired_genotype_plot = False
