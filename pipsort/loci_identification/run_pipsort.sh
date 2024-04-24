@@ -162,7 +162,7 @@ python extract_all_snps_rsid.py processedfiles.txt snp_map
 
 
 
-
+exit 0
 
 
 #cleanup all files
