@@ -18,6 +18,7 @@ plink_file_prefix=gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aca
 
 plink_loc=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification
 scripts=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification
+common=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/pipsort_inputs_ldl_cholesterol
 
 
 cd /home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/pipsort_inputs_${phen}
@@ -70,20 +71,20 @@ python $scripts/convert_phen_to_plink_format.py ${phen}_phenocovar.csv ${phen}_p
 gwas_file_s1_pre=${phen}_hail_${s1_samples}
 gwas_file_s2_pre=${phen}_hail_${s2_samples}
 
-if [ -e "${gwas_file_s1_pre}.gwas.tab" ]; then
+if [ -e "$common/${gwas_file_s1_pre}.gwas.tab" ]; then
     echo "no need to copy gwas1"
 else
     gsutil cp "${WORKSPACE_BUCKET}/pipsort/gwas/${gwas_file_s1_pre}.gwas.tab" ./
 fi
-if [ -e "${gwas_file_s2_pre}.gwas.tab" ]; then
+if [ -e "$common/${gwas_file_s2_pre}.gwas.tab" ]; then
     echo "no need to copy gwas2"
 else
     gsutil cp "${WORKSPACE_BUCKET}/pipsort/gwas/${gwas_file_s2_pre}.gwas.tab" ./
 fi
 
 
-python $scripts/subset_gwas_to_loci.py $chr $from $to ${gwas_file_s1_pre}.gwas.tab ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
-python $scripts/subset_gwas_to_loci.py $chr $from $to ${gwas_file_s2_pre}.gwas.tab ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
+python $scripts/subset_gwas_to_loci.py $chr $from $to $common/${gwas_file_s1_pre}.gwas.tab ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
+python $scripts/subset_gwas_to_loci.py $chr $from $to $common/${gwas_file_s2_pre}.gwas.tab ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
 python $scripts/add_rsid_col.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
 python $scripts/add_rsid_col.py ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
 
@@ -102,6 +103,18 @@ python $scripts/sort_gwas_results.py --infile ${gwas_file_s2_pre}_${chr}_${from}
 #cond reg analysis
 bash $scripts/single_study_cond_reg_with_input_data.sh s1_data ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab ${phen}_phenocovar.csv 0.0001 s1_lead_snps $max_num_cr
 bash $scripts/single_study_cond_reg_with_input_data.sh s2_data ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab ${phen}_phenocovar.csv 0.0001 s2_lead_snps $max_num_cr
+if [ -e "s1_lead_snps" ]; then
+    echo "s1_lead_snps exists"
+else
+    # Create the file if it doesn't exist
+    touch "s1_lead_snps"
+fi
+if [ -e "s2_lead_snps" ]; then
+    echo "s2_lead_snps exists"
+else
+    # Create the file if it doesn't exist
+    touch "s2_lead_snps"
+fi
 a=($(wc -l s1_lead_snps))
 num_lead_snps_s1=${a[0]}
 a=($(wc -l s2_lead_snps))
@@ -153,7 +166,6 @@ then
     rm plink*
     rm f_s1.txt
     rm f_s2.txt
-    rm ldfiles.txt
     exit 0
 fi
 
@@ -168,7 +180,6 @@ then
     rm plink*
     rm f_s1.txt
     rm f_s2.txt
-    rm ldfiles.txt
     exit 0
 fi
 
@@ -177,6 +188,7 @@ echo $'f_s1.txt\nf_s2.txt' > processedfiles.txt
 python $scripts/extract_all_snps_rsid.py processedfiles.txt snp_map
 
 
+exit 0
 
 #cleanup all files
 rm s1_lead_snps

@@ -20,10 +20,12 @@ echo $stop
 rm stop_file
 cntr=0
 cp $gwas0 gwas${cntr}.phenotype.glm.linear
+pval_col=p_value
 while [ $stop -ne 0 ];
 do
 	#python script that identifies lead snp and LD friends
-	python $scripts/get_lead_snp.py --infile gwas${cntr}.phenotype.glm.linear --pval_col p_value --rsid_col rsid > lead_snp_file
+	python $scripts/get_lead_snp.py --infile gwas${cntr}.phenotype.glm.linear --pval_col $pval_col --rsid_col rsid > lead_snp_file
+	pval_col=P #reset after evaluating first gwas
 	lead_snp=$( cat lead_snp_file )
 	echo $lead_snp
 	echo $lead_snp >> $lead_snps
