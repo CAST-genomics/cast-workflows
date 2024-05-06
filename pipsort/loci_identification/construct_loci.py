@@ -10,6 +10,7 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--s1_signals", help="file name for study 1 signals", type=str, required=True)
     parser.add_argument("--s2_signals", help="file name for study 2 signals", type=str, required=True)
+    parser.add_argument("--delim", help="delim for signals", type=str, required=True)
     parser.add_argument("--outfile", help="output file name", type=str, required=True)
     parser.add_argument("--pval_col", help="name of p value column", type=str, default="P")
     parser.add_argument("--pos_col", help="name of pos column", type=str, default="POS")
@@ -22,6 +23,7 @@ def main():
 
     signals_eur = args.s1_signals
     signals_afr = args.s2_signals
+    delim = args.delim
     outfile = args.outfile
 
     pval_col = args.pval_col
@@ -37,8 +39,8 @@ def main():
 
 
 
-    df1 = pd.read_csv(signals_eur)
-    df2 = pd.read_csv(signals_afr)
+    df1 = pd.read_csv(signals_eur, sep=delim)
+    df2 = pd.read_csv(signals_afr, sep=delim)
     df = pd.concat([df1, df2], ignore_index=True)
 
     if args.chr_name_prefix != '':
@@ -52,7 +54,7 @@ def main():
                     id_cols[i] = "alleles_concat"
         df[id_col] = df[id_cols].astype(str).agg('-'.join, axis=1)
 
-    #deduplicate
+    #deduplicate (bc of concat)
     print(df.shape[0])
     df = df.loc[df.groupby(id_col)[pval_col].idxmin()]
     print("DEDUP")
