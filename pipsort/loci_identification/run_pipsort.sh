@@ -119,16 +119,18 @@ a=($(wc -l s1_lead_snps))
 num_lead_snps_s1=${a[0]}
 a=($(wc -l s2_lead_snps))
 num_lead_snps_s2=${a[0]}
-echo "$chr $from $to $num_sig_snps_in_loci $num_lead_snps_s1 $num_lead_snps_s2" >> $cr_info
 
 
 #exclude high p vals, outputs s1_snps.txt and s2_snps.txt and s1_gwas_temp.txt and s2_gwas_temp.txt
 python $scripts/remove_high_pvals_not_common.py --gwas1 ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab --gwas2 ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab --fsl1 $fsl_s1 --fsl2 $fsl_s2 --pval_col p_value --rsid_col rsid
 
+mv ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab s1_orig_gwas
+mv ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab s2_orig_gwas
+
 python $scripts/get_gwas_in_mscaviar_style.py --infile s1_gwas_temp.txt --outfile s1_gwas.txt --chr_col chrom --pos_col pos --rsid_col rsid --ref_col n --alt_col locus --beta_col beta --se_col standard_error
 python $scripts/get_gwas_in_mscaviar_style.py --infile s2_gwas_temp.txt --outfile s2_gwas.txt --chr_col chrom --pos_col pos --rsid_col rsid --ref_col n --alt_col locus --beta_col beta --se_col standard_error
-rm s1_gwas_temp.txt
-rm s2_gwas_temp.txt
+#rm s1_gwas_temp.txt
+#rm s2_gwas_temp.txt
 
 #LD
 $plink_loc/plink2 --bfile s1_data  --extract s1_snps.txt --make-bed --out s1_remaining_snps
@@ -193,6 +195,7 @@ then
     exit 0
 fi
 
+echo "$chr $from $to $num_sig_snps_in_loci $num_lead_snps_s1 $num_lead_snps_s2" >> $cr_info
 
 echo $'f_s1.txt\nf_s2.txt' > processedfiles.txt
 python $scripts/extract_all_snps_rsid.py processedfiles.txt snp_map
