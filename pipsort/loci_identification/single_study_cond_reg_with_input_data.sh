@@ -19,13 +19,15 @@ echo "STOP IS:"
 echo $stop
 rm stop_file
 cntr=0
-cp $gwas0 gwas${cntr}.phenotype.glm.linear
+cp $gwas0 gwas${cntr}.PHENO1.glm.linear
 pval_col=p_value
+rsid_col=rsid
 while [ $stop -ne 0 ];
 do
 	#python script that identifies lead snp and LD friends
-	python $scripts/get_lead_snp.py --infile gwas${cntr}.phenotype.glm.linear --pval_col $pval_col --rsid_col rsid > lead_snp_file
+	python $scripts/get_lead_snp.py --infile gwas${cntr}.PHENO1.glm.linear --pval_col $pval_col --rsid_col $rsid_col > lead_snp_file
 	pval_col=P #reset after evaluating first gwas
+	rsid_col=ID #reset after evaluating first gwas
 	lead_snp=$( cat lead_snp_file )
 	echo $lead_snp
 	echo $lead_snp >> $lead_snps
@@ -36,10 +38,11 @@ do
 
 	#next round gwas
 	cntr=$((cntr+1))
-	$plink_loc/plink2 --glm hide-covar --bfile $data --pheno f_phen --covar f_covars --out gwas${cntr}
+	#$plink_loc/plink2 --glm hide-covar --bfile $data --pheno f_phen --covar f_covars --out gwas${cntr}
+	$plink_loc/plink2 --glm hide-covar --bfile $data --covar f_covars --out gwas${cntr}
 
 
-	python $scripts/check_stopping_criteria_cond_reg.py --infile gwas${cntr}.phenotype.glm.linear --pvalthresh $pvalthresh > stop_file 
+	python $scripts/check_stopping_criteria_cond_reg.py --infile gwas${cntr}.PHENO1.glm.linear --pvalthresh $pvalthresh > stop_file 
 	stop=$( cat stop_file )
 	echo "STOP IS:"
 	echo $stop

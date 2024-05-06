@@ -119,7 +119,7 @@ a=($(wc -l s1_lead_snps))
 num_lead_snps_s1=${a[0]}
 a=($(wc -l s2_lead_snps))
 num_lead_snps_s2=${a[0]}
-echo "$chr $to $from $num_sig_snps_in_loci $num_lead_snps_s1 $num_lead_snps_s2" >> $cr_info
+echo "$chr $from $to $num_sig_snps_in_loci $num_lead_snps_s1 $num_lead_snps_s2" >> $cr_info
 
 
 #exclude high p vals, outputs s1_snps.txt and s2_snps.txt and s1_gwas_temp.txt and s2_gwas_temp.txt
@@ -161,11 +161,16 @@ if test $num_snps_s1 -lt $min_num_snps
 then
     echo "Study 1 has ${num_snps_s1} SNPs"
     echo "*** $1 $2 $3 FAILED***: study 1 too few snps" >> $logfile
-    rm s1*
-    rm s2*
-    rm plink*
-    rm f_s1.txt
-    rm f_s2.txt
+    cd ..
+    rm -r "${chr}_${from}_${to}"
+    #rm s1*
+    #rm s2*
+    #rm $s1_samples_file
+    #rm $s2_samples_file
+    #rm ${phen}_phenocovar.csv
+    #rm plink*
+    #rm f_s1.txt
+    #rm f_s2.txt
     exit 0
 fi
 
@@ -175,11 +180,16 @@ if test $num_snps_s2 -lt $min_num_snps
 then
     echo "Study 2 has ${num_snps_s2} SNPs"
     echo "*** $1 $2 $3 FAILED***: study 2 too few snps" >> $logfile
-    rm s1*
-    rm s2*
-    rm plink*
-    rm f_s1.txt
-    rm f_s2.txt
+    cd ..
+    rm -r "${chr}_${from}_${to}"
+    #rm s1*
+    #rm s2*
+    #rm $s1_samples_file
+    #rm $s2_samples_file
+    #rm ${phen}_phenocovar.csv
+    #rm plink*
+    #rm f_s1.txt
+    #rm f_s2.txt
     exit 0
 fi
 
@@ -188,7 +198,6 @@ echo $'f_s1.txt\nf_s2.txt' > processedfiles.txt
 python $scripts/extract_all_snps_rsid.py processedfiles.txt snp_map
 
 
-exit 0
 
 #cleanup all files
 rm s1_lead_snps
