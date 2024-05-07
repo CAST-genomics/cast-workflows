@@ -36,7 +36,7 @@ def main():
     df_s1_sig = df_s1_sig[((df_s1_sig[p1] != pd.NA) & (df_s1_sig[p1] < fsl1)) | ((df_s1_sig[p2] != pd.NA) & (df_s1_sig[p2] < fsl2))]
 
     df_s2_sig = df_s2.merge(df_s1, on=rsid_col, how="left")
-    df_s2_sig = df_s2_sig[((df_s2_sig[p1] != pd.NA) & (df_s2_sig[p1] < fsl1)) | ((df_s2_sig[p2] != pd.NA) & (df_s2_sig[p2] < fsl2))]
+    df_s2_sig = df_s2_sig[((df_s2_sig[p1] != pd.NA) & (df_s2_sig[p1] < fsl2)) | ((df_s2_sig[p2] != pd.NA) & (df_s2_sig[p2] < fsl1))]
 
     df_s1_sig_final = df_s1.merge(df_s1_sig[rsid_col], on=rsid_col, how="inner")
     df_s2_sig_final = df_s2.merge(df_s2_sig[rsid_col], on=rsid_col, how="inner")
