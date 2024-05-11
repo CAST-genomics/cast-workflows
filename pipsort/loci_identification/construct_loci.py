@@ -40,7 +40,9 @@ def main():
 
 
     df1 = pd.read_csv(signals_eur, sep=delim)
+    print(df1)
     df2 = pd.read_csv(signals_afr, sep=delim)
+    print(df2)
     df = pd.concat([df1, df2], ignore_index=True)
 
     if args.chr_name_prefix != '':

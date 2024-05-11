@@ -9,8 +9,8 @@ s2_samples="${s2_samples_file%.*}"
 phen=$7 #e.g. ldl_cholesterol
 
 max_num_cr=15
-fsl_s1=0.0001
-fsl_s2=0.0001
+fsl_s1=0.001
+fsl_s2=0.001
 maf=0.01
 min_num_snps=25
 plink_file_prefix=gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/exome/plink_bed/acaf_threshold.chr${chr}
