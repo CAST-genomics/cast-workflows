@@ -49,20 +49,6 @@ def Inverse_Quantile_Normalization(M):
     Q = stats.norm.ppf(R/(M.shape[1]+1))
     Q = Q.transpose() 
     return Q
-
-# def NormalizeData_Quantile(data):
-#     # Add normalization quantile
-#     data["phenotype"] = Inverse_Quantile_Normalization(data[["phenotype"]])
-#     data["age"] = Inverse_Quantile_Normalization(data[["age"]])
-#     return data
-
-
-# def NormalizeData_Zscore(data):
-#     # Add z-score normalization
-#     data["phenotype"]  = stats.zscore(data[["phenotype"]])
-#     data["age"]  = stats.zscore(data[["phenotype"]])
-#     return data
-
  
 def main():
     parser = argparse.ArgumentParser(__doc__)
