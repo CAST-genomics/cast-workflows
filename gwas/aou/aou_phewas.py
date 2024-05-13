@@ -133,7 +133,6 @@ def main():
         #get PC
         PCs = [f'PC_{i}' for i in range(1, 16)]
         print(ptdata[PCs])
-        print(ptdata[[PCs]])
         #add normalization of phenotype and covariates
         if args.quantile:
             ptdata["phenotype"] = Inverse_Quantile_Normalization(ptdata[["phenotype"]])
