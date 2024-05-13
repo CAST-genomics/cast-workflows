@@ -137,9 +137,8 @@ def main():
             for i in range(1,16):
                 pc_name = f'PC_{i}'
                 ptdata[pc_name] = Inverse_Quantile_Normalization(ptdata[[pc_name]])
-
             
-        MSG("Quantile normalizing phenotype and age")
+            MSG("Quantile normalizing phenotype,age and pcs")
 
         if args.zscore:
             ptdata["phenotype"]  = stats.zscore(ptdata[["phenotype"]])
@@ -148,13 +147,9 @@ def main():
                 pc_name = f'PC_{i}'
                 ptdata[pc_name] = stats.zscore(ptdata[[pc_name]])
 
-        
-
-        MSG("Zscore normalizing phenotype and age")
-
-        print(ptdata.head())
+            MSG("Zscore normalizing phenotype,age and pcs")
         ptdata["intercept"] = 1
-        # Regression
+        # Regressionls
         covars = ["intercept"] + shared_covars + ptcovars 
     	# TODO, redo - need to put a flag in manifest to know if something
         #if logistic:
