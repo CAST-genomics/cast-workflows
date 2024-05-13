@@ -15,6 +15,8 @@ import statsmodels.formula.api as smf
 import statsmodels.api as sm
 import sys
 import os
+import numpy as np
+import scipy.stats as stats
 from utils import MSG, ERROR
 
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
@@ -41,6 +43,27 @@ def LoadAncestry(ancestry_pred_path):
         ancestry[p] = ancestry[p].apply(lambda x: GetFloatFromPC(x), 1)
     return ancestry
 
+def Inverse_Quantile_Normalization(M):
+    M = M.transpose()
+    R = stats.mstats.rankdata(M,axis=1)  # ties are averaged
+    Q = stats.norm.ppf(R/(M.shape[1]+1))
+    Q = Q.transpose() 
+    return Q
+
+def NormalizeData_Quantile(data):
+    # Add normalization quantile
+    data["phenotype"] = Inverse_Quantile_Normalization(data[["phenotype"]])
+    data["age"] = Inverse_Quantile_Normalization(data[["age"]])
+    return data
+
+
+def NormalizeData_Zscore(data):
+    # Add z-score normalization
+    data["phenotype"]  = stats.zscore(data[["phenotype"]])
+    data["age"]  = stats.zscore(data[["phenotype"]])
+    return data
+
+ 
 def main():
     parser = argparse.ArgumentParser(__doc__)
     # Specifying the phenotypes
@@ -53,6 +76,7 @@ def main():
     parser.add_argument("--samples", help="List of sample IDs, sex to keep", type=str, default=SAMPLEFILE)
     parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions", default=ANCESTRY_PRED_PATH)
     parser.add_argument("--num-pcs", help="Number of PCs to use as covariates", type=int, default=10)
+    parser.add_argument("--norm", help="Normalize phenotype either quantile or zscore", type=str)
     # Output options
     parser.add_argument("--out", help="Name of output file", type=str, default="stdout")
     args = parser.parse_args()
@@ -104,18 +128,25 @@ def main():
         ptcovars = [item for item in ptdata.columns if item != phenotype]
     	# Merge with genotypes. add intercept
         ptdata = pd.merge(data, ptdata, on=["person_id"])
+
+        print(ptdata.head())
+
+        #add normalization of phenotype and covariates
+        if args.quantile:
+            ptdata = ptdata.apply(NormalizeData_Quantile())
+
+        if args.zscore:
+            ptdata = ptdata.apply(NormalizeData_Zscore())
+
+
         ptdata["intercept"] = 1
         # Regression
         covars = ["intercept"] + shared_covars + ptcovars 
     	# TODO, redo - need to put a flag in manifest to know if something
         #if logistic:
             #model = smf.logit(ptdata["phenotype"], ptdata[["genotype"]+covars].astype(float))
-        #else:
-            #add linear regresssion
-       #model = OLS(ptdata["phenotype"], ptdata[["genotype"]+covars])
+
         model = sm.OLS(ptdata["phenotype"], ptdata[["genotype"]+covars].astype(float))
-    	# is case/control or quantitative. if case/control, use
-    	# logistic regression instead
             
         reg_result = model.fit()
         pval = reg_result.pvalues[0]
