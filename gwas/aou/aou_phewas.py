@@ -134,6 +134,7 @@ def main():
         if args.quantile:
             ptdata["phenotype"] = Inverse_Quantile_Normalization(ptdata[["phenotype"]])
             ptdata["age"] = Inverse_Quantile_Normalization(ptdata[["age"]])
+            print(ptdata)
             split_ptdata = ptdata["probabilities"].str.split(",")
             print(split_ptdata)
             normalized_ptdata = split_ptdata.apply(lambda x: [Inverse_Quantile_Normalization(split_ptdata) for pc in x])
