@@ -50,18 +50,18 @@ def Inverse_Quantile_Normalization(M):
     Q = Q.transpose() 
     return Q
 
-def NormalizeData_Quantile(data):
-    # Add normalization quantile
-    data["phenotype"] = Inverse_Quantile_Normalization(data[["phenotype"]])
-    data["age"] = Inverse_Quantile_Normalization(data[["age"]])
-    return data
+# def NormalizeData_Quantile(data):
+#     # Add normalization quantile
+#     data["phenotype"] = Inverse_Quantile_Normalization(data[["phenotype"]])
+#     data["age"] = Inverse_Quantile_Normalization(data[["age"]])
+#     return data
 
 
-def NormalizeData_Zscore(data):
-    # Add z-score normalization
-    data["phenotype"]  = stats.zscore(data[["phenotype"]])
-    data["age"]  = stats.zscore(data[["phenotype"]])
-    return data
+# def NormalizeData_Zscore(data):
+#     # Add z-score normalization
+#     data["phenotype"]  = stats.zscore(data[["phenotype"]])
+#     data["age"]  = stats.zscore(data[["phenotype"]])
+#     return data
 
  
 def main():
@@ -132,11 +132,13 @@ def main():
 
         #add normalization of phenotype and covariates
         if args.quantile:
-            ptdata = ptdata.apply(NormalizeData_Quantile(ptdata))
+            ptdata["phenotype"] = Inverse_Quantile_Normalization(ptdata[["phenotype"]])
+            ptdata["age"] = Inverse_Quantile_Normalization(ptdata[["age"]])
             MSG("Quantile normalizing phenotype and age")
 
         if args.zscore:
-            ptdata = ptdata.apply(NormalizeData_Zscore(ptdata))
+            ptdata["phenotype"]  = stats.zscore(ptdata[["phenotype"]])
+            ptdata["age"]  = stats.zscore(ptdata[["phenotype"]])
             MSG("Zscore normalizing phenotype and age")
 
 
