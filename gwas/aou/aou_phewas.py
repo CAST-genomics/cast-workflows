@@ -130,15 +130,13 @@ def main():
     	# Merge with genotypes. add intercept
         ptdata = pd.merge(data, ptdata, on=["person_id"])
 
-        print(ptdata.head())
-
         #add normalization of phenotype and covariates
         if args.quantile:
-            ptdata = ptdata.apply(NormalizeData_Quantile())
+            ptdata = ptdata.apply(NormalizeData_Quantile(ptdata))
             MSG("Quantile normalizing phenotype and age")
 
         if args.zscore:
-            ptdata = ptdata.apply(NormalizeData_Zscore())
+            ptdata = ptdata.apply(NormalizeData_Zscore(ptdata))
             MSG("Zscore normalizing phenotype and age")
 
 
