@@ -94,6 +94,7 @@ def main():
     data = LoadAncestry(args.ancestry_pred_path)
     data["person_id"] = data["person_id"].apply(str)
     print(data.head())
+    print(shared_covars)
 
     # Load TR genotypes for the target locus to a df and merge with data
     # Genotype should be in a column labeled "genotype"
