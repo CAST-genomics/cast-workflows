@@ -134,14 +134,22 @@ def main():
         if args.quantile:
             ptdata["phenotype"] = Inverse_Quantile_Normalization(ptdata[["phenotype"]])
             ptdata["age"] = Inverse_Quantile_Normalization(ptdata[["age"]])
-            MSG("Quantile normalizing phenotype and age")
+            split_ptdata = ptdata["probabilities"].str.split(",")
+            normalized_ptdata = split_ptdata.apply(lambda x: [Inverse_Quantile_Normalization(split_ptdata) for pc in x])
+            ptdata["probabilities"] = normalized_ptdata.apply(','.join)
+            
+        MSG("Quantile normalizing phenotype and age")
 
         if args.zscore:
             ptdata["phenotype"]  = stats.zscore(ptdata[["phenotype"]])
             ptdata["age"]  = stats.zscore(ptdata[["phenotype"]])
-            MSG("Zscore normalizing phenotype and age")
+            split_ptdata = ptdata["probabilities"].str.split(",")
+            normalized_ptdata = split_ptdata.apply(lambda x: [stats.zscore(split_ptdata) for pc in x])
+            ptdata["probabilities"] = normalized_ptdata.apply(','.join)
 
+        MSG("Zscore normalizing phenotype and age")
 
+        print(ptdata.head())
         ptdata["intercept"] = 1
         # Regression
         covars = ["intercept"] + shared_covars + ptcovars 
