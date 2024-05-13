@@ -76,7 +76,8 @@ def main():
     parser.add_argument("--samples", help="List of sample IDs, sex to keep", type=str, default=SAMPLEFILE)
     parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions", default=ANCESTRY_PRED_PATH)
     parser.add_argument("--num-pcs", help="Number of PCs to use as covariates", type=int, default=10)
-    parser.add_argument("--norm", help="Normalize phenotype either quantile or zscore", type=str)
+    parser.add_argument("--quantile", help="Quantile normalize phenotype", action="store_true", default=False)   
+    parser.add_argument("--zscore", help="Zscore normalize phenotype", action="store_true", default=False)
     # Output options
     parser.add_argument("--out", help="Name of output file", type=str, default="stdout")
     args = parser.parse_args()
