@@ -93,8 +93,7 @@ def main():
     shared_covars = [item for item in args.sharedcovars.split(",") if item != ""] + pcols
     data = LoadAncestry(args.ancestry_pred_path)
     data["person_id"] = data["person_id"].apply(str)
-    print(data.head())
-    print(shared_covars)
+
 
     # Load TR genotypes for the target locus to a df and merge with data
     # Genotype should be in a column labeled "genotype"
@@ -136,20 +135,18 @@ def main():
         if args.quantile:
             ptdata["phenotype"] = Inverse_Quantile_Normalization(ptdata[["phenotype"]])
             ptdata["age"] = Inverse_Quantile_Normalization(ptdata[["age"]])
-            print(ptdata)
-            split_ptdata = ptdata["probabilities"].str.split(",")
-            print(split_ptdata)
-            normalized_ptdata = split_ptdata.apply(lambda x: [Inverse_Quantile_Normalization(split_ptdata) for pc in x])
-            ptdata["probabilities"] = normalized_ptdata.apply(','.join)
+            PCs = [f'PC_{i}' for i in range(1, 16)]
+            ptdata[PCs] = Inverse_Quantile_Normalization(ptdata[[PCs]])
+
             
         MSG("Quantile normalizing phenotype and age")
 
         if args.zscore:
             ptdata["phenotype"]  = stats.zscore(ptdata[["phenotype"]])
             ptdata["age"]  = stats.zscore(ptdata[["phenotype"]])
-            split_ptdata = ptdata["probabilities"].str.split(",")
-            normalized_ptdata = split_ptdata.apply(lambda x: [stats.zscore(split_ptdata) for pc in x])
-            ptdata["probabilities"] = normalized_ptdata.apply(','.join)
+            PCs = [f'PC_{i}' for i in range(1, 16)]
+            ptdata[PCs] = stats.zscore(ptdata[[PCs]])
+        
 
         MSG("Zscore normalizing phenotype and age")
 
