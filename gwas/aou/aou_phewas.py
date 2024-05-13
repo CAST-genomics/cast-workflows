@@ -136,7 +136,7 @@ def main():
             ptdata["age"] = Inverse_Quantile_Normalization(ptdata[["age"]])
             for i in range(1,16):
                 pc_name = f'PC_{i}'
-                ptdata[pc_name] = Inverse_Quantile_Normalization(ptdata[["pc_name"]])
+                ptdata[pc_name] = Inverse_Quantile_Normalization(ptdata[[pc_name]])
 
             
         MSG("Quantile normalizing phenotype and age")
@@ -144,10 +144,9 @@ def main():
         if args.zscore:
             ptdata["phenotype"]  = stats.zscore(ptdata[["phenotype"]])
             ptdata["age"]  = stats.zscore(ptdata[["phenotype"]])
-            PCs = [f'PC_{i}' for i in range(1, 16)]
             for i in range(1,16):
                 pc_name = f'PC_{i}'
-                ptdata[pc_name] = stats.zscore(ptdata[["pc_name"]])
+                ptdata[pc_name] = stats.zscore(ptdata[[pc_name]])
 
         
 
