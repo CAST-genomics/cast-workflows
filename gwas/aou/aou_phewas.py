@@ -134,9 +134,11 @@ def main():
         #add normalization of phenotype and covariates
         if args.quantile:
             ptdata = ptdata.apply(NormalizeData_Quantile())
+            MSG("Quantile normalizing phenotype and age")
 
         if args.zscore:
             ptdata = ptdata.apply(NormalizeData_Zscore())
+            MSG("Zscore normalizing phenotype and age")
 
 
         ptdata["intercept"] = 1
