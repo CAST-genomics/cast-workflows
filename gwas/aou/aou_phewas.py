@@ -132,7 +132,7 @@ def main():
         ptdata = pd.merge(data, ptdata, on=["person_id"])
         #add normalization of phenotype and covariates
         if args.quantile:
-            ptdata["phenotype"] = Inverse_Quantile_Normalization(ptdata[["phenotype"]])
+            #ptdata["phenotype"] = Inverse_Quantile_Normalization(ptdata[["phenotype"]])
             ptdata["age"] = Inverse_Quantile_Normalization(ptdata[["age"]])
             for i in range(1,16):
                 pc_name = f'PC_{i}'
@@ -141,7 +141,7 @@ def main():
             MSG("Quantile normalizing phenotype,age and pcs")
 
         if args.zscore:
-            ptdata["phenotype"]  = stats.zscore(ptdata[["phenotype"]])
+            #ptdata["phenotype"]  = stats.zscore(ptdata[["phenotype"]])
             ptdata["age"]  = stats.zscore(ptdata[["phenotype"]])
             for i in range(1,16):
                 pc_name = f'PC_{i}'
