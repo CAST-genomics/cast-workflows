@@ -13,7 +13,7 @@ class AssociaTRRunner:
         self.ptcovar = ptcovar
         self.pt_npy = None
         self.covar_npy = None
-        self.trvcf = trvcf
+        self.trvcf = trvcf.replace(".vcf" ,"_sorted.vcf.gz")
         self.region = region
         self.covars = covars
         self.gwas = None
@@ -48,7 +48,8 @@ class AssociaTRRunner:
         plot_genotype_residuals = False
         plotting_ci_alphas = []
         imputed_ukb_strs_paper_period_check = False
-        outfile = tempfile.NamedTemporaryFile(suffix='.tsv')
+        #outfile = tempfile.NamedTemporaryFile(suffix='.tsv')
+        outfile = open("associaTR.tsv", "w")
         trtools.associaTR.perform_gwas(
             outfile.name,
             self.trvcf,

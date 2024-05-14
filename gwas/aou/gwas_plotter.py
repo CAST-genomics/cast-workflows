@@ -15,15 +15,37 @@ def plot_histogram(data, outpath):
     plot = sns.histplot(data)
     plt.savefig(outpath)
 
-def plot_genotype_phenotype(data, genotype, phenotype, outpath):
+def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, outpath):
     plt.clf()
-    plotted_data = data[[genotype, phenotype]]
+    plotted_data = data[[genotype, phenotype]].dropna()
     plotted_data = plotted_data.astype(float)
     plot = sns.jointplot(
             data=plotted_data,
             alpha=0.5,
             x=genotype,
             y=phenotype)
+    effect_size = gwas.loc[(gwas["chrom"] == chrom) &\
+                        (gwas["pos"] == pos), 'beta'].item()
+    #print("effect size {:.4}".format(effect_size))
+    # Draw a line corresponding to the effect size
+    #point_1 = [min(data[genotype]), min(data[phenotype])]
+    x_0 = data[genotype].mean()
+    y_0 = data[phenotype].mean()
+    x_1 = data[genotype].mean() - 2 * data[genotype].std()
+    x_2 = data[genotype].mean() + 2 * data[genotype].std()
+
+    point_1 = [x_1,
+               #data[phenotype].mean() - data[phenotype].std()]
+               y_0 + (x_1 - x_0) * effect_size]
+    point_2 = [x_2,
+               y_0 + (x_2 - x_0) * effect_size]
+    plot.ax_joint.plot([point_1[0], x_0, point_2[0]],
+                       [point_1[1], y_0, point_2[1]],
+                       'b-', linewidth = 1)
+    plot.ax_joint.text(x=x_0 + data[genotype].std(),
+            y=y_0 + data[phenotype].std(),
+            s="effect size: {:.4}".format(effect_size),
+            fontsize="medium", weight='bold')
     plt.savefig(outpath)
 
 def annotate_points(ax, gwas):
@@ -32,7 +54,12 @@ def annotate_points(ax, gwas):
                   ("chr17", "30237128", "SLC6A4"),
                   ("chr6", "81752005", "TENT5A"),
                   ("chr20", "2652732", "NOP56"),
-                  ("chr1", "155190864", "MUC1")]:
+                  ("chrX", "43654436", "MAOA"),
+                  ("chr15", "101334170", "PCSK6"),
+                  ("chr12", "2255790", "CACNA1C"),
+                  ("chr1", "155190864", "MUC1"),
+                  ("chr21", "43776443", "CSTB"),
+                  ]:
         chrom, position, label = point
         locus = gwas[(gwas["chrom"] == chrom) & \
                  (gwas["pos"] == int(position))]
@@ -54,7 +81,8 @@ def PlotManhattan(gwas, outpath):
     plot.ax.set_xticklabels(chrom_df.index)
 
     # Put the threshold
-    plot.ax.axhline(-np.log10(5*10**-8), linestyle="--", linewidth=1)
+    #plot.ax.axhline(-np.log10(5*10**-8), linestyle="--", linewidth=1)
+    plot.ax.axhline(-np.log10(1*10**-3), linestyle="--", linewidth=1)
     plot.fig.savefig(outpath)
 
 def ppoints(n, a=None):

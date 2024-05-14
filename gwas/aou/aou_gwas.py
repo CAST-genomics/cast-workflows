@@ -128,19 +128,22 @@ def get_rc_from_allele(vcf_df_row, allele):
         #print("call {} allele {}".format(allele, rc))
         return rc
 
-def get_mean_rc_from_call(vcf_df_row, call):
+def get_individual_rcs_from_call(vcf_df_row, call):
     allele_1, allele_2 = call.split("/")
     rc_1 = get_rc_from_allele(vcf_df_row, int(allele_1))
     rc_2 = get_rc_from_allele(vcf_df_row, int(allele_2))
-    return (rc_1 + rc_2) / 2
+    return rc_1, rc_2
+
+def get_overall_rc_from_call(vcf_df_row, call):
+    allele_1, allele_2 = call.split("/")
+    rc_1 = get_rc_from_allele(vcf_df_row, int(allele_1))
+    rc_2 = get_rc_from_allele(vcf_df_row, int(allele_2))
+    return (rc_1 + rc_2)/2.0
 
 
 def set_genotypes(data, args):
-    #print(data.columns)
-    #print(data.index)
     # Plot phenotype histogram
-    if args.phenotype.startswith("height"):
-        plot_histogram(data["phenotype"], "outputs/{}_histogram_after_norm.png".format(args.phenotype))
+    plot_histogram(data["phenotype"], "outputs/{}_histogram_after_norm.png".format(args.phenotype))
     # Read input VCF file into a dataframe
     lines = None
     with open(args.tr_vcf, "r") as vcf_file:
@@ -148,20 +151,26 @@ def set_genotypes(data, args):
     vcf_df = pd.read_csv(StringIO(re.sub("#CHROM", "CHROM", lines)), sep="\t", comment='#')
 
     # Set up an output vcf file for normalized values
-    normalized_file = open("normalized.vcf", "w+")
-    for line in lines:
-        if line.startswith("#"):
-            normalized_file.write(line + "\n")
-
+    #normalized_file = open("normalized.vcf", "w+")
+    #for line in lines:
+    #    if line.startswith("#"):
+    #        normalized_file.write(line + "\n")
     # Focus on a few loci of interest
     for chrom, start, gene in [("chr15", "88855424", "ACAN"),
-                  ("chr1", "155190864", "MUC1")
+                  ("chr17", "30237128", "SLC6A4"),
+                  ("chr6", "81752005", "TENT5A"),
+                  ("chr20", "2652732", "NOP56"),
+                  ("chr15", "101334170", "PCSK6"),
+                  ("chrX", "43654436", "MAOA"),
+                  ("chr12", "2255790", "CACNA1C"),
+                  ("chr1", "155190864", "MUC1"),
+                  ("chr21", "43776443", "CSTB"),
                   ]:
+        all_alleles = []
 
         locus_calls = vcf_df[(vcf_df["CHROM"] == chrom) & \
                              (vcf_df["POS"] == int(start))
                              ]
-        #print(vcf_df.columns)
         data.loc[:, [gene]] = np.nan
         samples_with_calls = set()
         shared_columns = []
@@ -173,71 +182,44 @@ def set_genotypes(data, args):
                 if call == ".":
                     # Equal to no call
                     continue
-                rc = get_mean_rc_from_call(locus_calls, call)
+
+                rc = get_overall_rc_from_call(locus_calls, call)
+                # Get individual alleles for plotting
+                rc_1, rc_2 = get_individual_rcs_from_call(locus_calls, call)
+                all_alleles.extend([rc_1, rc_2])
+
+
+                # Remove outliers for CACNA1C
+                #if gene == "CACNA1C" and (rc < 2*180 or rc > 2*205):
+                #    continue
                 samples_with_calls.add(column)
                 data.loc[data["person_id"]==column, gene] = rc
             else:
                 shared_columns.append(column)
-        data = data.dropna(subset=[gene, "phenotype"])
-
+        #data = data.dropna(subset=[gene, "phenotype"])
+        
+        # Plot individual alleles for ACAN
+        if gene == "ACAN" and args.phenotype == "height":
+            plot_histogram(all_alleles, "outputs/ACAN_alleles_height.png")
         # Normalize genotypes
         #data.loc[:, [gene]] = stats.zscore(data[gene])
         #data.loc[:, [gene]] = Inverse_Quantile_Normalization(data[[gene]])
         
         # Write output normalized file
-        locus_normalized = data.loc[:, [gene]]
+        #locus_normalized = data.loc[:, [gene]]
         #normalized_file.write(shared_columns + )
-        # TODO: transform RCs back to vcf format. Add SP, ML and other info as well
 
 
-        print("len of data after removing samples with no calls or no phenotypes {}: {}".format(
-                args.phenotype, len(data)))
+        #print("len of data after removing samples with no calls or no phenotypes {}: {}".format(
+        #        args.phenotype, len(data)))
         #print(plotted_data.head())
-        plot_genotype_phenotype(data=data,
-                    genotype=gene,
-                    phenotype="phenotype",
-                    outpath="outputs/{}_genotype_{}.png".format(gene, args.phenotype))
+        # Plotting genotype phenotype later when we have the effect sizes.
+        #plot_genotype_phenotype(data=data,
+        #            genotype=gene,
+        #            phenotype="phenotype",
+        #            outpath="outputs/{}_genotype_{}.png".format(gene, args.phenotype))
     return data
 
-def set_genotypes_pyvcf(data, args):
-    #print(data.columns)
-    #print(data.index)
-    plot_histogram(data["phenotype"], "{}_histogram_after_norm.png".format(args.phenotype))
-    for chrom, start, gene in [("chr15", "88855424", "ACAN"),
-                  ("chr1", "155190864", "MUC1")
-                  ]:
-        locus_calls, samples = [], []
-        vcf_reader = vcf.Reader(open(args.tr_vcf, "r"))
-        vcf_writer = vcf.Writer(open('normalized.vcf', 'w'), vcf_reader)
-        for record in vcf_reader:
-            if not (record.CHROM == chrom and \
-                     record.POS == int(start)):
-                # Unrelated loci
-                continue
-            for sample in all_samples:
-                # Corresponds to a sample id
-                call = record.genotype(sample)
-                call = call.split(":")[0]
-                if call == ".":
-                    # Equal to no call
-                    continue
-                locus_calls.append(call)
-                samples.append(samples)
-                rc = get_mean_rc_from_call_record(record, call)
-            # Normalize genotypes
-            #data.loc[:, [gene]] = stats.zscore(data[gene])
-            normalized_locus_calls = Inverse_Quantile_Normalization(locus_calls)
-            for sample in samples:
-                record.genotype # TODO: Don't know how to set the record genotype
-            vcf_writer.write_record(record)
-        
-        print("len of data after removing samples with no calls or no phenotypes:", len(data))
-        #print(plotted_data.head())
-        plot_genotype_phenotype(data=data,
-                    genotype=gene,
-                    phenotype="phenotype",
-                    outpath="{}_genotype_{}.png".format(gene, args.phenotype))
-    return data
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
@@ -350,6 +332,27 @@ def main():
 
     # Plot Manhattan
     if args.plot:
+        for chrom, pos, gene in [("chr15", 88855424, "ACAN"),
+                  ("chr17", 30237128, "SLC6A4"),
+                  ("chr6", 81752005, "TENT5A"),
+                  ("chr20", 2652732, "NOP56"),
+                  ("chr15", 101334170, "PCSK6"),
+                  ("chrX", 43654436, "MAOA"),
+                  ("chr12", 2255790, "CACNA1C"),
+                  ("chr1", 155190864, "MUC1"),
+                  ("chr21", 43776443, "CSTB"),,
+                  ]:
+            #print("Plotting genotype phenotype for gene {} and phenotype {}".format(
+            #            gene, args.phenotype))
+            #print("data.columns ", data.columns)
+            plot_genotype_phenotype(data=data,
+                    genotype=gene,
+                    gwas=runner.gwas,
+                    chrom=chrom,
+                    pos=pos,
+                    phenotype="phenotype",
+                    outpath="outputs/{}_genotype_{}.png".format(gene, args.phenotype))
+
         PlotManhattan(runner.gwas, outpath+".manhattan.png")
         PlotQQ(runner.gwas, outpath+".qq.png")
 
