@@ -1,12 +1,13 @@
 """
 Classes for performing GWAS
 """
-
+import os
 import hail as hl
 import numpy as np
 import pandas as pd
 
-MT_WGS_PATH = 'gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/acaf_threshold/multiMT/hail.mt' 
+#MT_WGS_PATH = 'gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/acaf_threshold/multiMT/hail.mt' 
+MT_WGS_PATH = os.getenv("WGS_ACAF_THRESHOLD_MULTI_HAIL_PATH")
 SMALLNUM = 10e-400
 
 class HailRunner:
