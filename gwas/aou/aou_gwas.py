@@ -294,8 +294,8 @@ def main():
         # Apply normalization on the entire data.
         if args.norm is not None:
             data = NormalizeData(data=data, norm=args.norm)
-
-    data = set_genotypes(data, args)
+    if args.method == "associaTR":
+        data = set_genotypes(data, args)
 
     # Add shared covars
     sampfile = args.samples
@@ -327,12 +327,16 @@ def main():
 
     # Run GWAS
     outpath = GetOutPath(args.phenotype, args.method, args.region, sampfile)
-    runner.RunGWAS()
-    WriteGWAS(runner.gwas, outpath+".tab", covars)
+    #runner.RunGWAS()
+    #WriteGWAS(runner.gwas, outpath+".tab", covars)
+    runner.gwas = pd.read_csv(outpath+".tab", sep="\t")
 
     # Plot Manhattan
     if args.plot:
-        for chrom, pos, gene in [("chr15", 88855424, "ACAN"),
+        if args.method == "associaTR":
+            annotate = True
+            p_value_threshold = -np.log10(5*10**-3)
+            for chrom, pos, gene in [("chr15", 88855424, "ACAN"),
                   ("chr17", 30237128, "SLC6A4"),
                   ("chr6", 81752005, "TENT5A"),
                   ("chr20", 2652732, "NOP56"),
@@ -340,20 +344,33 @@ def main():
                   ("chrX", 43654436, "MAOA"),
                   ("chr12", 2255790, "CACNA1C"),
                   ("chr1", 155190864, "MUC1"),
-                  ("chr21", 43776443, "CSTB"),,
+                  ("chr21", 43776443, "CSTB"),
                   ]:
-            #print("Plotting genotype phenotype for gene {} and phenotype {}".format(
-            #            gene, args.phenotype))
-            #print("data.columns ", data.columns)
-            plot_genotype_phenotype(data=data,
-                    genotype=gene,
-                    gwas=runner.gwas,
-                    chrom=chrom,
-                    pos=pos,
-                    phenotype="phenotype",
-                    outpath="outputs/{}_genotype_{}.png".format(gene, args.phenotype))
+                plot_genotype_phenotype(data=data,
+                        genotype=gene,
+                        gwas=runner.gwas,
+                        chrom=chrom,
+                        pos=pos,
+                        phenotype="phenotype",
+                        outpath="outputs/{}_genotype_{}.png".format(gene, args.phenotype))
+        else:
+            # no text annotation on manhattan plot for hail runner
+            annotate = False
+            p_value_threshold = -np.log10(5*10**-8)
+            print("GWAS index and column")
+            print(runner.gwas.index)
+            print(runner.gwas.column)
+            added_points = {"chrom": ["chr15", "chr15"],
+                            "pos": [88855424,88857434],
+                            "p_value": [0.1, 0.01],
+                            }
+            runner.gwas = runner.gwas.append(added_points, ignore_index=True)
+            runner.gwas = runner.gwas.sort(['chrom', 'pos']).reset_index(drop=True)
 
-        PlotManhattan(runner.gwas, outpath+".manhattan.png")
+
+        PlotManhattan(runner.gwas, outpath+".manhattan.png",
+                      annotate=annotate,
+                      p_value_threshold=p_value_threshold)
         PlotQQ(runner.gwas, outpath+".qq.png")
 
 if __name__ == "__main__":

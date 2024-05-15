@@ -67,13 +67,16 @@ def annotate_points(ax, gwas):
         y = locus["-log10pvalue"].values[0]
         ax.text(x=x, y=y, s=label, fontsize="medium")
 
-def PlotManhattan(gwas, outpath):
+def PlotManhattan(gwas, outpath, annotate=False,
+                p_value_threshold=-np.log10(5*10**-8)
+                ):
     gwas["ind"] = range(gwas.shape[0])
     plot = sns.relplot(data=gwas, x="ind", y="-log10pvalue", \
         s=30, aspect=4, linewidth=0, hue="chrom", palette="tab10", legend=None)
     chrom_df = gwas.groupby("chrom")["ind"].median()
 
-    annotate_points(plot.ax, gwas)
+    if annotate:
+        annotate_points(plot.ax, gwas)
 
     # Set labels
     plot.ax.set_xlabel("Chromosome")
@@ -81,8 +84,7 @@ def PlotManhattan(gwas, outpath):
     plot.ax.set_xticklabels(chrom_df.index)
 
     # Put the threshold
-    #plot.ax.axhline(-np.log10(5*10**-8), linestyle="--", linewidth=1)
-    plot.ax.axhline(-np.log10(1*10**-3), linestyle="--", linewidth=1)
+    plot.ax.axhline(p_value_threshold, linestyle="--", linewidth=1)
     plot.fig.savefig(outpath)
 
 def ppoints(n, a=None):
