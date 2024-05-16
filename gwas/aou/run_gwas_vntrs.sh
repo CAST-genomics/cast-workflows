@@ -10,11 +10,15 @@ echo "" > summary_gwas.txt
 #	      --plot
 ./aou_gwas.py --phenotype height \
 	      --num-pcs 10 \
+	      --region chr15:77855424-99857434 \
 	      --method hail \
-	      --region chr15:88000000-90000000\
 	      --norm quantile \
 	      --norm-by-sex \
 	      --plot
+	      #--region chr15:83855424-93857434 \ #5Mbp window
+	      #--region chr15:87855424-89857434 \ # 1Mbp window
+	      #--region chr15:88000000-90000000 \
+	      #--region chr15:88855400-88857500 \
 	      #--region chr15:88855424-88857434
 	      #--tr-vcf ${WORKSPACE_BUCKET}/saraj/batch_genotyping/run_8/merged_outputs/run_merge_advntr/d06c3f27-b7b7-41ad-9cfb-8e7161c43fce/call-merge_outputs/merged_samples.vcf
 exit 0

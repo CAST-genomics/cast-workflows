@@ -68,12 +68,26 @@ def annotate_points(ax, gwas):
         ax.text(x=x, y=y, s=label, fontsize="medium")
 
 def PlotManhattan(gwas, outpath, annotate=False,
-                p_value_threshold=-np.log10(5*10**-8)
+                p_value_threshold=-np.log10(5*10**-8),
+                extra_points=None
                 ):
     gwas["ind"] = range(gwas.shape[0])
+    num_points = gwas.shape[0]
+    print("Number of points in manhattan plot: ", gwas.shape[0])
     plot = sns.relplot(data=gwas, x="ind", y="-log10pvalue", \
         s=30, aspect=4, linewidth=0, hue="chrom", palette="tab10", legend=None)
     chrom_df = gwas.groupby("chrom")["ind"].median()
+
+    if extra_points:
+        for chrom, pos, p_value, label in extra_points:
+            chrom_gwas = gwas[gwas["chrom"] == chrom] 
+            # Index of the new node in the manhattan plot is the number of values
+            # with position smaller than the current position.
+            index = len(chrom_gwas[chrom_gwas["pos"] < pos])
+            plot.axes[0][0].scatter(x=index, y=p_value, color="red", marker="^")
+            plot.axes[0][0].text(x=index, y=p_value, s=label, fontsize="medium")
+            plot.set(ylim=(0, max(gwas['-log10pvalue']) + 1), xlim=(0, num_points))
+
 
     if annotate:
         annotate_points(plot.ax, gwas)

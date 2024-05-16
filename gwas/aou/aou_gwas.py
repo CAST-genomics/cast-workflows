@@ -327,9 +327,9 @@ def main():
 
     # Run GWAS
     outpath = GetOutPath(args.phenotype, args.method, args.region, sampfile)
-    #runner.RunGWAS()
-    #WriteGWAS(runner.gwas, outpath+".tab", covars)
-    runner.gwas = pd.read_csv(outpath+".tab", sep="\t")
+    runner.RunGWAS()
+    WriteGWAS(runner.gwas, outpath+".tab", covars)
+    #runner.gwas = pd.read_csv(outpath+".tab", sep="\t")
 
     # Plot Manhattan
     if args.plot:
@@ -359,18 +359,22 @@ def main():
             p_value_threshold = -np.log10(5*10**-8)
             print("GWAS index and column")
             print(runner.gwas.index)
-            print(runner.gwas.column)
-            added_points = {"chrom": ["chr15", "chr15"],
-                            "pos": [88855424,88857434],
-                            "p_value": [0.1, 0.01],
-                            }
-            runner.gwas = runner.gwas.append(added_points, ignore_index=True)
-            runner.gwas = runner.gwas.sort(['chrom', 'pos']).reset_index(drop=True)
+            print(runner.gwas.columns)
+            #added_points = {"chrom": ["chr15", "chr15"],
+            #                "pos": [88855424,88857434],
+            #                "p_value": [0.1, 0.01],
+            #                }
+            #runner.gwas = runner.gwas.append(added_points, ignore_index=True)
+            #runner.gwas = runner.gwas.sort(['chrom', 'pos']).reset_index(drop=True)
 
 
         PlotManhattan(runner.gwas, outpath+".manhattan.png",
                       annotate=annotate,
-                      p_value_threshold=p_value_threshold)
+                      p_value_threshold=p_value_threshold,
+                      extra_points=[
+                          ("chr15", 88855424, 1, "ACAN_v_s"),
+                          ("chr15", 88857434, 1, "ACAN_v_e")
+                          ])
         PlotQQ(runner.gwas, outpath+".qq.png")
 
 if __name__ == "__main__":
