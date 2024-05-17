@@ -47,7 +47,7 @@ task mergestr {
   >>>
     
   runtime {
-      docker: "gcr.io/ucsd-medicine-cast/trtools-mergestr-files:latest"
+      docker: "gcr.io/ucsd-medicine-cast/trtools-6.0.1:latest "
       memory: merge_mem +"GB"
   }
 
