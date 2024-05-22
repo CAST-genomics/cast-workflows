@@ -95,7 +95,7 @@ task beagle {
       java -Xmx20g -jar /beagle.jar \
             gt=~{vcf} \
             ref=~{ref_panel} \
-            window=20 \
+            window=5 \
             out=~{out_prefix}
     >>>
     
@@ -122,6 +122,8 @@ task sort_index_beagle {
 
     command <<<
         zcat ~{vcf} | vcf-sort | bgzip -c > ~{basename}.sorted.vcf.gz && tabix -p vcf ~{basename}.sorted.vcf.gz
+        echo "Number of TRs in the vcf file"
+	bcftools view -i 'ID="."' ~{basename}.sorted.vcf.gz | wc -l
     >>>
 
     runtime {
