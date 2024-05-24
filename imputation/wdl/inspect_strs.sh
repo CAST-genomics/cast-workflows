@@ -1,4 +1,5 @@
 #!/bin/bash
 
 vcf_file=$1
-bcftools view -i 'ID="."' $vcf_file | wc -l
+tabix -p vcf $vcf_file
+bcftools view -i 'ID="."' $vcf_file | grep -v "^#" | wc -l
