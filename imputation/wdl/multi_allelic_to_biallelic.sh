@@ -1,11 +1,14 @@
 #!/bin/bash
 
-panel_vcf="data/chr21_final_SNP_merged_additional_TRs_biallelic.vcf"
-panel_vcf_uniq_id="data/chr21_final_SNP_merged_additional_TRs_biallelic_uniq_id.vcf.gz"
-gt_vcf="data/ALL.chr21.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz"
-gt_vcf_biallelic="data/ALL.chr21.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes_biallelic.vcf"
-gt_vcf_uniq_id="data/ALL.chr21.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes_bialleleic_uniq_id.vcf.gz"
-gt_vcf_uniq_id_sorted="data/ALL.chr21.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes_bialleleic_uniq_id.sorted.vcf.gz"
+chr="chr21"
+panel_base="data/${chr}_final_SNP_merged_additional_TRs_biallelic"
+panel_vcf="$panel_base.vcf"
+panel_vcf_uniq_id="data/${chr}_final_SNP_merged_additional_TRs_biallelic_uniq_id.vcf.gz"
+gt_vcf_base="data/ALL.${chr}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased_chr"
+gt_vcf="$gt_vcf_base.vcf.gz"
+gt_vcf_biallelic="${gt_vcf_base}_biallelic.vcf"
+gt_vcf_uniq_id="${gt_vcf_base}_bialleleic_uniq_id.vcf.gz"
+gt_vcf_uniq_id_sorted="${gt_vcf_base}_bialleleic_uniq_id.sorted.vcf.gz"
 vcf=$gt_vcf
 vcf_biallelic=$gt_vcf_biallelic
 vcf_uniq_id=$gt_vcf_uniq_id
