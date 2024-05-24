@@ -1,6 +1,7 @@
 #!/bin/bash
 
-gt="data/ALL.chr21.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes_bialleleic_uniq_id_name.sorted.vcf.gz"
+#gt="data/ALL.chr21.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes_bialleleic_uniq_id_name.sorted.vcf.gz"
+gt="data/ALL.chr21.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased_chr.vcf.gz"
 ref="data/chr21_final_SNP_merged_additional_TRs_biallelic_uniq_id_rm_dups.vcf"
 
 java -Xmx12g -jar beagle/beagle.01Mar24.d36.jar \

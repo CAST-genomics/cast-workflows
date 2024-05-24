@@ -11,9 +11,13 @@ if [ ! -e $gt_file ]; then
   wget $gt_url.tbi
 fi
 
-zcat $gt_file | grep "^#" > $gt_file_chr
-zcat $gt_file | grep -v "^#" | awk '{print("chr"$0)}' >> $gt_file_chr
-cat $gt_file_chr | bgzip -c > $gt_file_chr.gz && tabix -p $gt_file_chr.gz
+if [ ! -e $gt_file_chr ]; then
+ zcat $gt_file | grep "^#" > $gt_file_chr
+ zcat $gt_file | grep -v "^#" | awk '{print("chr"$0)}' >> $gt_file_chr
+fi
+
+bgzip -c $gt_file_chr > $gt_file_chr.gz
+tabix -p vcf $gt_file_chr.gz
 rm $gt_file_chr
 
 ref_file="${chr}_final_SNP_merged_additional_TRs.vcf.gz"
