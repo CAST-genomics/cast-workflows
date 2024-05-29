@@ -1,10 +1,11 @@
 #!/bin/bash
 
-vcf="$WORKSPACE_BUCKET/tr_imputation/tr_imputation/21_final_SNP_merged_additional_TRs.vcf.gz"
-ref="$WORKSPACE_BUCKET/tr_imputation/tr_imputation/ALL.chr21.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz"
-map="$WORKSPACE_BUCKET/tr_imputation/tr_imputation/genetic_map_hg38_withX.txt.gz"
-python build_reference_aou.py \
+region="chr15:83855424-93857434"
+snp_vcf="gs://fc-aou-datasets-controlled/v7/wgs/long_read/joint_vcf/GRCh38/cohort_for_GLNexus_2023Q1_1027.g.vcf.bgz"
+vntr_vcf="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/ACAN_merged_samples.sorted.vcf.gz"
+
+python create_reference.py \
 	--name tr_build_reference \
-	--vcf $vcf \
-	--ref-panel $ref \
-	--map $map
+	--snp-vcf $snp_vcf \
+	--vntr-vcf $vntr_vcf \
+	--region $region

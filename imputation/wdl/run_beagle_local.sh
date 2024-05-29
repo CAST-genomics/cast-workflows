@@ -10,14 +10,17 @@ beagle_5_4="beagle.01Mar24.d36.jar"
 beagle_5_4_old="beagle.19Apr22.7c0.jar"
 beagle_5_3="beagle.08Feb22.fa4.jar"
 beagle=$beagle_5_4_old
+date
+date > time.txt
 java -Xmx10g -jar $beagle \
 	gt=$gt \
 	ref=$ref \
-	out=data/output_${chr}_ensemble \
-	window=5 \
+	out=data/output_${chr}_ensemble_apr_22_bref \
+	window=10 \
 	overlap=2
-	#overlap=2
 	#map=genetic_map/plink.chr21.GRCh38.map
 # 
 #gt=data/21_final_SNP_merged_additional_TRs.vcf.gz \
 	#map=genetic_map/beagle_chr21_b38.map
+date >> time.txt
+date

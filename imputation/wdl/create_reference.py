@@ -28,7 +28,7 @@ def RunWorkflow(json_file, json_options_file, dryrun=False):
 	"""
 	#cmd = "cromshell submit ../wdl/beagle.wdl {json} -op {options}".format(json=json_file, options=json_options_file)
 	cmd = "java -jar -Dconfig.file={} ".format("/home/jupyter/cromwell.conf") + \
-				"cromwell-86.jar run beagle.wdl " + \
+				"cromwell-87.jar run create_reference.wdl " + \
 				"--inputs {} --options {}".format(json_file, json_options_file)
 	if dryrun:
 		sys.stderr.write("Run: %s\n"%cmd)
@@ -54,26 +54,22 @@ def UploadGS(local_path, gcp_path):
 def main():
 	parser = argparse.ArgumentParser(__doc__)
 	parser.add_argument("--name", help="Name of the TR job", required=True, type=str)
-	parser.add_argument("--vcf", help="Name of the genotype vcf file", required=True, type=str)
-	parser.add_argument("--map", help="Name of the genetic map file provided by Beagle", required=True, type=str)
-	parser.add_argument("--ref-panel", help="File id of ref genome", type=str)
+	parser.add_argument("--snp-vcf", help="Name of the genotype vcf file including snps", required=True, type=str)
+	parser.add_argument("--region", help="region in the SNP file to be extracted", required=True, type=str)
+	parser.add_argument("--vntr-vcf", help="Name of the genotype vcf file including vntr(s)", required=True, type=str)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 
 	args = parser.parse_args()
 
 	
-	# Get token
-	token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
-		capture_output=True, check=True, encoding='utf-8')
-	token = str.strip(token_fetch_command.stdout)
-
 	# Set up output bucket
 	bucket = os.getenv("WORKSPACE_BUCKET")
 	project = os.getenv("GOOGLE_PROJECT")
 	output_bucket = bucket + "/" + args.name
+	output_path = os.path.join(bucket, "workflows", "cromwell-executions", "vntr_ref")
 
 	# Upload vcf file
-	if args.vcf.startswith("gs://"):
+	'''if args.vcf.startswith("gs://"):
 		vcf_gcs = args.vcf
 	else:
 				# Copying the vcf file
@@ -81,16 +77,16 @@ def main():
 		UploadGS(args.vcf, vcf_gcs)
 				# Copying the index file
 		UploadGS(args.vcf + ".tbi", vcf_gcs)
-
+        '''
 	# Set up workflow JSON
 	json_dict = {}
-	json_dict["beagle.map"] = args.map
-	json_dict["beagle.vcf"] = args.vcf
-	json_dict["beagle.vcf_index"]=args.vcf+".tbi"
-	json_dict["beagle.ref_panel"] = args.ref_panel
-	json_dict["beagle.ref_panel_index"] = args.ref_panel+".tbi"
-	json_dict["beagle.out_prefix"] = args.name
-	json_dict["beagle.GOOGLE_PROJECT"] = project
+	json_dict["create_reference.snp_vcf"] = args.snp_vcf
+	json_dict["create_reference.snp_vcf_index"]=args.snp_vcf+".tbi"
+	json_dict["create_reference.vntr_vcf"] = args.vntr_vcf
+	json_dict["create_reference.vntr_vcf_index"]=args.vntr_vcf+".tbi"
+	json_dict["create_reference.region"] = args.region
+	json_dict["create_reference.out_prefix"] = args.name
+	json_dict["create_reference.GOOGLE_PROJECT"] = project
 
 	# Convert to json and save as a file
 	json_file = args.name+".aou.json"
@@ -98,8 +94,8 @@ def main():
 		json.dump(json_dict, f, indent=4)
 
 
-	# Set up json optionsß
-	json_options_dict = {}
+	# Set up json options
+	json_options_dict = {"jes_gcs_root": output_path}
 	json_options_file = args.name+".options.aou.json"
 	with open(json_options_file, "w") as f:
 		json.dump(json_options_dict, f, indent=4)

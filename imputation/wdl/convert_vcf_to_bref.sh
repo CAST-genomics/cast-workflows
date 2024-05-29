@@ -1,6 +1,6 @@
 #!/bin/bash
 
-chr="chr22"
+chr="chr11"
 new_bref="bref3.01Mar24.d36.jar"
 old_bref="bref3.19Apr22.7c0.jar"
 bref=$new_bref
