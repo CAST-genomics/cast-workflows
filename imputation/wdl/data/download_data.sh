@@ -1,6 +1,14 @@
 #!/bin/bash
 
-for chr in "chr19"; do
+for chr in "chr6"; do
+  ref_file="${chr}_final_SNP_merged_additional_TRs.vcf.gz"
+  ref_url="https://ensemble-tr.s3.us-east-2.amazonaws.com/additional-phased-trs/$ref_file"
+  
+  if [ ! -e $ref_file ]; then
+    wget $ref_url
+    wget $ref_url.tbi
+  fi
+  exit 0
 
   gt_file="ALL.${chr}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz"
   gt_file_chr="ALL.${chr}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased_chr.vcf"
@@ -20,11 +28,4 @@ for chr in "chr19"; do
   tabix -p vcf $gt_file_chr.gz
   rm $gt_file_chr
   
-  ref_file="${chr}_final_SNP_merged_additional_TRs.vcf.gz"
-  ref_url="https://ensemble-tr.s3.us-east-2.amazonaws.com/additional-phased-trs/$ref_file"
-  
-  if [ ! -e $ref_file ]; then
-    wget $ref_url
-    wget $ref_url.tbi
-  fi
 done

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Beagle
-wget "https://faculty.washington.edu/browning/beagle/beagle.01Mar24.d36.jar"
+#wget "https://faculty.washington.edu/browning/beagle/beagle.01Mar24.d36.jar"
 wget "https://faculty.washington.edu/browning/beagle/beagle.19Apr22.7c0.jar"
 
 # Bref
