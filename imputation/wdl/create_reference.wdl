@@ -2,8 +2,8 @@ version 1.0
 
 workflow create_reference {
     input {
-        File vntr_vcf
-        File vntr_vcf_index
+        String vntr_vcf
+        String vntr_vcf_index
         String snp_vcf  
         String snp_vcf_index
         String region
@@ -24,7 +24,9 @@ workflow create_reference {
     output {
         File snp_outfile = merge_vntr_nearby_snps.snp_outfile 
         File snp_outfile_idx = merge_vntr_nearby_snps.snp_outfile_idx
+        File vntr_snp_vcf = merge_vntr_nearby_snps.vntr_snp_vcf
         File vntr_snp_outfile = merge_vntr_nearby_snps.vntr_snp_outfile
+        File vntr_snp_np_outfile = merge_vntr_nearby_snps.vntr_snp_np_outfile
         File vntr_snp_outfile_idx = merge_vntr_nearby_snps.vntr_snp_outfile_idx
     }
     meta {
@@ -34,8 +36,8 @@ workflow create_reference {
 
 task merge_vntr_nearby_snps {
     input {
-        File vntr_vcf
-        File vntr_vcf_index
+        String vntr_vcf
+        String vntr_vcf_index
         String snp_vcf
         String snp_vcf_index
         String region
@@ -43,26 +45,49 @@ task merge_vntr_nearby_snps {
         String GOOGLE_PROJECT
     } 
     String int_out_file="~{out_prefix}_partial"
+    String samples_file="gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/vntr_reference_panel/vntr_samples_clean_sorted.txt"
 
     command <<<
       export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
       export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
       echo "getting a subset of the vcf file based on a region (bcftools)"
-      bcftools view ~{snp_vcf} ~{region} > ~{int_out_file}.vcf
+      bcftools view -r ~{region} -S ~{samples_file} -e 'POS=87296520' ~{snp_vcf} > ~{int_out_file}.vcf
       date
-      bcftools sort -o ~{int_out_file}.sorted.vcf -o ~{int_out_file}.vcf 
-      bgzip -c ~{int_out_file}.sorted.vcf > ~{int_out_file}.sorted.vcf.gz
+      bcftools sort -O z  ~{int_out_file}.vcf > ~{int_out_file}.sorted.vcf.gz
+      ls -lht
+      echo "number of variants in unsorted file"
+      cat ~{int_out_file}.vcf | grep -v "^#" | wc -l
+      echo "number of variants in sorted file"
+      zcat ~{int_out_file}.sorted.vcf | grep -v "^#" | wc -l
+      rm ~{int_out_file}.vcf
+      #bgzip -c ~{int_out_file}.sorted.vcf > ~{int_out_file}.sorted.vcf.gz
       date
       tabix -p vcf ~{int_out_file}.sorted.vcf.gz
+      #bcftools view -h ~{int_out_file}.sorted.vcf.gz > header.txt
       # ACAN VNTR region, a 10MB window
+      echo "concat with sorted files"
       bcftools concat --allow-overlaps ~{int_out_file}.sorted.vcf.gz ~{vntr_vcf} > vntr_snp.vcf
-      bcftools sort -o vntr_snp.sorted.vcf vntr_snp.vcf
-      bgzip -c vntr_snp.sorted.vcf > vntr_snp.sorted.vcf.gz
+      echo "sort the resulting file"
+      bcftools sort -O z vntr_snp.vcf > vntr_snp.sorted.vcf.gz
+      echo "number of variants in pre sorted file"
+      cat vntr_snp.vcf | grep -v "^#" | wc -l
+      zcat vntr_snp.sorted.vcf | grep -v "^#" | wc -l
+      #bgzip -c vntr_snp.sorted.vcf > vntr_snp.sorted.vcf.gz
       tabix -p vcf vntr_snp.sorted.vcf.gz
+
+      #echo "concat with unsorted files"
+      echo "empty" > vntr_snp_no_pre_sorted.vcf.gz
+      #bcftools concat --allow-overlaps ~{int_out_file}.vcf ~{vntr_vcf} > vntr_snp_no_pre_sorted.vcf
+      #echo "number of variants in no pre sorted file"
+      #cat vntr_snp_no_pre_sorted.vcf | grep -v "^#" | wc -l
+      #bgzip -c vntr_snp_no_pre_sorted.vcf > vntr_snp_no_pre_sorted.vcf.gz
+      #bcftools sort -o vntr_snp.sorted.vcf vntr_snp.vcf
+      ls -lth
     >>>
     
   
     runtime {
+        memory: "60GB"
         #docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
     }
@@ -70,6 +95,8 @@ task merge_vntr_nearby_snps {
     output {
        File snp_outfile = "~{int_out_file}.sorted.vcf.gz"
        File snp_outfile_idx = "~{int_out_file}.sorted.vcf.gz.tbi"
+       File vntr_snp_vcf = "vntr_snp.vcf"
+       File vntr_snp_np_outfile = "vntr_snp_no_pre_sorted.vcf.gz"
        File vntr_snp_outfile = "vntr_snp.sorted.vcf.gz"
        File vntr_snp_outfile_idx = "vntr_snp.sorted.vcf.gz.tbi"
     }
