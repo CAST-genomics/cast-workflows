@@ -65,6 +65,7 @@ def main():
 	parser.add_argument("--vcf", help="Name of the genotype vcf file", required=True, type=str)
 	parser.add_argument("--ref-panel", help="File id of ref genome", type=str)
 	parser.add_argument("--mem", help="Specify run memory ", type=int, required=False, default=32)
+	parser.add_argument("--chrom", help="Specify target chromosome ", type=str, required=True)
 	parser.add_argument("--window", help="Specify window size for imputation ", type=int, required=False, default=20)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 
