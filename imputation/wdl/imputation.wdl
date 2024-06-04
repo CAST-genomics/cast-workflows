@@ -4,11 +4,12 @@ workflow imputation {
     input {
         String vcf 
         String vcf_index 
-        File ref_panel
-        File ref_panel_index
+        String ref_panel
+        String ref_panel_index
         String out_prefix
         String GOOGLE_PROJECT = ""
         String GCS_OAUTH_TOKEN = ""
+        String chrom
         Int? mem 
         Int? window_size 
         File samples_file 
@@ -19,6 +20,8 @@ workflow imputation {
     input:
         samples_file=samples_file,
         regions_file=regions_file,
+        ref_panel=ref_panel, 
+        ref_panel_index=ref_panel_index,
         vcf=vcf,
         vcf_index=vcf_index,
         GOOGLE_PROJECT=GOOGLE_PROJECT,
@@ -39,6 +42,7 @@ workflow imputation {
           out_prefix=out_prefix,
           GOOGLE_PROJECT=GOOGLE_PROJECT,
           GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN,
+          chrom=chrom,
           mem=mem,
           window_size=window_size
     }
@@ -60,6 +64,8 @@ task subset_vcf {
     input {
         String vcf
         String vcf_index
+        String ref_panel
+        String ref_panel_index
         File? samples_file
 	File? regions_file
         String GOOGLE_PROJECT = ""
@@ -70,10 +76,16 @@ task subset_vcf {
     command <<<
         export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        # To get a list of sample ids
+        #bcftools query -l ~{vcf} > sample_ids.txt
         # The "bcftools head" command was to check the header for the labeling if contigs e.g. chr21 vs 21.
         # bcftools head ~{vcf} > header.txt
         # Subsetting region for each chromesome
-        bcftools view -R ~{regions_file} -S ~{samples_file} ~{vcf} > ~{out_prefix}.vcf
+        # Select reference samples from the actual samples (to exclude later)
+        bcftools query -l ~{ref_panel} > ref_sample_ids.txt
+        # Exclude reference samples from the query. Otherwise beagle will give an error.
+        grep -v -x -f ref_sample_ids.txt ~{samples_file} > samples_file_clean.txt
+        bcftools view -R ~{regions_file} -S samples_file_clean.txt ~{vcf} > ~{out_prefix}.vcf
     >>>
 
     runtime {
@@ -82,6 +94,7 @@ task subset_vcf {
 
     output {
         File outfile = "${out_prefix}.vcf"
+        File ref_sample_ids = "ref_sample_ids.txt"
     }    
 }
 task index_vcf {
@@ -109,11 +122,12 @@ task beagle {
     input {
         File vcf 
         File vcf_index 
-        File ref_panel
-        File ref_panel_index
+        String ref_panel
+        String ref_panel_index
         String out_prefix
         String GOOGLE_PROJECT = ""
         String GCS_OAUTH_TOKEN = ""
+        String chrom
         Int? mem 
         Int? window_size
     } 
@@ -122,11 +136,11 @@ task beagle {
 
         export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-
         java -Xmx~{mem}g -jar /beagle.jar \
             gt=~{vcf} \
             ref=~{ref_panel} \
             window=~{window_size} \
+            chrom=~{chrom} \
             out=~{out_prefix}_output
     >>>
     
