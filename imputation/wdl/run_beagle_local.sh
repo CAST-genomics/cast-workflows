@@ -2,7 +2,12 @@
 
 chr="chr21"
 #gt="data/ALL.${chr}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes_bialleleic_uniq_id_name.sorted.vcf.gz"
-gt="data/ALL.${chr}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased_chr.vcf.gz"
+#gt="data/ALL.${chr}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased_chr.vcf.gz"
+# Have to run this before:
+# bcftools convert -O z data/aou_100_chr21_phased_shapit_ma.bcf > data/aou_100_chr21_phased_shapit_ma.vcf.gz
+gt="data/aou_100_chr21_phased_shapit_ma.vcf.gz"
+#gt="data/aou_chr21_100samples.vcf.gz"
+
 #ref="data/${chr}_final_SNP_merged_additional_TRs.vcf.gz"
 ref="data/${chr}_final_SNP_merged_additional_TRs.bref3"
 
@@ -12,11 +17,11 @@ beagle_5_3="beagle.08Feb22.fa4.jar"
 beagle=$beagle_5_4_old
 date
 date > time.txt
-java -Xmx10g -jar $beagle \
+time java -Xmx10g -jar $beagle \
 	gt=$gt \
 	ref=$ref \
-	out=data/output_${chr}_ensemble_apr_22_bref \
-	window=10 \
+	out=data/output_${chr}_aou_100_shapeit_apr_22_bref \
+	window=4 \
 	overlap=2
 	#map=genetic_map/plink.chr21.GRCh38.map
 # 
