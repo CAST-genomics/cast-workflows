@@ -12,9 +12,9 @@ time python imputation_aou.py \
         --vcf $gt \
         --ref-panel $ref \
         --name output_${chr}_acan_10mbp_aou_10k_samples \
-        --window 5 \
+        --window 10 \
 	--chrom chr15 \
 	--samples-file $samples \
-	--regions-file $regions \
-	--cromwell
+	--regions-file $regions
+#--cromwell
 
