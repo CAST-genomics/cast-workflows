@@ -90,6 +90,7 @@ task subset_vcf {
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
+        memory: "30GB"
     }
 
     output {
