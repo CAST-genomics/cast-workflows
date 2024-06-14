@@ -56,6 +56,7 @@ def main():
 	parser.add_argument("--name", help="Name of the TR job", required=True, type=str)
 	parser.add_argument("--snp-vcf", help="Name of the genotype vcf file including snps", required=True, type=str)
 	parser.add_argument("--region", help="region in the SNP file to be extracted", required=True, type=str)
+	parser.add_argument("--samples", help="samples to be used for creating the reference", required=True, type=str)
 	parser.add_argument("--vntr-vcf", help="Name of the genotype vcf file including vntr(s)", required=True, type=str)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 
@@ -85,6 +86,7 @@ def main():
 	json_dict["create_reference.vntr_vcf"] = args.vntr_vcf
 	json_dict["create_reference.vntr_vcf_index"]=args.vntr_vcf+".tbi"
 	json_dict["create_reference.region"] = args.region
+	json_dict["create_reference.samples"] = args.samples
 	json_dict["create_reference.out_prefix"] = args.name
 	json_dict["create_reference.GOOGLE_PROJECT"] = project
 
