@@ -25,6 +25,8 @@ def read_vcf_file(filename):
         variants.append(variant)
         alt_alleles = variant.ALT
         ref_allele = variant.REF
+        if str(variant.POS) != "88855424":
+            continue
         print("number of alt alleles ", len(alt_alleles))
         print("len of ref allele", len(ref_allele))
         for i, genotype in enumerate(variant.genotypes):
@@ -62,34 +64,38 @@ def compare_pair(first_name, first_allele_len, second_name, second_allele_len, s
     print("Concordance between {} and {} is {}".format(first_name, second_name, concordance))
 
 def compare_gt():
-    hipstr_filename = "data/CBL_test.filtered.sorted.vcf.gz"
-    hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(hipstr_filename)
+    #hipstr_filename = "data/CBL_test.filtered.sorted.vcf.gz"
+    #hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(hipstr_filename)
+    caller_filename = "vntr_reference/ref_phased_output_chr15_acan_vntr_apr_22.vcf.gz"
+    hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(caller_filename)
     
-    beagle_filename = "data/CBL_aou_100_phasing_impute_beagle_apr_22_bref.vcf.gz"
+    #beagle_filename = "data/CBL_aou_100_phasing_impute_beagle_apr_22_bref.vcf.gz"
+    beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_275_lrwgs_w8_o2_ac_an_refilled.vcf.gz"
     beagle_call_gt, beagle_allele_len, beagle_samples = read_vcf_file(beagle_filename)
 
 
     shapeit_filename = "data/CBL_aou_100_phase_shapeit_impute_beagle_apr_22_bref.vcf.gz"
+    #shapeit_filename = "data/CBL_aou_100_phase_shapeit_impute_beagle_iflag_apr_22_bref.vcf.gz"
     shapeit_call_gt, shapeit_allele_len, shapeit_samples = read_vcf_file(shapeit_filename)
 
-    print("len hipstr_samples ", len(hipstr_samples))
+    print("len caller_samples ", len(hipstr_samples))
     print("len beagle_samples ", len(beagle_samples))
-    print("len shapeit_samples ", len(shapeit_samples))
-    compare_pair(first_name="hipstr",
+    #print("len shapeit_samples ", len(shapeit_samples))
+    compare_pair(first_name="caller",
                  first_allele_len=hipstr_allele_len,
                  second_name="beagle",
                  second_allele_len=beagle_allele_len,
                  samples=beagle_samples)
-    compare_pair(first_name="hipstr",
-                 first_allele_len=hipstr_allele_len,
-                 second_name="shapeit",
-                 second_allele_len=shapeit_allele_len,
-                 samples=shapeit_samples)
-    compare_pair(first_name="beagle",
-                 first_allele_len=beagle_allele_len,
-                 second_name="shapeit",
-                 second_allele_len=shapeit_allele_len,
-                 samples=shapeit_samples)
+    #compare_pair(first_name="hipstr",
+    #             first_allele_len=hipstr_allele_len,
+    #             second_name="shapeit",
+    #             second_allele_len=shapeit_allele_len,
+    #             samples=shapeit_samples)
+    #compare_pair(first_name="beagle",
+    #             first_allele_len=beagle_allele_len,
+    #             second_name="shapeit",
+    #             second_allele_len=shapeit_allele_len,
+    #             samples=shapeit_samples)
 
 if __name__ == "__main__":
     compare_gt()
