@@ -45,11 +45,42 @@ def read_vcf_file(filename):
     #print("Num variants in the vcf file: ", len(variants))
     return call_gt, allele_len, samples
 
-def compare_pair(first_name, first_allele_len, second_name, second_allele_len, samples):
+def get_repeat_count(allele_len, motif_len):
+    return int(allele_len / motif_len)
+
+def get_diff_motif_count(first_allele_len, second_allele_len, motif_len):
+    return abs(
+                get_repeat_count(first_allele_len, motif_len) - \
+                get_repeat_count(second_allele_len, motif_len) \
+                )
+            
+
+def compare_pair(first_name, first_allele_len,
+                 second_name, second_allele_len,
+                 samples, motif_len,
+                 repeat_count_threshold,
+                 verbose=False):
     is_concordant = []
-    verbose = False
     for sample in samples:
-        if first_allele_len[sample] == second_allele_len[sample]:
+        # Sanity check that alleles are sorted
+        for allele in [first_allele_len[sample], second_allele_len[sample]]:
+            if allele[0] > allele[1]:
+                print("allele not sorted for sample {}: {} and {}".format(
+                    sample,
+                    allele[0],
+                    allele[1]))
+                return
+
+        # Check concordance
+        # The difference threshold should hold for both alleles
+        if (get_diff_motif_count(first_allele_len[sample][0],
+                                second_allele_len[sample][0],
+                                motif_len,
+                                ) <= repeat_count_threshold) and \
+           (get_diff_motif_count(first_allele_len[sample][1],
+                                second_allele_len[sample][1],
+                                motif_len, 
+                                ) <= repeat_count_threshold):
             is_concordant.append(1)
         else:
             if verbose:
@@ -61,16 +92,20 @@ def compare_pair(first_name, first_allele_len, second_name, second_allele_len, s
             is_concordant.append(0)
     concordance = sum(is_concordant)/float(len(samples))
 
-    print("Concordance between {} and {} is {}".format(first_name, second_name, concordance))
+    print("--- Concordance between {} and {} is {:.2f}\%".format(
+          first_name, second_name,
+          concordance * 100))
 
 def compare_gt():
+    motif_len = 57 # For ACAN VNTR
     #hipstr_filename = "data/CBL_test.filtered.sorted.vcf.gz"
     #hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(hipstr_filename)
     caller_filename = "vntr_reference/ref_phased_output_chr15_acan_vntr_apr_22.vcf.gz"
     hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(caller_filename)
     
     #beagle_filename = "data/CBL_aou_100_phasing_impute_beagle_apr_22_bref.vcf.gz"
-    beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_275_lrwgs_w8_o2_ac_an_refilled.vcf.gz"
+    #beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_185_lrwgs_w8_o2.vcf.gz"
+    beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_275_lrwgs_w8_o2.vcf.gz"
     beagle_call_gt, beagle_allele_len, beagle_samples = read_vcf_file(beagle_filename)
 
 
@@ -81,21 +116,26 @@ def compare_gt():
     print("len caller_samples ", len(hipstr_samples))
     print("len beagle_samples ", len(beagle_samples))
     #print("len shapeit_samples ", len(shapeit_samples))
-    compare_pair(first_name="caller",
-                 first_allele_len=hipstr_allele_len,
-                 second_name="beagle",
-                 second_allele_len=beagle_allele_len,
-                 samples=beagle_samples)
-    #compare_pair(first_name="hipstr",
-    #             first_allele_len=hipstr_allele_len,
-    #             second_name="shapeit",
-    #             second_allele_len=shapeit_allele_len,
-    #             samples=shapeit_samples)
-    #compare_pair(first_name="beagle",
-    #             first_allele_len=beagle_allele_len,
-    #             second_name="shapeit",
-    #             second_allele_len=shapeit_allele_len,
-    #             samples=shapeit_samples)
+    for repeat_count_threshold in [0, 1, 2, 3]:
+        print("Working with motif length {} and repeat count threshold {}".format(
+            motif_len, repeat_count_threshold))
+        compare_pair(first_name="caller",
+                     first_allele_len=hipstr_allele_len,
+                     second_name="beagle",
+                     second_allele_len=beagle_allele_len,
+                     samples=beagle_samples,
+                     motif_len=motif_len,
+                     repeat_count_threshold=repeat_count_threshold)
+        #compare_pair(first_name="hipstr",
+        #             first_allele_len=hipstr_allele_len,
+        #             second_name="shapeit",
+        #             second_allele_len=shapeit_allele_len,
+        #             samples=shapeit_samples)
+        #compare_pair(first_name="beagle",
+        #             first_allele_len=beagle_allele_len,
+        #             second_name="shapeit",
+        #             second_allele_len=shapeit_allele_len,
+        #             samples=shapeit_samples)
 
 if __name__ == "__main__":
     compare_gt()
