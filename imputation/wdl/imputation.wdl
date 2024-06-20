@@ -87,16 +87,16 @@ task subset_vcf {
         bcftools query -l ~{ref_panel} > ref_sample_ids.txt
         # Exclude reference samples from the query. Otherwise beagle will give an error.
         grep -v -x -f ref_sample_ids.txt ~{samples_file} > samples_file_clean.txt
-        bcftools view -R ~{regions_file} -S samples_file_clean.txt ~{vcf} > ~{out_prefix}.vcf
+        bcftools view -Oz -R ~{regions_file} -S samples_file_clean.txt ~{vcf} > ~{out_prefix}.vcf.gz
     >>>
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-        memory: "30GB"
+        memory: "60GB"
     }
 
     output {
-        File outfile = "${out_prefix}.vcf"
+        File outfile = "${out_prefix}.vcf.gz"
         File ref_sample_ids = "ref_sample_ids.txt"
     }    
 }
@@ -107,8 +107,9 @@ task index_vcf {
 
     String basename = basename(vcf, ".vcf")
 
+        #bgzip -c ~{vcf}> ~{basename}.vcf.gz && tabix -p vcf ~{basename}.vcf.gz
     command <<<
-        bgzip -c ~{vcf}> ~{basename}.vcf.gz && tabix -p vcf ~{basename}.vcf.gz
+        tabix -p vcf ~{vcf}
     >>>
 
     runtime {
