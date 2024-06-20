@@ -70,7 +70,8 @@ def main():
 	parser.add_argument("--ref-panel", help="File id of ref genome", type=str)
 	parser.add_argument("--mem", help="Specify run memory ", type=int, required=False, default=32)
 	parser.add_argument("--chrom", help="Specify target chromosome ", type=str, required=True)
-	parser.add_argument("--window", help="Specify window size for imputation ", type=int, required=False, default=20)
+	parser.add_argument("--window", help="Specify window size for imputation ", type=int, required=False, default=5)
+	parser.add_argument("--overlap", help="Specify overlap size for imputation ", type=int, required=False, default=2)
 	parser.add_argument("--samples-file", help="Name of sub_samples file ", type=str, required=True)
 	parser.add_argument("--regions-file", help="Name of sub_region file ", type=str,required=False)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
@@ -133,6 +134,7 @@ def main():
 	json_dict["imputation.mem"] = args.mem
 	json_dict["imputation.chrom"] = args.chrom
 	json_dict["imputation.window_size"] = args.window
+	json_dict["imputation.overlap"] = args.overlap
 	json_dict["imputation.samples_file"] = args.samples_file 
 	json_dict["imputation.regions_file"] = args.regions_file 
 

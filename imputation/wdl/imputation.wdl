@@ -12,6 +12,7 @@ workflow imputation {
         String chrom
         Int? mem 
         Int? window_size 
+        Int? overlap
         File samples_file 
 	File regions_file
     }
@@ -44,7 +45,8 @@ workflow imputation {
           GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN,
           chrom=chrom,
           mem=mem,
-          window_size=window_size
+          window_size=window_size,
+          overlap=overlap
     }
     call sort_index_beagle {
         input :
@@ -131,16 +133,18 @@ task beagle {
         String chrom
         Int? mem 
         Int? window_size
+        Int? overlap
     } 
 
     command <<<
 
-        export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
-        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        #export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
+        #export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         java -Xmx~{mem}g -jar /beagle.jar \
             gt=~{vcf} \
             ref=~{ref_panel} \
             window=~{window_size} \
+            overlap=~{overlap} \
             chrom=~{chrom} \
             out=~{out_prefix}_output
     >>>
