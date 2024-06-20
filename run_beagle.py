@@ -34,7 +34,7 @@ def RunWorkflow(json_file, json_options_file, dryrun=False):
 	dryrun : bool
 		Just print the command, don't actually run cromshell
 	"""
-	cmd = "cromshell submit ../wdl/beagle.wdl {json} -op {options}".format(json=json_file, options=json_options_file)
+	cmd = "cromshell submit ../wdl/imputation.wdl {json} -op {options}".format(json=json_file, options=json_options_file)
 	# cmd = "java -jar -Dconfig.file={} ".format("/home/jupyter/cromwell.conf") + \
 	#  			"cromwell-86.jar run beagle.wdl " + \
 	#  			"--inputs {} --options {}".format(json_file, json_options_file)
@@ -67,6 +67,9 @@ def main():
 	parser.add_argument("--mem", help="Specify run memory ", type=int, required=False, default=32)
 	parser.add_argument("--chrom", help="Specify target chromosome ", type=str, required=True)
 	parser.add_argument("--window", help="Specify window size for imputation ", type=int, required=False, default=20)
+	parser.add_argument("--overlap", help="Specify overlap size for imputation ", type=int, required=False, default=2)
+	parser.add_argument("--samples-file", help="Name of sub_samples file ", type=str, required=True)
+	parser.add_argument("--regions-file", help="Name of sub_region file ", type=str,required=False)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 
 
@@ -97,15 +100,19 @@ def main():
 	
 	# Set up workflow JSON
 	json_dict = {}
-	json_dict["beagle.vcf"] = args.vcf
-	json_dict["beagle.vcf_index"]=args.vcf+".tbi"
-	json_dict["beagle.ref_panel"] = args.ref_panel
-	json_dict["beagle.ref_panel_index"] = args.ref_panel+".tbi"
-	json_dict["beagle.out_prefix"] = args.name
-	json_dict["beagle.GOOGLE_PROJECT"] = project
-	json_dict["beagle.GCS_OAUTH_TOKEN"] = token
-	json_dict["beagle.mem"] = args.mem
-	json_dict["beagle.window_size"] = args.window
+	json_dict["imputation.vcf"] = args.vcf
+	json_dict["imputation.vcf_index"]=args.vcf+".tbi"
+	json_dict["imputation.ref_panel"] = args.ref_panel
+	json_dict["imputation.ref_panel_index"] = args.ref_panel+".tbi"
+	json_dict["imputation.out_prefix"] = args.name
+	json_dict["imputation.GOOGLE_PROJECT"] = project
+	json_dict["imputation.GCS_OAUTH_TOKEN"] = token
+	json_dict["imputation.mem"] = args.mem
+	json_dict["imputation.chrom"] = args.chrom
+	json_dict["imputation.window_size"] = args.window
+	json_dict["imputation.overlap"] = args.overlap
+	json_dict["imputation.samples_file"] = args.samples_file 
+	json_dict["imputation.regions_file"] = args.regions_file 
 
 	# Convert to json and save as a file
 	json_file = args.name+".aou.json"

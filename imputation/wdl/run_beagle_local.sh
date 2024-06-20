@@ -1,39 +1,20 @@
 #!/bin/bash
 
-chr="chr11"
-#gt="data/ALL.${chr}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes_bialleleic_uniq_id_name.sorted.vcf.gz"
-#gt="data/ALL.${chr}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased_chr.vcf.gz"
 # Have to run this before:
 #bcftools convert -O z data/aou_100_chr11_phased_shapeit_ma_.bcf > data/aou_100_chr11_phased_shapit_ma.vcf.gz
-gt="data/aou_100_${chr}_phased_shapit_ma.vcf.gz"
-#gt="data/100_aou_${chr}_imputation.vcf.gz"
-#gt="data/aou_chr21_100samples.vcf.gz"
+chr="chr15"
+gt="vntr_data/acan_10mbp_aou_185_lrwgs_samples_subset.vcf.gz"
+ref="../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/phased_ACAN_vntr_snp_740_samples.sorted.vcf.gz"
 
-# For vntr ref phasing. Also remember to set impute=false and remove the reference.
-gt="vntr_reference/ACAN_vntr_snp_650_samples.sorted.vcf.gz"
+out="data/output_${chr}_10mb_aou_185_lrwgs_w8_o2"
 
-#ref="data/${chr}_final_SNP_merged_additional_TRs.vcf.gz"
-#ref="data/${chr}_final_SNP_merged_additional_TRs.bref3"
-
-beagle_5_4="beagle.01Mar24.d36.jar"
 beagle_5_4_old="beagle.19Apr22.7c0.jar"
-beagle_5_3="beagle.08Feb22.fa4.jar"
 beagle=$beagle_5_4_old
-#out="data/output_${chr}_aou_100_phasing_shapeit_impute_beagle_iflag_apr_22_bref"
-out="vntr_reference/phased_ACAN_vntr_snp_650_samples.sorted."
-date
-date > time.txt
-time java -Xmx10g -jar $beagle \
-	gt=$gt \
-	out=$out\
-	window=4 \
-	impute=false \
-	overlap=2
-	#map=genetic_map/plink.chr21.GRCh38.map
-	#ref=$ref \
-# 
-#gt=data/21_final_SNP_merged_additional_TRs.vcf.gz \
-	#map=genetic_map/beagle_chr21_b38.map
-date >> time.txt
-date
+java -Xmx4g -jar $beagle \
+        gt=$gt \
+        ref=$ref \
+        out=$out \
+        window=8 \
+        overlap=2 \
+	chrom=$chr && \
 tabix -p vcf $out.vcf.gz
