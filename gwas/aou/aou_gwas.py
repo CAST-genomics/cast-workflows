@@ -151,7 +151,7 @@ def get_overall_rc_from_call(vcf_df_row, call, sep="/"):
 
 
 def set_genotypes(data, args, annotations):
-    print("is imputed: ", args.is_imputed)
+    #print("is imputed: ", args.is_imputed)
     imputed = args.is_imputed
     # Plot phenotype histogram
     plot_histogram(data["phenotype"], "outputs/{}_histogram_after_norm.png".format(args.phenotype))
@@ -169,6 +169,7 @@ def set_genotypes(data, args, annotations):
     # Focus on a few loci of interest
     for chrom, start, gene in annotations:
         all_alleles = []
+        empty_calls, no_calls = 0, 0
 
         locus_calls = vcf_df[(vcf_df["CHROM"] == chrom) & \
                              (vcf_df["POS"] == int(start))
@@ -184,11 +185,13 @@ def set_genotypes(data, args, annotations):
                     #print("Locus call", locus_calls[column].to_string())
                     if len(locus_calls[column].array) == 0:
                         # An error causing an empty value in the vcf file
+                        empty_calls += 1
                         continue
                     call = locus_calls[column].array[0]
                     call = call.split(":")[0]
                     if call == ".":
                         # Equal to no call
+                        no_calls += 1
                         continue
                     rc = get_overall_rc_from_call(locus_calls, call, sep="/")
                     # Get individual alleles for plotting
@@ -219,6 +222,9 @@ def set_genotypes(data, args, annotations):
         # Plot individual alleles for ACAN
         if gene == "ACAN" and args.phenotype == "height":
             plot_histogram(all_alleles, "outputs/ACAN_alleles_height.png")
+        if no_calls + empty_calls > 0:
+            print("Skipping {} empty calls and {} no calls for {} on vcf".format(
+                    empty_calls, no_calls, gene))
         # Normalize genotypes
         #data.loc[:, [gene]] = stats.zscore(data[gene])
         #data.loc[:, [gene]] = Inverse_Quantile_Normalization(data[[gene]])
@@ -373,9 +379,9 @@ def main():
             # no text annotation on manhattan plot for hail runner
             annotate = False
             p_value_threshold = -np.log10(5*10**-8)
-            print("GWAS index and column")
-            print(runner.gwas.index)
-            print(runner.gwas.columns)
+            #print("GWAS index and column")
+            #print(runner.gwas.index)
+            #print(runner.gwas.columns)
             #added_points = {"chrom": ["chr15", "chr15"],
             #                "pos": [88855424,88857434],
             #                "p_value": [0.1, 0.01],

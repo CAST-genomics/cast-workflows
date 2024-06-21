@@ -19,13 +19,18 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, outpath
     plt.clf()
     plotted_data = data[[genotype, phenotype]].dropna()
     plotted_data = plotted_data.astype(float)
+    if len(gwas.loc[(gwas["chrom"] == chrom) &\
+                        (gwas["pos"] == pos), 'beta']) == 0:
+        print("No gwas data for chrom {} position {}".format(
+                chrom, pos))
+        return
+    effect_size = gwas.loc[(gwas["chrom"] == chrom) &\
+                        (gwas["pos"] == pos), 'beta'].item()
     plot = sns.jointplot(
             data=plotted_data,
             alpha=0.5,
             x=genotype,
             y=phenotype)
-    effect_size = gwas.loc[(gwas["chrom"] == chrom) &\
-                        (gwas["pos"] == pos), 'beta'].item()
     #print("effect size {:.4}".format(effect_size))
     # Draw a line corresponding to the effect size
     #point_1 = [min(data[genotype]), min(data[phenotype])]
@@ -73,12 +78,11 @@ def PlotManhattan(gwas, outpath, annotate=False,
                 ):
     gwas["ind"] = range(gwas.shape[0])
     num_points = gwas.shape[0]
-    print("Number of points in manhattan plot: ", gwas.shape[0])
     plot = sns.relplot(data=gwas, x="ind", y="-log10pvalue", \
         s=30, aspect=4, linewidth=0, hue="chrom", palette="tab10", legend=None)
     chrom_df = gwas.groupby("chrom")["ind"].median()
 
-    if extra_points:
+    if extra_points and num_points > 0 and max(gwas['-log10pvalue'].dropna()):
         for chrom, pos, p_value, label in extra_points:
             chrom_gwas = gwas[gwas["chrom"] == chrom] 
             # Index of the new node in the manhattan plot is the number of values
@@ -86,7 +90,10 @@ def PlotManhattan(gwas, outpath, annotate=False,
             index = len(chrom_gwas[chrom_gwas["pos"] < pos])
             plot.axes[0][0].scatter(x=index, y=p_value, color="red", marker="^")
             plot.axes[0][0].text(x=index, y=p_value, s=label, fontsize="medium")
-            plot.set(ylim=(0, max(gwas['-log10pvalue']) + 1), xlim=(0, num_points))
+            #print("gwas['-log10pvalue']: ", gwas['-log10pvalue'])
+            #print("max(gwas['-log10pvalue']): ", max(gwas['-log10pvalue'].dropna()))
+            #print("num_points: ", num_points)
+            plot.set(ylim=(0, max(gwas['-log10pvalue'].dropna()) + 1), xlim=(0, num_points))
 
 
     if annotate:
