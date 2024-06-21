@@ -51,14 +51,14 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, outpath
 def annotate_points(ax, gwas):
     # Annotate points
     for point in [("chr15", "88855424", "ACAN"),
-                  ("chr17", "30237128", "SLC6A4"),
-                  ("chr6", "81752005", "TENT5A"),
-                  ("chr20", "2652732", "NOP56"),
-                  ("chrX", "43654436", "MAOA"),
-                  ("chr15", "101334170", "PCSK6"),
-                  ("chr12", "2255790", "CACNA1C"),
-                  ("chr1", "155190864", "MUC1"),
-                  ("chr21", "43776443", "CSTB"),
+                  #("chr17", "30237128", "SLC6A4"),
+                  #("chr6", "81752005", "TENT5A"),
+                  #("chr20", "2652732", "NOP56"),
+                  #("chrX", "43654436", "MAOA"),
+                  #("chr15", "101334170", "PCSK6"),
+                  #("chr12", "2255790", "CACNA1C"),
+                  #("chr1", "155190864", "MUC1"),
+                  #("chr21", "43776443", "CSTB"),
                   ]:
         chrom, position, label = point
         locus = gwas[(gwas["chrom"] == chrom) & \

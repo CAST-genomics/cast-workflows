@@ -13,7 +13,8 @@ class AssociaTRRunner:
         self.ptcovar = ptcovar
         self.pt_npy = None
         self.covar_npy = None
-        self.trvcf = trvcf.replace(".vcf" ,"_sorted.vcf.gz")
+        #self.trvcf = trvcf.replace(".vcf" ,"_sorted.vcf.gz")
+        self.trvcf = trvcf#.replace(".vcf" ,"_sorted.vcf.gz")
         self.region = region
         self.covars = covars
         self.gwas = None

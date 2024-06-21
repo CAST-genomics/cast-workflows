@@ -92,6 +92,15 @@ def NormalizeData(data, norm):
     else:
         ERROR("No normalization method specified")
 
+def read_annotations(filename):
+    annotations = []
+    with open(filename, "r") as annotations_file:
+        lines = annotations_file.readlines()
+    for line in lines:
+        chrom, start, gene = line.strip().split(",")
+        annotations.append((str(chrom), str(start), str(gene)))
+    return annotations
+
 def get_rc_from_allele_record(record, allele):
     ref_allele = record.REF
     alt_alleles = record.ALT.split(",")
@@ -107,8 +116,8 @@ def get_rc_from_allele_record(record, allele):
         #print("call {} allele {}".format(allele, rc))
         return rc
 
-def get_mean_rc_from_call_record(record, call):
-    allele_1, allele_2 = call.split("/")
+def get_mean_rc_from_call_record(record, call, sep="/"):
+    allele_1, allele_2 = call.split(sep)
     rc_1 = get_rc_from_allele_record(record, int(allele_1))
     rc_2 = get_rc_from_allele_record(record, int(allele_2))
     return (rc_1 + rc_2) / 2
@@ -128,20 +137,22 @@ def get_rc_from_allele(vcf_df_row, allele):
         #print("call {} allele {}".format(allele, rc))
         return rc
 
-def get_individual_rcs_from_call(vcf_df_row, call):
-    allele_1, allele_2 = call.split("/")
+def get_individual_rcs_from_call(vcf_df_row, call, sep="/"):
+    allele_1, allele_2 = call.split(sep)
     rc_1 = get_rc_from_allele(vcf_df_row, int(allele_1))
     rc_2 = get_rc_from_allele(vcf_df_row, int(allele_2))
     return rc_1, rc_2
 
-def get_overall_rc_from_call(vcf_df_row, call):
-    allele_1, allele_2 = call.split("/")
+def get_overall_rc_from_call(vcf_df_row, call, sep="/"):
+    allele_1, allele_2 = call.split(sep)
     rc_1 = get_rc_from_allele(vcf_df_row, int(allele_1))
     rc_2 = get_rc_from_allele(vcf_df_row, int(allele_2))
     return (rc_1 + rc_2)/2.0
 
 
-def set_genotypes(data, args):
+def set_genotypes(data, args, annotations):
+    print("is imputed: ", args.is_imputed)
+    imputed = args.is_imputed
     # Plot phenotype histogram
     plot_histogram(data["phenotype"], "outputs/{}_histogram_after_norm.png".format(args.phenotype))
     # Read input VCF file into a dataframe
@@ -156,16 +167,7 @@ def set_genotypes(data, args):
     #    if line.startswith("#"):
     #        normalized_file.write(line + "\n")
     # Focus on a few loci of interest
-    for chrom, start, gene in [("chr15", "88855424", "ACAN"),
-                  ("chr17", "30237128", "SLC6A4"),
-                  ("chr6", "81752005", "TENT5A"),
-                  ("chr20", "2652732", "NOP56"),
-                  ("chr15", "101334170", "PCSK6"),
-                  ("chrX", "43654436", "MAOA"),
-                  ("chr12", "2255790", "CACNA1C"),
-                  ("chr1", "155190864", "MUC1"),
-                  ("chr21", "43776443", "CSTB"),
-                  ]:
+    for chrom, start, gene in annotations:
         all_alleles = []
 
         locus_calls = vcf_df[(vcf_df["CHROM"] == chrom) & \
@@ -177,16 +179,32 @@ def set_genotypes(data, args):
         for column in vcf_df.columns:
             if column.isnumeric():
                 # Corresponds to a sample id
-                call = locus_calls[column].array[0]
-                call = call.split(":")[0]
-                if call == ".":
-                    # Equal to no call
-                    continue
-
-                rc = get_overall_rc_from_call(locus_calls, call)
-                # Get individual alleles for plotting
-                rc_1, rc_2 = get_individual_rcs_from_call(locus_calls, call)
-                all_alleles.extend([rc_1, rc_2])
+                if not imputed:
+                    #print("Column: ", column)
+                    #print("Locus call", locus_calls[column].to_string())
+                    if len(locus_calls[column].array) == 0:
+                        # An error causing an empty value in the vcf file
+                        continue
+                    call = locus_calls[column].array[0]
+                    call = call.split(":")[0]
+                    if call == ".":
+                        # Equal to no call
+                        continue
+                    rc = get_overall_rc_from_call(locus_calls, call, sep="/")
+                    # Get individual alleles for plotting
+                    rc_1, rc_2 = get_individual_rcs_from_call(locus_calls, call, sep="/")
+                    all_alleles.extend([rc_1, rc_2])
+                else: # imputed
+                    if len(locus_calls[column]) == 0:
+                        # Equal to no call
+                        continue
+                    call = locus_calls[column].array[0]
+                    call = call.split(":")[0]
+                    #print("Locus call after split ", call)
+                    rc = get_overall_rc_from_call(locus_calls, call, sep="|")
+                    # Get individual alleles for plotting
+                    rc_1, rc_2 = get_individual_rcs_from_call(locus_calls, call, sep="|")
+                    all_alleles.extend([rc_1, rc_2])
 
 
                 # Remove outliers for CACNA1C
@@ -232,6 +250,11 @@ def main():
     parser.add_argument("--ptcovars", help="Comma-separated list of phenotype-specific covariates. Default: age", type=str, default="age")
     parser.add_argument("--sharedcovars", help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male", type=str, default="sex_at_birth_Male")
     parser.add_argument("--tr-vcf", help="VCF file with TR genotypes. Required if running associaTR", type=str)
+    parser.add_argument("--is-imputed", help="Indicate if the tr-vcf file is imputed", action="store_true")
+    parser.add_argument("--annotations", help="CSV file with annotations for plotting" + \
+                                              "each line should include the " + \
+                                              "chromosome, start coordinate and label(gene).",
+                                              type=str)
     parser.add_argument("--plot", help="Make a Manhattan plot", action="store_true")
     parser.add_argument("--norm", help="Normalize phenotype either quantile or zscore", type=str)
     parser.add_argument("--norm-by-sex",
@@ -295,7 +318,9 @@ def main():
         if args.norm is not None:
             data = NormalizeData(data=data, norm=args.norm)
     if args.method == "associaTR":
-        data = set_genotypes(data, args)
+        # Get annotations of specific TRs for plotting
+        annotations = read_annotations(args.annotations)
+        data = set_genotypes(data, args, annotations)
 
     # Add shared covars
     sampfile = args.samples
@@ -336,16 +361,7 @@ def main():
         if args.method == "associaTR":
             annotate = True
             p_value_threshold = -np.log10(5*10**-3)
-            for chrom, pos, gene in [("chr15", 88855424, "ACAN"),
-                  ("chr17", 30237128, "SLC6A4"),
-                  ("chr6", 81752005, "TENT5A"),
-                  ("chr20", 2652732, "NOP56"),
-                  ("chr15", 101334170, "PCSK6"),
-                  ("chrX", 43654436, "MAOA"),
-                  ("chr12", 2255790, "CACNA1C"),
-                  ("chr1", 155190864, "MUC1"),
-                  ("chr21", 43776443, "CSTB"),
-                  ]:
+            for chrom, pos, gene in annotations:
                 plot_genotype_phenotype(data=data,
                         genotype=gene,
                         gwas=runner.gwas,
