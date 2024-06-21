@@ -11,5 +11,5 @@ if len(sys.argv) == 3:
 gwas = pd.read_csv(gwas_file, sep=delim)
 alleles = gwas['alleles'].apply(lambda x: ":".join(ast.literal_eval(x)))
 gwas['rsid'] = gwas['locus']+":"+alleles
-gwas.to_csv(gwas_file, sep="\t", index=False)
+gwas.to_csv(gwas_file, sep=delim, index=False)
 

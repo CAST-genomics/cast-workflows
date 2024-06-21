@@ -9,6 +9,7 @@ logfile=cond_reg.log
 
 nc=1 #num causal
 plink_loc=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification
+plink_loc=/usr/bin
 scripts=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification
 
 python $scripts/split_phenocovar.py $phenocovar f_phen f_covars

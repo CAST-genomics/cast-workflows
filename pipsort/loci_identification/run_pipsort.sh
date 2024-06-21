@@ -17,13 +17,33 @@ plink_file_prefix=gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/exo
 plink_file_prefix=gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/acaf_threshold_v7.1/plink_bed/acaf_threshold.chr${chr}
 
 plink_loc=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification
+plink_loc=/usr/bin
 scripts=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification
-common=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/pipsort_inputs_${phen}
+common=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/pipsort_inputs_${phen}_${s1_samples}_${s2_samples}
+
+if [ ! -d "$common" ]; then
+        mkdir -p "$common"
+        echo "Directory '$common' created."
+    else
+        echo "Directory '$common' already exists."
+    fi
 
 
-cd /home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/pipsort_inputs_${phen}
-logfile=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/pipsort_inputs_${phen}/pipsort.log
-cr_info=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/pipsort_inputs_${phen}/loci_cr_info
+exit 0
+#cd /home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/pipsort_inputs_${phen}
+#logfile=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/pipsort_inputs_${phen}/pipsort.log
+#cr_info=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/pipsort_inputs_${phen}/loci_cr_info
+cd $common
+logfile=$common/pipsort.log
+cr_info=$common/loci_cr_info
+if [ ! -f "$logfile" ]; then
+        touch "$logfile"
+	touch "$cr_info"
+        echo "File '$logfile' created."
+        echo "File '$cr_info' created."
+    else
+        echo "File '$logfile' already exists."
+    fi
 
 
 if [ -d "${chr}_${from}_${to}" ]; then
@@ -74,12 +94,12 @@ gwas_file_s2_pre=${phen}_hail_${s2_samples}
 if [ -e "$common/${gwas_file_s1_pre}.gwas.tab" ]; then
     echo "no need to copy gwas1"
 else
-    gsutil cp "${WORKSPACE_BUCKET}/pipsort/gwas/${gwas_file_s1_pre}.gwas.tab" ./
+    gsutil cp "${WORKSPACE_BUCKET}/pipsort/gwas/${gwas_file_s1_pre}.gwas.tab" $common
 fi
 if [ -e "$common/${gwas_file_s2_pre}.gwas.tab" ]; then
     echo "no need to copy gwas2"
 else
-    gsutil cp "${WORKSPACE_BUCKET}/pipsort/gwas/${gwas_file_s2_pre}.gwas.tab" ./
+    gsutil cp "${WORKSPACE_BUCKET}/pipsort/gwas/${gwas_file_s2_pre}.gwas.tab" $common
 fi
 
 
@@ -199,7 +219,6 @@ echo "$chr $from $to $num_sig_snps_in_loci $num_lead_snps_s1 $num_lead_snps_s2" 
 
 echo $'f_s1.txt\nf_s2.txt' > processedfiles.txt
 python $scripts/extract_all_snps_rsid.py processedfiles.txt snp_map
-
 
 
 #cleanup all files
