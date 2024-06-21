@@ -12,9 +12,10 @@ echo "running gwas for imputed calls"
 	      --tr-vcf $aou_10k_imputed \
 	      --norm quantile \
 	      --norm-by-sex \
-	      --annotations annotations.txt \
+	      --annotations annotations_acan.txt \
 	      --is-imputed \
 	      --plot
+exit 0
 echo "running gwas for advntr calls"
 ./aou_gwas.py --phenotype height \
 	      --num-pcs 10 \
@@ -22,7 +23,7 @@ echo "running gwas for advntr calls"
 	      --tr-vcf $lrwgs_data \
 	      --norm quantile \
 	      --norm-by-sex \
-	      --annotations annotations.txt \
+	      --annotations annotations_acan.txt \
 	      --plot
 #	      --tr-vcf merged_samples.vcf \
 # Running Hail
