@@ -29,7 +29,6 @@ if [ ! -d "$common" ]; then
     fi
 
 
-exit 0
 #cd /home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/pipsort_inputs_${phen}
 #logfile=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/pipsort_inputs_${phen}/pipsort.log
 #cr_info=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/pipsort_inputs_${phen}/loci_cr_info

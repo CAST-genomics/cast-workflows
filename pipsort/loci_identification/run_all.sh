@@ -1,8 +1,8 @@
 #infile=platelet_count_1MB_loci.txt
 #infile=remaining_loci.txt
 #infile=platelet_count_loci_1MB_AFR_NOT_AFR.txt
-#infile=small_loci.txt
-infile=egfr_ckdepi_1MB_loci.txt
+infile=small_loci.txt
+#infile=egfr_ckdepi_1MB_loci.txt
 while IFS=$' ' read -r -a myArray
 do
  echo ${myArray[0]}

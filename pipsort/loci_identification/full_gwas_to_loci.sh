@@ -19,6 +19,9 @@ python add_rsid_col.py ${phen_name}_${pop2}_peaks.csv ,
 
 python construct_loci.py --s1_signals ${phen_name}_${pop1}_peaks.csv --s2_signals ${phen_name}_${pop2}_peaks.csv --delim , --outfile ${phen_name}_${pop1}_${pop2}_1MB_loci.txt --pval_col p_value --pos_col pos --chr_col chrom --id_col rsid --chr_name_prefix chr
 
+python postprocess_loci.py ${phen_name}_${pop1}_${pop2}_1MB_loci.txt fixed_${phen_name}_loci.txt
+mv fixed_${phen_name}_loci.txt ${phen_name}_${pop1}_${pop2}_1MB_loci.txt
+
 gsutil cp ${phen_name}_${pop1}_${pop2}_1MB_loci.txt "${WORKSPACE_BUCKET}/pipsort/loci"
 
 
