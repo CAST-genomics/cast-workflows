@@ -5,7 +5,6 @@ RUN apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get install -qqy \
     python3-pip \
     git-all wget \
     curl \
-    default-jre \
     make \
     cmake \
     gcc \
@@ -13,7 +12,12 @@ RUN apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get install -qqy \
     automake \
     libtool \
     subversion \
-    pkg-config
+    pkg-config \
+    openjdk-21-jdk 
+
+
+#default-jre \
+
 
 # Download and install gcloud
 RUN curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz
@@ -23,25 +27,8 @@ RUN mkdir -p /usr/local/gcloud \
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
 
 
-RUN wget "http://faculty.washington.edu/browning/beagle/beagle.01Mar24.d36.jar" -O beagle.jar
+RUN wget "https://faculty.washington.edu/browning/beagle/beagle.27May24.118.jar" -O beagle.jar
 
-#
-#
-#RUN wget -qO- "https://cmake.org/files/v3.17/cmake-3.17.0-Linux-x86_64.tar.gz" | tar --strip-components=1 -xz -C /usr/local
-#
-## Install BEAGLE
-#RUN apt-get update && apt-get install -y cmake build-essential autoconf automake libtool pkg-config
-#RUN git clone --depth=1 https://github.com/beagle-dev/beagle-lib.git 
-#
-#RUN cd beagle-lib \
-#    mkdir build \
-#    cd build \
-#    cmake -DBUILD_SSE=OFF -DBUILD=_CUDA=OFF .. \
-#    make install \
-#    ldconfig
-#
-#ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-#CMD java -jar beagle
-#CMD beagle
+
 
 

@@ -2,14 +2,15 @@ version 1.0
 
 workflow beagle {
     input {
-        File vntr_vcf
-        File vntr_vcf_index
-        String snp_vcf  
-        String vcf_index
+        File vcf 
+        File vcf_index 
         File ref_panel
         File ref_panel_index
         String out_prefix
         String GOOGLE_PROJECT = ""
+        String GCS_OAUTH_TOKEN = ""
+        Int? mem 
+        Int? window_size 
     }
     call split {
         input:
@@ -20,12 +21,15 @@ workflow beagle {
     }
     call beagle {
         input : 
-          vcf=vcf, 
+          vcf=vcf,
           vcf_index=vcf_index,
           ref_panel=ref_panel, 
           ref_panel_index=ref_panel_index,
           out_prefix=out_prefix,
           GOOGLE_PROJECT=GOOGLE_PROJECT,
+          GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN,
+          mem=mem,
+          window_size=window_size
     }
     call sort_index_beagle {
         input :
@@ -37,7 +41,7 @@ workflow beagle {
         File outfile_index = sort_index_beagle.outvcf_index
     }
     meta {
-      description: "Run Beagle on a single chromesome with default parameters"
+      description: "Run Beagle on a subset of samples on a single chromesome with default parameters"
     }
 }
 
@@ -74,35 +78,41 @@ task split {
 
 task beagle {
     input {
-        File vcf
-        File vcf_index
+        File vcf 
+        File vcf_index 
         File ref_panel
         File ref_panel_index
         String out_prefix
         String GOOGLE_PROJECT = ""
+        String GCS_OAUTH_TOKEN = ""
+        Int? mem 
+        Int? window_size 
     } 
 
     command <<<
-      #export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
-      #export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-      echo "Java max heap size"
-      java -XX:+PrintFlagsFinal -version | grep HeapSize
-      echo "system memory"
-      grep MemTotal /proc/meminfo | awk '{print $2}'
-      echo "running beagle"
-      date
-      java -Xmx20g -jar /beagle.jar \
+
+        export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+
+        echo "Java max heap size"
+        java -XX:+PrintFlagsFinal -version | grep HeapSize
+        echo "system memory"
+        grep MemTotal /proc/meminfo | awk '{print $2}'
+        echo "running beagle"
+        date
+
+        java -Xmx~{mem}g -jar /beagle.jar \
             gt=~{vcf} \
             ref=~{ref_panel} \
-            window=5 \
+            window=~{window_size} \
             out=~{out_prefix}
+        date
     >>>
     
-  
+    #file upto 300mb use mem=25
     runtime {
-        #docker:"gcr.io/ucsd-medicine-cast/beagle:latest"
-	docker: "sarajava/beagle:v3"
-	memory: "40GB"
+        docker:"gcr.io/ucsd-medicine-cast/beagle:latest"
+	    memory: mem + "GB"
     }
 
     output {
