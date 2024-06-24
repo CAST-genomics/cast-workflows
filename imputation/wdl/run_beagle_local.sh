@@ -8,9 +8,11 @@ ref="../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/phased_
 
 out="data/output_${chr}_10mb_aou_185_lrwgs_w8_o2"
 
-beagle_5_4_old="beagle.19Apr22.7c0.jar"
-beagle=$beagle_5_4_old
-java -Xmx4g -jar $beagle \
+beagle_latest="beagle.27May24.118.jar"
+beagle=$beagle_latest
+date
+date > time.txt
+java -Xmx8g -jar $beagle \
         gt=$gt \
         ref=$ref \
         out=$out \
