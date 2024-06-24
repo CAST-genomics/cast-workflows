@@ -24,6 +24,9 @@ echo "difference in original and reconstructed sample size (should be 0) : $(com
 # change the header.txt, i.e. get the ENG tag from merged_samples.sorted.vcf.gz.
 # line to add for the END tag:
 # ##INFO=<ID=END,Number=1,Type=Integer,Description="End position of variant">
+# ##INFO=<ID=VID,Number=1,Type=Integer,Description="VNTR ID">
+# ##INFO=<ID=RU,Number=1,Type=String,Description="Repeat motif">
+# ##INFO=<ID=RC,Number=1,Type=Integer,Description="Reference repeat unit count">
 #bcftools reheader -h -p ref_phased_reheader_chr15_acan_vntr.vcf.gz ref_phased_output_chr15_acan_vntr_apr_22.vcf.gz
 
 tabix -f -p vcf ref_phased_output_chr15_acan_vntr_apr_22.vcf.gz
