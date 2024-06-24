@@ -158,6 +158,8 @@ def main():
     # Set up dataframes
     demog = SQLToDF(aou_queries.demographics_sql)
     ptdata = SQLToDF(aou_queries.ConstructTraitSQL(args.concept_id, args.ppi))
+    print("units:", ptdata["unit_concept_name"].unique())
+    print("values: ", ptdata["value_as_number"].unique())
     data = pd.merge(ptdata, demog, on="person_id", how="inner")
     MSG("After merge, have %s data points"%data.shape[0])
 

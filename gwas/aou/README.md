@@ -40,7 +40,7 @@ Required arguments:
 Optional arguments:
 
 * `--method <STR>`: Which GWAS method to use. Default: hail
-* `--samples <FILE>`: csv file with list of samples to restrict to. Needs columns "person_id" and "sex_at_birth_Male". Typically this would a list of samples that passed upstream sample-level QC info. Defaults to `${WORKSPACE_BUCKET}/samples/passing_samples_v7.csv`.
+* `--samples <FILE>`: csv file with list of samples to restrict to. Needs columns "person_id" and "sex_at_birth_Male". Typically this would a list of samples that passed upstream sample-level QC info. Defaults to `${WORKSPACE_BUCKET}/samples/passing_samples_v7.1.csv`.
 * `--ancestry-pred-path <FILE>`: Path to file with PC info. Defaults to the AoU v7 ancestry predictions.
 * `--region <STR>`: Region to restrict to (chrom:start-endd)
 * `--num-pcs <INT>`: Number of population PCs to include as covariates. Default: 10
@@ -58,14 +58,15 @@ Optional arguments:
 
 ## Important file locations:
 
-* Samples passing QC: `${WORKSPACE_BUCKET}/samples/passing_samples_v7.csv`
+* Samples passing QC: `${WORKSPACE_BUCKET}/samples/passing_samples_v7.1.csv`
 * Preprocessed phenotypes+covariates: `${WORKSPACE_BUCKET}/phenotypes/${phenotype}_phenocovar.csv`
 * GWAS results: `${WORKSPACE_BUCKET}/gwas/${phenotype}_hail_${cohort}.gwas.tab` where `cohort` is parsed from the `--samples` argument. If using the default for `--samples`, `cohort` will be `ALL`.
 * Manifest of existing preprocessed phenotypes: `phenotypes_manifest.csv` (this repo)
 
-Available cohort options:
+Available cohort options (edit 4/24/24: updated for v7.1):
 * `${WORKSPACE_BUCKET}/samples/EUR_WHITE.csv` (119184 samples) (self-reported race matches `ANCESTRY_PRED`)
 * `${WORKSPACE_BUCKET}/samples/AFR_BLACK.csv` (44386 samples) (self-reported race matches `ANCESTRY_PRED`)
+* `${WORKSPACE_BUCKET}/samples/NOT_AFR_BLACK.csv` (174828 samples) (all samples except where race is African American/Black or `ANCESTRY_PRED` is AFR)
 
 ## Setup
 
@@ -76,7 +77,7 @@ The GWAS instructions below assume you have:
 We will store the list of samples passing QC at:
 
 ```
-${WORKSPACE_BUCKET}/samples/passing_samples_v7.csv
+${WORKSPACE_BUCKET}/samples/passing_samples_v7.1.csv
 ```
 
 2. Run phenotype preprocessing on your phenotype of interest. See the `phenotype_preprocessing` folder for more details.

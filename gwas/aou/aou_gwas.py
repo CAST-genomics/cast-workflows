@@ -8,7 +8,7 @@ Example:
 """
 
 import argparse
-from gwas_plotter import PlotManhattan, PlotQQ
+from gwas_plotter import PlotManhattan, PlotQQ, plot_histogram, plot_genotype_phenotype
 import os
 import pandas as pd
 import re
@@ -17,12 +17,15 @@ from utils import MSG, ERROR
 import numpy as np
 import scipy.stats as stats
 import warnings
+import re
+import vcf
+from io import StringIO
 
 GWAS_METHODS = ["hail", "associaTR"]
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
 SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
-    "passing_samples_v7.csv")
-DEFAULTSAMPLECSV = "passing_samples_v7.csv"
+    "passing_samples_v7.1.csv")
+DEFAULTSAMPLECSV = "passing_samples_v7.1.csv"
 
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
@@ -39,7 +42,7 @@ def GetOutPath(phenotype, method, region, samplefile):
     outprefix = "%s_%s_%s"%(phenotype, method, cohort)
     if region is not None:
         outprefix += "_%s"%(region.replace(":", "_").replace("-","_"))
-    return outprefix + ".gwas"
+    return "outputs/" + outprefix + ".gwas"
 
 def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
@@ -89,6 +92,159 @@ def NormalizeData(data, norm):
     else:
         ERROR("No normalization method specified")
 
+def read_annotations(filename):
+    annotations = []
+    with open(filename, "r") as annotations_file:
+        lines = annotations_file.readlines()
+    for line in lines:
+        chrom, start, gene = line.strip().split(",")
+        annotations.append((str(chrom), str(start), str(gene)))
+    return annotations
+
+def get_rc_from_allele_record(record, allele):
+    ref_allele = record.REF
+    alt_alleles = record.ALT.split(",")
+    ru = record.INFO.split(";")[2].replace("RU=", "")
+    ru_len = len(ru)
+    #print("ru_len, ru, len ref allele", ru_len, ru, len(ref_allele))
+    if allele == 0:
+        ref_rc = int(len(ref_allele)/ru_len)
+        #print("ref_rc ", ref_rc)
+        return ref_rc
+    else:
+        rc = int(len(alt_alleles[allele-1])/ru_len)
+        #print("call {} allele {}".format(allele, rc))
+        return rc
+
+def get_mean_rc_from_call_record(record, call, sep="/"):
+    allele_1, allele_2 = call.split(sep)
+    rc_1 = get_rc_from_allele_record(record, int(allele_1))
+    rc_2 = get_rc_from_allele_record(record, int(allele_2))
+    return (rc_1 + rc_2) / 2
+
+def get_rc_from_allele(vcf_df_row, allele):
+    ref_allele = vcf_df_row["REF"].array[0]
+    alt_alleles = vcf_df_row["ALT"].array[0].split(",")
+    ru = vcf_df_row["INFO"].array[0].split(";")[2].replace("RU=", "")
+    ru_len = len(ru)
+    #print("ru_len, ru, len ref allele", ru_len, ru, len(ref_allele))
+    if allele == 0:
+        ref_rc = int(len(ref_allele)/ru_len)
+        #print("ref_rc ", ref_rc)
+        return ref_rc
+    else:
+        rc = int(len(alt_alleles[allele-1])/ru_len)
+        #print("call {} allele {}".format(allele, rc))
+        return rc
+
+def get_individual_rcs_from_call(vcf_df_row, call, sep="/"):
+    allele_1, allele_2 = call.split(sep)
+    rc_1 = get_rc_from_allele(vcf_df_row, int(allele_1))
+    rc_2 = get_rc_from_allele(vcf_df_row, int(allele_2))
+    return rc_1, rc_2
+
+def get_overall_rc_from_call(vcf_df_row, call, sep="/"):
+    allele_1, allele_2 = call.split(sep)
+    rc_1 = get_rc_from_allele(vcf_df_row, int(allele_1))
+    rc_2 = get_rc_from_allele(vcf_df_row, int(allele_2))
+    return (rc_1 + rc_2)/2.0
+
+
+def set_genotypes(data, args, annotations):
+    #print("is imputed: ", args.is_imputed)
+    imputed = args.is_imputed
+    # Plot phenotype histogram
+    plot_histogram(data["phenotype"], "outputs/{}_histogram_after_norm.png".format(args.phenotype))
+    # Read input VCF file into a dataframe
+    lines = None
+    with open(args.tr_vcf, "r") as vcf_file:
+        lines = "\n".join(vcf_file.readlines())
+    vcf_df = pd.read_csv(StringIO(re.sub("#CHROM", "CHROM", lines)), sep="\t", comment='#')
+
+    # Set up an output vcf file for normalized values
+    #normalized_file = open("normalized.vcf", "w+")
+    #for line in lines:
+    #    if line.startswith("#"):
+    #        normalized_file.write(line + "\n")
+    # Focus on a few loci of interest
+    for chrom, start, gene in annotations:
+        all_alleles = []
+        empty_calls, no_calls = 0, 0
+
+        locus_calls = vcf_df[(vcf_df["CHROM"] == chrom) & \
+                             (vcf_df["POS"] == int(start))
+                             ]
+        data.loc[:, [gene]] = np.nan
+        samples_with_calls = set()
+        shared_columns = []
+        for column in vcf_df.columns:
+            if column.isnumeric():
+                # Corresponds to a sample id
+                if not imputed:
+                    #print("Column: ", column)
+                    #print("Locus call", locus_calls[column].to_string())
+                    if len(locus_calls[column].array) == 0:
+                        # An error causing an empty value in the vcf file
+                        empty_calls += 1
+                        continue
+                    call = locus_calls[column].array[0]
+                    call = call.split(":")[0]
+                    if call == ".":
+                        # Equal to no call
+                        no_calls += 1
+                        continue
+                    rc = get_overall_rc_from_call(locus_calls, call, sep="/")
+                    # Get individual alleles for plotting
+                    rc_1, rc_2 = get_individual_rcs_from_call(locus_calls, call, sep="/")
+                    all_alleles.extend([rc_1, rc_2])
+                else: # imputed
+                    if len(locus_calls[column]) == 0:
+                        # Equal to no call
+                        continue
+                    call = locus_calls[column].array[0]
+                    call = call.split(":")[0]
+                    #print("Locus call after split ", call)
+                    rc = get_overall_rc_from_call(locus_calls, call, sep="|")
+                    # Get individual alleles for plotting
+                    rc_1, rc_2 = get_individual_rcs_from_call(locus_calls, call, sep="|")
+                    all_alleles.extend([rc_1, rc_2])
+
+
+                # Remove outliers for CACNA1C
+                #if gene == "CACNA1C" and (rc < 2*180 or rc > 2*205):
+                #    continue
+                samples_with_calls.add(column)
+                data.loc[data["person_id"]==column, gene] = rc
+            else:
+                shared_columns.append(column)
+        #data = data.dropna(subset=[gene, "phenotype"])
+        
+        # Plot individual alleles for ACAN
+        if gene == "ACAN" and args.phenotype == "height":
+            plot_histogram(all_alleles, "outputs/ACAN_alleles_height.png")
+        if no_calls + empty_calls > 0:
+            print("Skipping {} empty calls and {} no calls for {} on vcf".format(
+                    empty_calls, no_calls, gene))
+        # Normalize genotypes
+        #data.loc[:, [gene]] = stats.zscore(data[gene])
+        #data.loc[:, [gene]] = Inverse_Quantile_Normalization(data[[gene]])
+        
+        # Write output normalized file
+        #locus_normalized = data.loc[:, [gene]]
+        #normalized_file.write(shared_columns + )
+
+
+        #print("len of data after removing samples with no calls or no phenotypes {}: {}".format(
+        #        args.phenotype, len(data)))
+        #print(plotted_data.head())
+        # Plotting genotype phenotype later when we have the effect sizes.
+        #plot_genotype_phenotype(data=data,
+        #            genotype=gene,
+        #            phenotype="phenotype",
+        #            outpath="outputs/{}_genotype_{}.png".format(gene, args.phenotype))
+    return data
+
+
 def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--phenotype", help="Phenotypes file path, or phenotype name", type=str, required=True)
@@ -100,6 +256,11 @@ def main():
     parser.add_argument("--ptcovars", help="Comma-separated list of phenotype-specific covariates. Default: age", type=str, default="age")
     parser.add_argument("--sharedcovars", help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male", type=str, default="sex_at_birth_Male")
     parser.add_argument("--tr-vcf", help="VCF file with TR genotypes. Required if running associaTR", type=str)
+    parser.add_argument("--is-imputed", help="Indicate if the tr-vcf file is imputed", action="store_true")
+    parser.add_argument("--annotations", help="CSV file with annotations for plotting" + \
+                                              "each line should include the " + \
+                                              "chromosome, start coordinate and label(gene).",
+                                              type=str)
     parser.add_argument("--plot", help="Make a Manhattan plot", action="store_true")
     parser.add_argument("--norm", help="Normalize phenotype either quantile or zscore", type=str)
     parser.add_argument("--norm-by-sex",
@@ -113,8 +274,10 @@ def main():
     args = parser.parse_args()
 
     # Set up paths
-    if args.phenotype.endswith(".csv"):
-        ptcovar_path = args.phenotype
+    ptcovar_path = "{}_phenocovar.csv".format(args.phenotype)
+    #if args.phenotype.endswith(".csv"):
+    if os.path.exists(ptcovar_path):
+        pass
     else:
         ptcovar_path = GetPTCovarPath(args.phenotype)
 
@@ -160,7 +323,11 @@ def main():
         # Apply normalization on the entire data.
         if args.norm is not None:
             data = NormalizeData(data=data, norm=args.norm)
-        
+    if args.method == "associaTR":
+        # Get annotations of specific TRs for plotting
+        annotations = read_annotations(args.annotations)
+        data = set_genotypes(data, args, annotations)
+
     # Add shared covars
     sampfile = args.samples
     if sampfile.startswith("gs://"):
@@ -193,10 +360,43 @@ def main():
     outpath = GetOutPath(args.phenotype, args.method, args.region, sampfile)
     runner.RunGWAS()
     WriteGWAS(runner.gwas, outpath+".tab", covars)
+    #runner.gwas = pd.read_csv(outpath+".tab", sep="\t")
 
     # Plot Manhattan
     if args.plot:
-        PlotManhattan(runner.gwas, outpath+".manhattan.png")
+        if args.method == "associaTR":
+            annotate = True
+            p_value_threshold = -np.log10(5*10**-3)
+            for chrom, pos, gene in annotations:
+                plot_genotype_phenotype(data=data,
+                        genotype=gene,
+                        gwas=runner.gwas,
+                        chrom=chrom,
+                        pos=pos,
+                        phenotype="phenotype",
+                        outpath="outputs/{}_genotype_{}.png".format(gene, args.phenotype))
+        else:
+            # no text annotation on manhattan plot for hail runner
+            annotate = False
+            p_value_threshold = -np.log10(5*10**-8)
+            #print("GWAS index and column")
+            #print(runner.gwas.index)
+            #print(runner.gwas.columns)
+            #added_points = {"chrom": ["chr15", "chr15"],
+            #                "pos": [88855424,88857434],
+            #                "p_value": [0.1, 0.01],
+            #                }
+            #runner.gwas = runner.gwas.append(added_points, ignore_index=True)
+            #runner.gwas = runner.gwas.sort(['chrom', 'pos']).reset_index(drop=True)
+
+
+        PlotManhattan(runner.gwas, outpath+".manhattan.png",
+                      annotate=annotate,
+                      p_value_threshold=p_value_threshold,
+                      extra_points=[
+                          ("chr15", 88855424, 1, "ACAN_v_s"),
+                          ("chr15", 88857434, 1, "ACAN_v_e")
+                          ])
         PlotQQ(runner.gwas, outpath+".qq.png")
 
 if __name__ == "__main__":
