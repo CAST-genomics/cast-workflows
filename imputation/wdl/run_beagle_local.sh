@@ -20,8 +20,9 @@ ref="vntr_reference/ref_phased_reheader_chr15_acan_vntr.vcf.gz"
 
 out="data/output_${chr}_10mb_aou_10k_srwgs_w8_o2"
 
-beagle_5_4_old="beagle.19Apr22.7c0.jar"
-beagle=$beagle_5_4_old
+#beagle_5_4_old="beagle.19Apr22.7c0.jar"
+beagle_latest="beagle.27May24.118.jar"
+beagle=$beagle_latest
 date
 date > time.txt
 java -Xmx8g -jar $beagle \
