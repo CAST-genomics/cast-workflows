@@ -30,14 +30,14 @@ workflow imputation {
         out_prefix=out_prefix
     }
     
-    call index_vcf {
-        input:
-            vcf=subset_vcf.outfile
-    }
+    #call index_vcf {
+    #    input:
+    #        vcf=subset_vcf.outfile
+    #}
     call beagle {
         input : 
-          vcf=index_vcf.outvcf, 
-          vcf_index=index_vcf.outvcf_index,
+          vcf=subset_vcf.outfile, 
+          vcf_index=subset_vcf.outfile_index,
           ref_panel=ref_panel, 
           ref_panel_index=ref_panel_index,
           out_prefix=out_prefix,
@@ -88,6 +88,7 @@ task subset_vcf {
         # Exclude reference samples from the query. Otherwise beagle will give an error.
         grep -v -x -f ref_sample_ids.txt ~{samples_file} > samples_file_clean.txt
         bcftools view -Oz -R ~{regions_file} -S samples_file_clean.txt ~{vcf} > ~{out_prefix}.vcf.gz
+        tabix -p vcf ~{out_prefix}.vcf.gz
     >>>
 
     runtime {
@@ -97,6 +98,7 @@ task subset_vcf {
 
     output {
         File outfile = "${out_prefix}.vcf.gz"
+        File outfile_index = "${out_prefix}.vcf.gz.tbi"
         File ref_sample_ids = "ref_sample_ids.txt"
     }    
 }

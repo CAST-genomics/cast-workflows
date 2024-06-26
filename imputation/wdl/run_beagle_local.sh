@@ -4,21 +4,25 @@
 
 chr="chr11"
 # Have to run this before:
-#bcftools convert -O z data/aou_100_chr11_phased_shapeit_ma_.bcf > data/aou_100_chr11_phased_shapit_ma.vcf.gz
+if [ ! -e data/aou_100_${chr}_phased_shapit.vcf.gz ]; then
+  bcftools convert -O z data/aou_100_${chr}_phased_shapeit.bcf > data/aou_100_${chr}_phased_shapit.vcf.gz
+fi
+
 gt="data/aou_100_${chr}_phased_shapit_ma.vcf.gz"
-#ref="data/${chr}_final_SNP_merged_additional_TRs.bref3"
+ref="data/${chr}_final_SNP_merged_additional_TRs.bref3"
+out="data/beagle_imputed_shapeit_phased_${chr}_100_aou"
 
 # For ACAN VNTR
-chr="chr15"
+#chr="chr15"
 
-#gt="vntr_data/acan_10mbp_aou_185_lrwgs_samples_subset.vcf.gz"
-gt="vntr_data/output_chr15_acan_10mbp_aou_10k_samples.vcf.gz"
+##gt="vntr_data/acan_10mbp_aou_185_lrwgs_samples_subset.vcf.gz"
+#gt="vntr_data/output_chr15_acan_10mbp_aou_10k_samples.vcf.gz"
 
-#ref="data/${chr}_final_SNP_merged_additional_TRs.bref3"
-#ref="vntr_data/phased_ACAN_vntr_snp_650_samples.sorted.vcf.gz"
-ref="vntr_reference/ref_phased_reheader_chr15_acan_vntr.vcf.gz"
+##ref="data/${chr}_final_SNP_merged_additional_TRs.bref3"
+##ref="vntr_data/phased_ACAN_vntr_snp_650_samples.sorted.vcf.gz"
+#ref="vntr_reference/ref_phased_reheader_chr15_acan_vntr.vcf.gz"
 
-out="data/output_${chr}_10mb_aou_10k_srwgs_w8_o2"
+#out="data/output_${chr}_10mb_aou_10k_srwgs_w8_o2"
 
 #beagle_5_4_old="beagle.19Apr22.7c0.jar"
 beagle_latest="beagle.27May24.118.jar"
