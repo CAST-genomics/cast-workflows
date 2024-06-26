@@ -12,11 +12,12 @@ regions="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/ACAN_region_10m.bed"
 time python imputation_aou.py \
         --vcf $gt \
         --ref-panel $ref \
-        --name output_${chr}_acan_10mbp_aou_10k_samples \
-        --window 5 \
+        --name output_${chr}_acan_50mbp_aou_10_samples \
+        --window 20 \
 	--overlap 2 \
 	--chrom chr15 \
+	--mem 100 \
 	--samples-file $samples \
-	--regions-file $regions \
-	--cromwell
+	--regions-file $regions
+#	--cromwell
 

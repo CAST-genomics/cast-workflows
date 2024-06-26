@@ -14,7 +14,8 @@ def get_hipstr_call():
     #bcftools query -r chr11:119206290- -f"%CHROM\t%POS\t%REF\t%ALT\t[%TGT\t]\n" 100_aou_chr11_beagle.vcf.gz|grep -w 119206290 >> genotype_chr11_aou.txt
     call_gt, allele_len
     pass
-def read_vcf_file(filename):
+
+def read_vcf_file(filename, position):
     print("Working with ", filename)
     variants = []
     reader = VCF(filename)
@@ -25,7 +26,7 @@ def read_vcf_file(filename):
         variants.append(variant)
         alt_alleles = variant.ALT
         ref_allele = variant.REF
-        if str(variant.POS) != "88855424":
+        if str(variant.POS) != position:
             continue
         print("number of alt alleles ", len(alt_alleles))
         print("len of ref allele", len(ref_allele))
@@ -46,6 +47,9 @@ def read_vcf_file(filename):
     return call_gt, allele_len, samples
 
 def get_repeat_count(allele_len, motif_len):
+    if motif_len == -1: # In this case, just return allele len
+        return allele_len
+    # otherwise, return the actual repeat count
     return int(allele_len / motif_len)
 
 def get_diff_motif_count(first_allele_len, second_allele_len, motif_len):
@@ -96,27 +100,26 @@ def compare_pair(first_name, first_allele_len,
           first_name, second_name,
           concordance * 100))
 
-def compare_gt():
-    motif_len = 57 # For ACAN VNTR
-    #hipstr_filename = "data/CBL_test.filtered.sorted.vcf.gz"
-    #hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(hipstr_filename)
-    caller_filename = "vntr_reference/ref_phased_output_chr15_acan_vntr_apr_22.vcf.gz"
-    hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(caller_filename)
+    def compare_gt(motif_len, position, repeat_count_thresholds):
+    hipstr_filename = "data/CBL_test.filtered.sorted.vcf.gz"
+    hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(hipstr_filename, position)
+    #caller_filename = "vntr_reference/ref_phased_output_chr15_acan_vntr_apr_22.vcf.gz"
+    hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(caller_filename, position)
     
-    #beagle_filename = "data/CBL_aou_100_phasing_impute_beagle_apr_22_bref.vcf.gz"
+    beagle_filename = "data/CBL_aou_100_phasing_impute_beagle_apr_22_bref.vcf.gz"
     #beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_185_lrwgs_w8_o2.vcf.gz"
-    beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_275_lrwgs_w8_o2.vcf.gz"
-    beagle_call_gt, beagle_allele_len, beagle_samples = read_vcf_file(beagle_filename)
+    #beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_275_lrwgs_w8_o2.vcf.gz"
+    beagle_call_gt, beagle_allele_len, beagle_samples = read_vcf_file(beagle_filename, position)
 
 
     shapeit_filename = "data/CBL_aou_100_phase_shapeit_impute_beagle_apr_22_bref.vcf.gz"
     #shapeit_filename = "data/CBL_aou_100_phase_shapeit_impute_beagle_iflag_apr_22_bref.vcf.gz"
-    shapeit_call_gt, shapeit_allele_len, shapeit_samples = read_vcf_file(shapeit_filename)
+    shapeit_call_gt, shapeit_allele_len, shapeit_samples = read_vcf_file(shapeit_filename, position)
 
     print("len caller_samples ", len(hipstr_samples))
     print("len beagle_samples ", len(beagle_samples))
     #print("len shapeit_samples ", len(shapeit_samples))
-    for repeat_count_threshold in [0, 1, 2, 3]:
+    for repeat_count_threshold in repeat_count_thresholds:
         print("Working with motif length {} and repeat count threshold {}".format(
             motif_len, repeat_count_threshold))
         compare_pair(first_name="caller",
@@ -138,4 +141,16 @@ def compare_gt():
         #             samples=shapeit_samples)
 
 if __name__ == "__main__":
-    compare_gt()
+    # For ACAN VNTR
+    repeat_count_thresholds = [0, 1, 2, 3]
+    position = "88855424"
+    motif_len = 57
+
+    # For other test TR
+    motif_len = -1
+    positions = ["2961502", "8824204", "47310908", "119206290"]
+    # For debug
+    positions = positions[0:1]
+    repeat_count_thresholds = [0]
+    for position in positions:
+        compare_gt(motif_len, position, repeat_count_thresholds)
