@@ -22,6 +22,7 @@ ref="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/ref_phased_output_chr15_acan_v
 ## Run with AoU data
 # VCF file with all samples
 gt="gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/acaf_threshold_v7.1/vcf/acaf_threshold.${chr}.vcf.bgz"
+#gt="gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/acan_data_all/output_chr15_acan_50mbp_aou_10_samples.vcf.gz"
 # VCF file with 100 samples
 #gt="$WORKSPACE_BUCKET/tr_imputation/tr_imputation/aou_data_subset/100_aou_${chr}_imputation.vcf.gz"
 # VCF file for all aou samples, only acan region 10mbp
@@ -35,11 +36,11 @@ regions="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/ACAN_region_50m.bed"
 time python imputation_aou.py \
         --vcf $gt \
         --ref-panel $ref \
-        --name output_${chr}_acan_50mbp_aou_10_samples \
-        --window 20 \
+        --name output_${chr}_acan_50mbp_aou_all_srwgs_samples \
+        --window 10 \
 	--overlap 2 \
-	--chrom chr15 \
-	--mem 100 \
+	--chrom $chr \
+	--mem 200 \
 	--samples-file $samples \
 	--regions-file $regions
 #	--cromwell

@@ -15,3 +15,6 @@ wget "https://faculty.washington.edu/browning/beagle/unbref3.01Mar24.d36.jar"
 
 #Cromwell
 wget "https://github.com/broadinstitute/cromwell/releases/download/87/cromwell-87.jar"
+
+# Shapeit
+wget "https://github.com/odelaneau/shapeit5/releases/download/v5.1.1/phase_common_static"

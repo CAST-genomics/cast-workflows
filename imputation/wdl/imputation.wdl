@@ -5,6 +5,7 @@ workflow imputation {
         String vcf 
         String vcf_index 
         String ref_panel
+        String ref_panel_bref
         String ref_panel_index
         String out_prefix
         String GOOGLE_PROJECT = ""
@@ -25,6 +26,7 @@ workflow imputation {
         ref_panel_index=ref_panel_index,
         vcf=vcf,
         vcf_index=vcf_index,
+        mem=mem,
         GOOGLE_PROJECT=GOOGLE_PROJECT,
         GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN,
         out_prefix=out_prefix
@@ -38,8 +40,8 @@ workflow imputation {
         input : 
           vcf=subset_vcf.outfile, 
           vcf_index=subset_vcf.outfile_index,
-          ref_panel=ref_panel, 
-          ref_panel_index=ref_panel_index,
+          ref_panel=ref_panel_bref, 
+          #ref_panel_index=ref_panel_index,
           out_prefix=out_prefix,
           GOOGLE_PROJECT=GOOGLE_PROJECT,
           GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN,
@@ -50,7 +52,8 @@ workflow imputation {
     }
     call sort_index_beagle {
         input :
-            vcf=beagle.outfile
+            vcf=beagle.outfile,
+            mem=mem
     }
     output {
         File outfile = sort_index_beagle.outvcf 
@@ -70,6 +73,7 @@ task subset_vcf {
         String ref_panel_index
         File? samples_file
 	File? regions_file
+        Int? mem 
         String GOOGLE_PROJECT = ""
         String GCS_OAUTH_TOKEN = ""
         String out_prefix=out_prefix
@@ -78,6 +82,10 @@ task subset_vcf {
     command <<<
         export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        echo "memory on device"
+        grep MemTotal /proc/meminfo
+        echo "disk space on device"
+        df -h
         # To get a list of sample ids
         #bcftools query -l ~{vcf} > sample_ids.txt
         # The "bcftools head" command was to check the header for the labeling if contigs e.g. chr21 vs 21.
@@ -93,7 +101,8 @@ task subset_vcf {
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-        memory: "60GB"
+	memory: mem + "GB"
+        bootDiskSizeGb: mem
     }
 
     output {
@@ -128,8 +137,8 @@ task beagle {
     input {
         File vcf 
         File vcf_index 
-        String ref_panel
-        String ref_panel_index
+        File ref_panel
+        #String ref_panel_index
         String out_prefix
         String GOOGLE_PROJECT = ""
         String GCS_OAUTH_TOKEN = ""
@@ -155,7 +164,7 @@ task beagle {
     #file upto 300mb use mem=25
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/beagle:latest"
-	    memory: mem + "GB"
+	memory: mem + "GB"
     }
 
     output {
@@ -166,6 +175,7 @@ task beagle {
 task sort_index_beagle {
     input {
       File vcf
+      Int? mem 
     }
 
     String basename = basename(vcf, ".vcf.gz")
@@ -178,6 +188,7 @@ task sort_index_beagle {
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
+	memory: mem + "GB"
     }
 
     output {
