@@ -18,6 +18,7 @@ def get_hipstr_call():
 def read_vcf_file(filename, position):
     print("Working with ", filename)
     variants = []
+    alleles = []
     reader = VCF(filename)
     samples = reader.samples
     call_gt = {}
@@ -38,12 +39,17 @@ def read_vcf_file(filename, position):
                 call_gt[samples[i]] = genotype
                 if int(call) == 0: #Ref allele
                     allele_len[samples[i]].append(len(ref_allele))
+                    alleles.append(len(ref_allele))
                 else:
                     allele_len[samples[i]].append(len(alt_alleles[call - 1]))
+                    alleles.append(len(alt_alleles[call - 1]))
                 # Sorting the two alleles based on the lengths
                 allele_len[samples[i]] = sorted(allele_len[samples[i]])
             #print(genotype, hipstr_allele_len[samples[i]])
     #print("Num variants in the vcf file: ", len(variants))
+    print("Min and max allele lengths are: min: {} and max: {}".format(
+            min(alleles),
+            max(alleles)))
     return call_gt, allele_len, samples
 
 def get_repeat_count(allele_len, motif_len):
@@ -65,6 +71,7 @@ def compare_pair(first_name, first_allele_len,
                  repeat_count_threshold,
                  verbose=False):
     is_concordant = []
+    alleles = []
     for sample in samples:
         # Sanity check that alleles are sorted
         for allele in [first_allele_len[sample], second_allele_len[sample]]:
@@ -74,18 +81,19 @@ def compare_pair(first_name, first_allele_len,
                     allele[0],
                     allele[1]))
                 return
-
+        
         # Check concordance
         # The difference threshold should hold for both alleles
         if (get_diff_motif_count(first_allele_len[sample][0],
                                 second_allele_len[sample][0],
                                 motif_len,
-                                ) <= repeat_count_threshold) and \
-           (get_diff_motif_count(first_allele_len[sample][1],
+                                ) <= repeat_count_threshold):
+            is_concordant.append(0.5)
+        if (get_diff_motif_count(first_allele_len[sample][1],
                                 second_allele_len[sample][1],
                                 motif_len, 
                                 ) <= repeat_count_threshold):
-            is_concordant.append(1)
+            is_concordant.append(0.5)
         else:
             if verbose:
                 print("example of non-concordant call {} {} and {} {}".format(
@@ -93,28 +101,29 @@ def compare_pair(first_name, first_allele_len,
                     first_allele_len[sample],
                     second_name,
                     second_allele_len[sample]))
-            is_concordant.append(0)
+            # No need to add a zero, as the length is not used later
+            #is_concordant.append(0)
     concordance = sum(is_concordant)/float(len(samples))
 
-    print("--- Concordance between {} and {} is {:.2f}\%".format(
+    print("--- Concordance between {} and {} is {:.2f}%".format(
           first_name, second_name,
           concordance * 100))
 
-    def compare_gt(motif_len, position, repeat_count_thresholds):
-    hipstr_filename = "data/CBL_test.filtered.sorted.vcf.gz"
-    hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(hipstr_filename, position)
+def compare_gt(motif_len, position, repeat_count_thresholds, caller_filename, beagle_filename):
+    #hipstr_filename = "data/CBL_test.filtered.sorted.vcf.gz"
+    #hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(caller_filename, position)
     #caller_filename = "vntr_reference/ref_phased_output_chr15_acan_vntr_apr_22.vcf.gz"
     hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(caller_filename, position)
     
-    beagle_filename = "data/CBL_aou_100_phasing_impute_beagle_apr_22_bref.vcf.gz"
+    #beagle_filename = "data/CBL_aou_100_phasing_impute_beagle_apr_22_bref.vcf.gz"
     #beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_185_lrwgs_w8_o2.vcf.gz"
     #beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_275_lrwgs_w8_o2.vcf.gz"
     beagle_call_gt, beagle_allele_len, beagle_samples = read_vcf_file(beagle_filename, position)
 
 
-    shapeit_filename = "data/CBL_aou_100_phase_shapeit_impute_beagle_apr_22_bref.vcf.gz"
+    #shapeit_filename = "data/CBL_aou_100_phase_shapeit_impute_beagle_apr_22_bref.vcf.gz"
     #shapeit_filename = "data/CBL_aou_100_phase_shapeit_impute_beagle_iflag_apr_22_bref.vcf.gz"
-    shapeit_call_gt, shapeit_allele_len, shapeit_samples = read_vcf_file(shapeit_filename, position)
+    #shapeit_call_gt, shapeit_allele_len, shapeit_samples = read_vcf_file(shapeit_filename, position)
 
     print("len caller_samples ", len(hipstr_samples))
     print("len beagle_samples ", len(beagle_samples))
@@ -140,17 +149,39 @@ def compare_pair(first_name, first_allele_len,
         #             second_allele_len=shapeit_allele_len,
         #             samples=shapeit_samples)
 
-if __name__ == "__main__":
+def check_for_acan():
+    print("======= for ACAN VNTR =======")
     # For ACAN VNTR
-    repeat_count_thresholds = [0, 1, 2, 3]
+    repeat_count_thresholds = [0, 1]
     position = "88855424"
     motif_len = 57
+    beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_275_lrwgs_w8_o2_gmap.vcf.gz"
+    caller_filename = "../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/ref_phased_output_chr15_acan_vntr_apr_22.vcf.gz"
+    compare_gt(motif_len, position, repeat_count_thresholds,
+                    caller_filename=caller_filename,
+                    beagle_filename=beagle_filename)
 
-    # For other test TR
+def check_for_cbl():
+    print("======= for CBL TR =======")
+    repeat_count_thresholds = [0, 1]
+    position = "119206290"
     motif_len = -1
-    positions = ["2961502", "8824204", "47310908", "119206290"]
+    beagle_filename = "../../../../imputation/cast-workflows/imputation/wdl/data/CBL_aou_100_phasing_impute_beagle_apr_22_bref.vcf.gz"
+    caller_filename = "../../../../imputation/cast-workflows/imputation/wdl/data/CBL_test.filtered.sorted.vcf.gz"
+    compare_gt(motif_len, position, repeat_count_thresholds,
+                    caller_filename=caller_filename,
+                    beagle_filename=beagle_filename)
+
+
+if __name__ == "__main__":
+    check_for_acan()
+    check_for_cbl()
+    exit(0)
+    # For other test TR on chr14
+    motif_len = -1
+    positions = ["64247333"]
+    hipstr_filename = "data/UKB_finemapped-batch3.filtered.sorted.vcf.gz"
     # For debug
-    positions = positions[0:1]
     repeat_count_thresholds = [0]
     for position in positions:
-        compare_gt(motif_len, position, repeat_count_thresholds)
+        compare_gt(motif_len, position, repeat_count_thresholds, hipstr_filename)

@@ -93,33 +93,34 @@ def main():
 	output_bucket = bucket + "/" + args.name
 	output_path = os.path.join(bucket, "workflows", "cromwell-executions", "beagle_2")
 
-	# Upload vcf file
-	if args.vcf.startswith("gs://"):
-		vcf_gcs = args.vcf
-	else:
-				# Copying the vcf file
-		vcf_gcs = output_bucket + "/" + args.name + "/"
-		UploadGS(args.vcf, vcf_gcs)
-				# Copying the index file
-		UploadGS(args.vcf + ".tbi", vcf_gcs)
+	if False:
+            # Upload vcf file
+            if args.vcf.startswith("gs://"):
+                    vcf_gcs = args.vcf
+            else:
+                                    # Copying the vcf file
+                    vcf_gcs = output_bucket + "/" + args.name + "/"
+                    UploadGS(args.vcf, vcf_gcs)
+                                    # Copying the index file
+                    UploadGS(args.vcf + ".tbi", vcf_gcs)
 
-	# Upload subset sample file
-	if args.samples_file.startswith("gs://"):
-		samples_file = args.samples_file
-	else:
-				# Copying the exclude sample file
-		samples_file = output_bucket + "/" + args.name + "/"
-		UploadGS(args.samples_file, samples_file)
+            # Upload subset sample file
+            if args.samples_file.startswith("gs://"):
+                    samples_file = args.samples_file
+            else:
+                                    # Copying the exclude sample file
+                    samples_file = output_bucket + "/" + args.name + "/"
+                    UploadGS(args.samples_file, samples_file)
 
 
 
-	# Upload subset region file
-	if args.regions_file.startswith("gs://"):
-		regions_file = args.regions_file
-	else:
-				# Copying the exclude sample file
-		regions_file = output_bucket + "/" + args.name + "/"
-		UploadGS(args.regions_file, regions_file)
+            # Upload subset region file
+            if args.regions_file.startswith("gs://"):
+                    regions_file = args.regions_file
+            else:
+                                    # Copying the exclude sample file
+                    regions_file = output_bucket + "/" + args.name + "/"
+                    UploadGS(args.regions_file, regions_file)
 
 
 
@@ -127,6 +128,7 @@ def main():
 	json_dict = {}
 	json_dict["imputation.vcf"] = args.vcf
 	json_dict["imputation.vcf_index"]=args.vcf+".tbi"
+	json_dict["imputation.ref_panel_bref"] = args.ref_panel.replace(".vcf.gz", ".bref3")
 	json_dict["imputation.ref_panel"] = args.ref_panel
 	json_dict["imputation.ref_panel_index"] = args.ref_panel+".tbi"
 	json_dict["imputation.out_prefix"] = args.name
