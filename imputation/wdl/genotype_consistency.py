@@ -69,6 +69,7 @@ def compare_pair(first_name, first_allele_len,
                  second_name, second_allele_len,
                  samples, motif_len,
                  repeat_count_threshold,
+                 haploid_concordance=True,
                  verbose=False):
     is_concordant = []
     alleles = []
@@ -84,25 +85,43 @@ def compare_pair(first_name, first_allele_len,
         
         # Check concordance
         # The difference threshold should hold for both alleles
-        if (get_diff_motif_count(first_allele_len[sample][0],
-                                second_allele_len[sample][0],
-                                motif_len,
-                                ) <= repeat_count_threshold):
-            is_concordant.append(0.5)
-        if (get_diff_motif_count(first_allele_len[sample][1],
-                                second_allele_len[sample][1],
-                                motif_len, 
-                                ) <= repeat_count_threshold):
-            is_concordant.append(0.5)
-        else:
-            if verbose:
-                print("example of non-concordant call {} {} and {} {}".format(
-                    first_name,
-                    first_allele_len[sample],
-                    second_name,
-                    second_allele_len[sample]))
-            # No need to add a zero, as the length is not used later
-            #is_concordant.append(0)
+        if haploid_concordance:
+            if (get_diff_motif_count(first_allele_len[sample][0],
+                                    second_allele_len[sample][0],
+                                    motif_len,
+                                    ) <= repeat_count_threshold):
+                is_concordant.append(0.5)
+            if (get_diff_motif_count(first_allele_len[sample][1],
+                                    second_allele_len[sample][1],
+                                    motif_len, 
+                                    ) <= repeat_count_threshold):
+                is_concordant.append(0.5)
+            else:
+                if verbose:
+                    print("example of non-concordant call {} {} and {} {}".format(
+                        first_name,
+                        first_allele_len[sample],
+                        second_name,
+                        second_allele_len[sample]))
+        else: # diploid concordance
+            if (get_diff_motif_count(first_allele_len[sample][0],
+                                    second_allele_len[sample][0],
+                                    motif_len,
+                                    ) <= repeat_count_threshold) and \
+             (get_diff_motif_count(first_allele_len[sample][1],
+                                    second_allele_len[sample][1],
+                                    motif_len, 
+                                    ) <= repeat_count_threshold):
+                is_concordant.append(1)
+            else:
+                if verbose:
+                    print("example of non-concordant call {} {} and {} {}".format(
+                        first_name,
+                        first_allele_len[sample],
+                        second_name,
+                        second_allele_len[sample]))
+                # No need to add a zero, as the length is not used later
+                #is_concordant.append(0)
     concordance = sum(is_concordant)/float(len(samples))
 
     print("--- Concordance between {} and {} is {:.2f}%".format(
@@ -152,10 +171,10 @@ def compare_gt(motif_len, position, repeat_count_thresholds, caller_filename, be
 def check_for_acan():
     print("======= for ACAN VNTR =======")
     # For ACAN VNTR
-    repeat_count_thresholds = [0, 1]
+    repeat_count_thresholds = [0]
     position = "88855424"
     motif_len = 57
-    beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_275_lrwgs_w8_o2_gmap.vcf.gz"
+    beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_275_lrwgs_w8_o2.vcf.gz"
     caller_filename = "../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/ref_phased_output_chr15_acan_vntr_apr_22.vcf.gz"
     compare_gt(motif_len, position, repeat_count_thresholds,
                     caller_filename=caller_filename,
@@ -174,7 +193,7 @@ def check_for_cbl():
 
 
 if __name__ == "__main__":
-    check_for_acan()
+    #check_for_acan()
     check_for_cbl()
     exit(0)
     # For other test TR on chr14

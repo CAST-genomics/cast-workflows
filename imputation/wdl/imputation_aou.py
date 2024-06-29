@@ -22,7 +22,7 @@ import sys
 import tempfile
 
 
-def RunWorkflow(json_file, json_options_file, cromwell, dryrun=False):
+def RunWorkflow(wdl_file, json_file, json_options_file, cromwell, dryrun=False):
 	"""
 	Run workflow on AoU
 
@@ -37,10 +37,14 @@ def RunWorkflow(json_file, json_options_file, cromwell, dryrun=False):
 		Just print the command, don't actually run cromshell
 	"""
 	if cromwell is False:
-		cmd = "cromshell submit ./imputation.wdl {json} -op {options}".format(json=json_file, options=json_options_file)
+		cmd = "cromshell submit {wdl} {json} -op {options} ".format(
+                        wdl=wdl_file,
+                        json=json_file, options=json_options_file)
+                        # There is no conf flag in cromshell
+                        #conf="/home/jupyter/cromwell.conf")
 	else:
 		cmd = "java -jar -Dconfig.file={} ".format("/home/jupyter/cromwell.conf") + \
-	  			"cromwell-87.jar run imputation.wdl " + \
+	  			"cromwell-87.jar run {} ".format(wdl_file) + \
 	  			"--inputs {} --options {}".format(json_file, json_options_file)
 	if dryrun:
 		sys.stderr.write("Run: %s\n"%cmd)
@@ -80,6 +84,9 @@ def main():
 
 
 	args = parser.parse_args()
+
+        wdl_workflow = "imputation_2"
+        wdl_file = "./{}.wdl".format(wdl_workflow)
 
 	
 	# Get token
@@ -126,20 +133,20 @@ def main():
 
 	# Set up workflow JSON
 	json_dict = {}
-	json_dict["imputation.vcf"] = args.vcf
-	json_dict["imputation.vcf_index"]=args.vcf+".tbi"
-	json_dict["imputation.ref_panel_bref"] = args.ref_panel.replace(".vcf.gz", ".bref3")
-	json_dict["imputation.ref_panel"] = args.ref_panel
-	json_dict["imputation.ref_panel_index"] = args.ref_panel+".tbi"
-	json_dict["imputation.out_prefix"] = args.name
-	json_dict["imputation.GOOGLE_PROJECT"] = project
-	json_dict["imputation.GCS_OAUTH_TOKEN"] = token
-	json_dict["imputation.mem"] = args.mem
-	json_dict["imputation.chrom"] = args.chrom
-	json_dict["imputation.window_size"] = args.window
-	json_dict["imputation.overlap"] = args.overlap
-	json_dict["imputation.samples_file"] = args.samples_file 
-	json_dict["imputation.regions_file"] = args.regions_file 
+	json_dict[wdl_workflow + ".vcf"] = args.vcf
+	json_dict[wdl_workflow + ".vcf_index"]=args.vcf+".tbi"
+	json_dict[wdl_workflow + ".ref_panel_bref"] = args.ref_panel.replace(".vcf.gz", ".bref3")
+	json_dict[wdl_workflow + ".ref_panel"] = args.ref_panel
+	json_dict[wdl_workflow + ".ref_panel_index"] = args.ref_panel+".tbi"
+	json_dict[wdl_workflow + ".out_prefix"] = args.name
+	json_dict[wdl_workflow + ".GOOGLE_PROJECT"] = project
+	json_dict[wdl_workflow + ".GCS_OAUTH_TOKEN"] = token
+	json_dict[wdl_workflow + ".mem"] = args.mem
+	json_dict[wdl_workflow + ".chrom"] = args.chrom
+	json_dict[wdl_workflow + ".window_size"] = args.window
+	json_dict[wdl_workflow + ".overlap"] = args.overlap
+	json_dict[wdl_workflow + ".samples_file"] = args.samples_file 
+	json_dict[wdl_workflow + ".regions_file"] = args.regions_file 
 
 
 
@@ -151,12 +158,18 @@ def main():
 
 	# Set up json options
 	json_options_dict = {"jes_gcs_root": output_path}
+	json_options_dict = {"call-caching.enabled": "false"}
+	json_options_dict = {"callCaching.allowResultReuse": "false"}
 	json_options_file = args.name+".options.aou.json"
 	with open(json_options_file, "w") as f:
 		json.dump(json_options_dict, f, indent=4)
 
 	# Run workflow on AoU using cromwell
-	RunWorkflow(json_file, json_options_file, args.cromwell, dryrun=args.dryrun)
+	RunWorkflow(wdl_file,
+                    json_file,
+                    json_options_file,
+                    args.cromwell,
+                    dryrun=args.dryrun)
 
 
 if __name__ == "__main__":

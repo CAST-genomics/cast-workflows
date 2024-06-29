@@ -11,8 +11,8 @@ echo "running gwas for imputed calls"
 	      --method associaTR \
 	      --tr-vcf $aou_10k_imputed \
 	      --norm quantile \
-	      --norm-by-sex \
 	      --annotations annotations_acan.txt \
+	      --norm-by-sex \
 	      --is-imputed \
 	      --plot
 exit 0
