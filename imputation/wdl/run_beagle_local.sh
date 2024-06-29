@@ -2,15 +2,25 @@
 
 # For CBL TR
 
-chr="chr11"
+chr="chr14"
 # Have to run this before:
-if [ ! -e data/aou_100_${chr}_phased_shapit.vcf.gz ]; then
-  bcftools convert -O z data/aou_100_${chr}_phased_shapeit.bcf > data/aou_100_${chr}_phased_shapit.vcf.gz
+gt_base="data/aou_100_${chr}_phased_shapeit"
+if [ ! -e "$gt_base.vcf.gz" ]; then
+  bcftools convert -Oz "$gt_base.bcf" > "$gt_base.vcf"
+  tabix -p vcf "$gt_base.vcf.gz"
 fi
 
-gt="data/aou_100_${chr}_phased_shapit_ma.vcf.gz"
-ref="data/${chr}_final_SNP_merged_additional_TRs.bref3"
-out="data/beagle_imputed_shapeit_phased_${chr}_100_aou"
+gt="data/aou_100_${chr}_phased_shapeit.vcf.gz"
+#gt="../../../../imputation/cast-workflows/imputation/wdl/data/aou_100_${chr}_phased_shapit_ma.vcf.gz"
+#ref="../../../../imputation/cast-workflows/imputation/wdl/data/${chr}_final_SNP_merged_additional_TRs.vcf.gz"
+#ref="data/${chr}_final_SNP_merged_additional_TRs.bref3"
+#ref="data/${chr}_final_SNP_merged_additional_TRs_AN_AC_filled.vcf.gz"
+ref="data/${chr}_final_SNP_merged_additional_TRs.vcf.gz"
+out="data/beagle_imputed_shapeit_phased_${chr}_100_aou_test"
+
+gt="data/output_chr14_tr_50mbp_aou_100.vcf.gz"
+out="data/beagle_imputed_and_phased_${chr}_100_aou_50mbp"
+
 
 # For ACAN VNTR
 #chr="chr15"
@@ -24,7 +34,7 @@ out="data/beagle_imputed_shapeit_phased_${chr}_100_aou"
 
 #out="data/output_${chr}_10mb_aou_10k_srwgs_w8_o2"
 
-#beagle_5_4_old="beagle.19Apr22.7c0.jar"
+beagle_5_4_old="beagle.19Apr22.7c0.jar"
 beagle_latest="beagle.27May24.118.jar"
 beagle=$beagle_latest
 date
@@ -33,7 +43,7 @@ java -Xmx8g -jar $beagle \
         gt=$gt \
         ref=$ref \
         out=$out \
-        window=8 \
+        window=5 \
         overlap=2 \
 	chrom=$chr
 	#map=genetic_map/plink.chr21.GRCh38.map
