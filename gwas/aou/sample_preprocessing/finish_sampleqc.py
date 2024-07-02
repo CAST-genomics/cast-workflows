@@ -27,6 +27,12 @@ subprocess.run("gsutil -u $GOOGLE_PROJECT -m cp "+related_samples_path+" ./", sh
 related = pd.read_csv("relatedness_flagged_samples.tsv", sep="\t")
 all_ratios = all_ratios[~all_ratios['s'].isin(related['sample_id'].values)]
 
+#v7.1 update as per https://support.researchallofus.org/hc/en-us/articles/25646444720404-Incremental-Data-Release-for-v7-Genotyping-Array-and-Short-Read-Genomic-Data
+wgs_to_filter_path = "gs://fc-aou-datasets-controlled/v7/known_issues/research_id_v7_wgs_known_issue_15.tsv"
+subprocess.run("gsutil -u $GOOGLE_PROJECT cp "+wgs_to_filter_path+" ./", shell=True, check=True)
+wgs_to_filter = pd.read_csv("research_id_v7_wgs_known_issue_15.tsv", sep="\t")
+all_ratios = all_ratios[~all_ratios['s'].isin(wgs_to_filter['research_id'].values)]
+
 #sex filtering/processing
 # This query represents dataset "All_population" for domain "person" and was generated for All of Us Controlled Tier Dataset v7
 dataset_52206452_person_sql = """
@@ -83,4 +89,4 @@ demog = demog[(demog['sex_at_birth']=='Male') | (demog['sex_at_birth']=='Female'
 all_ratios = all_ratios.merge(demog, left_on='s', right_on='person_id', how='inner')
 all_ratios = pd.get_dummies(all_ratios, columns=['sex_at_birth'], dtype='int')
 all_ratios[['person_id','sex_at_birth_Male']].to_csv("postqc_samples.csv", index=False)
-subprocess.run("gsutil cp postqc_samples.csv "+bucket+"/samples/passing_samples_v7.csv", shell=True, check=True)
+subprocess.run("gsutil cp postqc_samples.csv "+bucket+"/samples/passing_samples_v7.1.csv", shell=True, check=True)

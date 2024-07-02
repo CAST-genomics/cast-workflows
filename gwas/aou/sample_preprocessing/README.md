@@ -1,6 +1,6 @@
 # Sample preprocessing for AoU
 
-This directory contains scripts for performing sample qc. The list of samples that pass qc checks can be found at `${WORKSPACE_BUCKET}/samples/passing_samples_v7.csv`. 
+This directory contains scripts for performing sample qc. The list of samples that pass qc checks can be found at `${WORKSPACE_BUCKET}/samples/passing_samples_v7.1.csv`. 
 
 The sample qc scripts in this directory should be executed in the following order: 
 1. `compute_ratios.py` : obtains #singletons insertions/deletions ratio, heterozygous/homozygous ratio, transition/transversion ratio per sample

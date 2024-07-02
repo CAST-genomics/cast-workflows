@@ -4,6 +4,7 @@ Classes for performing GWAS
 
 import hail as hl
 import numpy as np
+import os
 import pandas as pd
 
 MT_WGS_PATH = 'gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/acaf_threshold_v7.1/multiMT/hail.mt' 

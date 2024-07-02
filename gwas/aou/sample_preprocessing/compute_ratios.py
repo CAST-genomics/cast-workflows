@@ -19,7 +19,7 @@ bucket = os.getenv('WORKSPACE_BUCKET')
 
 hl.init(default_reference = "GRCh38")
 
-mt_wgs_path = 'gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/acaf_threshold/multiMT/hail.mt'
+mt_wgs_path = os.getenv("WGS_ACAF_THRESHOLD_MULTI_HAIL_PATH")
 mt = hl.read_matrix_table(mt_wgs_path)
 sampleIDs = mt.cols().to_pandas()
 mt = mt.annotate_cols(sint = hl.int(mt.s))
