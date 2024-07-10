@@ -8,7 +8,6 @@ example code to impute 10 samples at CBL region
 --name batch_test 
 --vcf gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/acaf_threshold_v7.1/vcf/acaf_threshold.chr21.vcf.bgz \
 --ref-panel $WORKSPACE_BUCKET/tr_imputation/tr_imputation/ref/chr21_final_SNP_merged_additional_TRs.bref3 \
---ref $WORKSPACE_BUCKET/tr_imputation/tr_imputation/ref/chr21_final_SNP_merged_additional_TRs.vcf.gz \
 --mem 120 \
 --batch-num 2
 """
@@ -122,8 +121,8 @@ def main():
 	parser.add_argument("--name", help="Name of the TR job", required=True, type=str)
 	parser.add_argument("--vcf", help="Name of the genotype vcf file", required=True, type=str)
 	parser.add_argument("--ref-panel", help="File id of ref genome", type=str)
-	parser.add_argument("--ref", help="File of ref genome", type=str,required=True)
-	parser.add_argument("--ref-index", help="File of ref index genome", type=str,required=False)
+	#parser.add_argument("--ref", help="File of ref genome", type=str,required=True)
+	#parser.add_argument("--ref-index", help="File of ref index genome", type=str,required=False)
 	parser.add_argument("--mem", help="Specify run memory ", type=int, required=False, default=50)
 	parser.add_argument("--disk", help="Specify disk memory ", type=int, required=False, default=25)
 	parser.add_argument("--window", help="Specify window size for imputation ", type=int, required=False, default=20)
@@ -136,8 +135,8 @@ def main():
 	parser.add_argument("--batch-num", help="Number of batches. Default: -1 (all)",type=int, required=False, default=None)
 	parser.add_argument("--overlap", help="Specify overlap size for imputation ", type=int, required=False, default=2)
 	parser.add_argument("--map", help="Specify genetic map for imputation ", type=str, required=True)					
-	parser.add_argument("--header-file", help="Add hipstr header",type=str, required=False, \
-					 default="gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/tr_imputation/tr_imputation/header_annotation.txt")
+	#parser.add_argument("--header-file", help="Add hipstr header",type=str, required=False, \
+	#				 default="gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/tr_imputation/tr_imputation/header_annotation.txt")
 	parser.add_argument("--cromwell", help="Run using cormwell as opposed to the default cromshell",
                             action="store_true", default=False)
 
@@ -201,9 +200,9 @@ def main():
 	json_dict["batch_imputation.region"] = args.region
 	json_dict["batch_imputation.subset_region"] = args.subset_region 
 	json_dict["batch_imputation.beagle_region"] =args.beagle_region
-	json_dict["batch_imputation.header_file"] =args.header_file
-	json_dict["batch_imputation.ref"] =args.ref
-	json_dict["batch_imputation.ref_index"] =args.ref + ".tbi"
+	#json_dict["batch_imputation.header_file"] =args.header_file
+	#json_dict["batch_imputation.ref"] =args.ref
+	#json_dict["batch_imputation.ref_index"] =args.ref + ".tbi"
 	json_dict["batch_imputation.overlap"] =args.overlap
 	json_dict["batch_imputation.map"] =args.map
 

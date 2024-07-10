@@ -12,8 +12,6 @@ workflow batch_imputation {
                 String vcf 
                 String vcf_index 
                 File ref_panel
-                File ref
-                File ref_index
                 String out_prefix
                 String GOOGLE_PROJECT = ""
                 Int? mem 
@@ -22,7 +20,6 @@ workflow batch_imputation {
                 Boolean subset_region = false
                 Boolean beagle_region = false
                 Array[File] samples = []
-                File header_file
                 Int? disk
                 Int? overlap
                 File map
@@ -50,57 +47,78 @@ workflow batch_imputation {
                         map=map
                 }
                 ## extract TR from batches of beagle output
-                call processTR_t.processTR as processTR {
+                call extract_TR {
+
                     input:
                         vcf=run_imputation.outfile,
                         vcf_index=run_imputation.outfile_index,
-                        ref=ref,
-                        ref_index=ref_index,
-                        out_prefix=out_prefix+".BATCH"+i,
-                        header_file=header_file
+                        out_prefix=out_prefix+".BATCH"+i
 
                 }
-                ## extract SNP from batches of beagle output
-                #call processSNP_t.processSNP as processSNP {
-                #    input:
-                #        vcf=run_imputation.outfile,
-                #        vcf_index=run_imputation.outfile_index,
-                #        out_prefix=out_prefix+".BATCH"+i
-
-                #}
         }
 
         ## use MergeSTR to merge TR
-        call merge_TR_batch_t.merge_batch as merge_TR_batch {
+        call  merge_TR_batch {
             input:
-                vcfs=processTR.outfile,
-                vcfs_index=processTR.outfile_index,
+                vcfs=extract_TR.outvcf,
+                vcfs_index=extract_TR.outvcf_index,
                 out_prefix=out_prefix,
                 disk=disk
         }
 
-        ## use bcftools to merge SNP
-        #call merge_SNP_batch_t.merge_SNP_batch as merge_SNP_batch {
-        #    input:
-        #        vcfs=processSNP.outfile,
-        #        vcfs_index=processSNP.outfile_index,
-        #        out_prefix=out_prefix
-
-        #}
-
-
         output {
             File trvcf = merge_TR_batch.outfile
-            #Array[File] outvcf = run_imputation.outfile
-            #Array[File] outvcf_index = run_imputation.outfile_index
-            #File trvcf_index = merge_TR_batch.outfile_index
-            #File snpvcf = merge_SNP_batch.outfile
-            #File snpvcf_index = merge_SNP_batch.outfile_index
+            File trvcf_index = merge_TR_batch.outfile_index
         }
 
         meta {
             description: "This workflow run imputation on batches of sample, extract TRs and merge across a single chromosome with default parameters "
-    }
+        }
                    
+}
+
+task extract_TR {
+    input {
+        File vcf
+        File vcf_index
+        String out_prefix
+    }
+    command <<<
+        bcftools view -i 'ID="."' ~{out_prefix}.vcf.gz -Oz -o ~{out_prefix}_TR.vcf.gz
+        tabix -p vcf ~{out_prefix}_TR.vcf.gz
+    >>>
+
+    runtime {
+        docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
+    }
+
+    output {
+        File outvcf = "${out_prefix}_TR.vcf.gz"
+        File outvcf_index = "${out_prefix}_TR.vcf.gz.tbi"
+
+    }    
+}
+
+task merge_TR_batch {
+    input {
+        Array[File] vcfs
+        Array[File] vcfs_index
+        String out_prefix
+        Int? disk
+    }
+    command <<<
+        bcftools merge ~{sep='' vcfs} -Oz -o ${out_prefix}_TR_merged.vcf.gz
+        tabix -p vcf ${out_prefix}_TR_merged.vcf.gz
+    >>>
+    
+    runtime {
+        docker: "gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
+        disks: "local-disk ~{disk} SSD"
+    }
+    output {
+        File outfile = "${out_prefix}_TR_merged.vcf.gz"
+        File outfile_index = "${out_prefix}_TR_merged.vcf.gz.tbi"
+    }
+
 }
 
