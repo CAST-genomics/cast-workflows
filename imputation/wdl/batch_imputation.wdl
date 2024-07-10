@@ -1,9 +1,9 @@
 version 1.0
 
 import "imputation.wdl" as imputation_t
-import "processTR.wdl" as processTR_t
+#import "processTR.wdl" as processTR_t
 #import "processSNP.wdl" as processSNP_t
-import "merge_TR_batch.wdl" as merge_TR_batch_t
+#import "merge_TR_batch.wdl" as merge_TR_batch_t
 #import "merge_SNP_batch.wdl" as merge_SNP_batch_t
 
 
@@ -67,8 +67,8 @@ workflow batch_imputation {
         }
 
         output {
-            File trvcf = merge_TR_batch.outfile
-            File trvcf_index = merge_TR_batch.outfile_index
+            File outfile = merge_TR_batch.outfile
+            File outfile_index = merge_TR_batch.outfile_index
         }
 
         meta {
@@ -108,7 +108,7 @@ task merge_TR_batch {
     }
     command <<<
         bcftools merge ~{sep='' vcfs} -Oz -o ${out_prefix}_TR_merged.vcf.gz
-        tabix -p vcf ${out_prefix}_TR_merged.vcf.gz
+        tabix -p vcf ~{out_prefix}_TR_merged.vcf.gz
     >>>
     
     runtime {
