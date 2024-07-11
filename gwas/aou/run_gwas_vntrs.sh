@@ -2,7 +2,8 @@
 
 echo "" > summary_gwas.txt
 #aou_100_imputed="/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/vntr_workspace/nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_275_lrwgs.vcf"
-aou_10k_imputed="../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_acan_only_aou_10k_samples_imputed_rh.vcf"
+#aou_10k_imputed="../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_acan_only_aou_10k_samples_imputed_rh.vcf"
+aou_10k_imputed="../../imputation/wdl/data/output_chr15_acan_50mbp_aou_10k_srwgs_samples_output.vcf.gz"
 lrwgs_data="../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/merged_samples.sorted_clean.vcf"
 # Running associatr
 echo "running gwas for imputed calls"
