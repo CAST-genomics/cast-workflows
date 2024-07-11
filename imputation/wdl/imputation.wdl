@@ -38,10 +38,12 @@ workflow imputation {
     #}
     call beagle {
         input : 
+          #vcf=index_vcf.outfile, 
+          #vcf_index=index_vcf.outfile_index,
           vcf=subset_vcf.outfile, 
           vcf_index=subset_vcf.outfile_index,
           ref_panel=ref_panel_bref, 
-          #ref_panel_index=ref_panel_index,
+          ref_panel_index=ref_panel_index,
           out_prefix=out_prefix,
           GOOGLE_PROJECT=GOOGLE_PROJECT,
           GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN,
@@ -86,6 +88,8 @@ task subset_vcf {
         grep MemTotal /proc/meminfo
         echo "disk space on device"
         df -h
+        #echo "Check if the bam file is corrupted or not"
+
         # To get a list of sample ids
         #bcftools query -l ~{vcf} > sample_ids.txt
         # The "bcftools head" command was to check the header for the labeling if contigs e.g. chr21 vs 21.
@@ -95,14 +99,17 @@ task subset_vcf {
         bcftools query -l ~{ref_panel} > ref_sample_ids.txt
         # Exclude reference samples from the query. Otherwise beagle will give an error.
         grep -v -x -f ref_sample_ids.txt ~{samples_file} > samples_file_clean.txt
+        #bcftools view -R ~{regions_file} -S samples_file_clean.txt ~{vcf} > ~{out_prefix}.vcf
         bcftools view -Oz -R ~{regions_file} -S samples_file_clean.txt ~{vcf} > ~{out_prefix}.vcf.gz
         tabix -p vcf ~{out_prefix}.vcf.gz
+        df -h
     >>>
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
 	memory: mem + "GB"
-        bootDiskSizeGb: mem
+        #bootDiskSizeGb: mem
+	disks: "local-disk " + mem + " SSD"
     }
 
     output {
@@ -118,8 +125,8 @@ task index_vcf {
 
     String basename = basename(vcf, ".vcf")
 
-        #bgzip -c ~{vcf}> ~{basename}.vcf.gz && tabix -p vcf ~{basename}.vcf.gz
     command <<<
+        bgzip -c ~{vcf} > ~{basename}.vcf.gz && tabix -p vcf ~{basename}.vcf.gz
         tabix -p vcf ~{vcf}
     >>>
 
@@ -128,8 +135,8 @@ task index_vcf {
     }
 
     output {
-        File outvcf = "${basename}.vcf.gz"
-        File outvcf_index = "${basename}.vcf.gz.tbi"
+        File outfile = "${basename}.vcf.gz"
+        File outfile_index = "${basename}.vcf.gz.tbi"
     }
 }
 
@@ -138,7 +145,7 @@ task beagle {
         File vcf 
         File vcf_index 
         File ref_panel
-        #String ref_panel_index
+        File ref_panel_index
         String out_prefix
         String GOOGLE_PROJECT = ""
         String GCS_OAUTH_TOKEN = ""
@@ -164,6 +171,7 @@ task beagle {
     #file upto 300mb use mem=25
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/beagle:latest"
+	disks: "local-disk " + mem + " SSD"
 	memory: mem + "GB"
     }
 
@@ -181,7 +189,9 @@ task sort_index_beagle {
     String basename = basename(vcf, ".vcf.gz")
 
     command <<<
+        df -h /cromwell_root
         zcat ~{vcf} | vcf-sort | bgzip -c > ~{basename}.sorted.vcf.gz && tabix -p vcf ~{basename}.sorted.vcf.gz
+        df -h /cromwell_root
         echo "Number of TRs in the genotyped file"
         bcftools view -i 'ID="."' ~{basename}.sorted.vcf.gz | grep -v "^#" | wc -l
     >>>
@@ -189,6 +199,7 @@ task sort_index_beagle {
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
 	memory: mem + "GB"
+	disks: "local-disk " + mem + " SSD"
     }
 
     output {

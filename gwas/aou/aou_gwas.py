@@ -19,6 +19,7 @@ import scipy.stats as stats
 import warnings
 import re
 import vcf
+import gzip
 from io import StringIO
 
 GWAS_METHODS = ["hail", "associaTR"]
@@ -157,8 +158,17 @@ def set_genotypes(data, args, annotations):
     plot_histogram(data["phenotype"], "outputs/{}_histogram_after_norm.png".format(args.phenotype))
     # Read input VCF file into a dataframe
     lines = None
-    with open(args.tr_vcf, "r") as vcf_file:
-        lines = "\n".join(vcf_file.readlines())
+
+    if args.tr_vcf.endswith("gz"):
+        # It is a compressed vcf file
+        with gzip.open(args.tr_vcf, "rt") as vcf_file:
+            lines = "\n".join(vcf_file.readlines())
+    elif args.tr_vcf.endswith("vcf"):
+        # It is an uncompressed vcf file
+        with open(args.tr_vcf, "rb") as vcf_file:
+            lines = "\n".join(vcf_file.readlines())
+    else:
+        print("Error: Cannot recognize tr-vcf file format. Should be either a vcf file or a vcf.gz file")
     vcf_df = pd.read_csv(StringIO(re.sub("#CHROM", "CHROM", lines)), sep="\t", comment='#')
 
     # Set up an output vcf file for normalized values

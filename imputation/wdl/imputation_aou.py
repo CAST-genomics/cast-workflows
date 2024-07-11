@@ -85,8 +85,8 @@ def main():
 
 	args = parser.parse_args()
 
-        wdl_workflow = "imputation_2"
-        wdl_file = "./{}.wdl".format(wdl_workflow)
+	wdl_workflow = "imputation"
+	wdl_file = "./{}.wdl".format(wdl_workflow)
 
 	
 	# Get token
