@@ -154,9 +154,9 @@ python $scripts/get_gwas_in_mscaviar_style.py --infile s2_gwas_temp.txt --outfil
 #LD
 $plink_loc/plink2 --bfile s1_data  --extract s1_snps.txt --make-bed --out s1_remaining_snps
 $plink_loc/plink2 --bfile s2_data  --extract s2_snps.txt --make-bed --out s2_remaining_snps
-$plink_loc/plink2 --bfile s1_remaining_snps --r-unphased square
+$plink_loc/plink2 --bfile s1_remaining_snps --r-unphased square ref-based
 mv plink2.unphased.vcor1 s1.ld
-$plink_loc/plink2 --bfile s2_remaining_snps --r-unphased square
+$plink_loc/plink2 --bfile s2_remaining_snps --r-unphased square ref-based
 mv plink2.unphased.vcor1 s2.ld
 
 #AFREQ
