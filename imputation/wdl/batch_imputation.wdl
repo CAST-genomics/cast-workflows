@@ -107,7 +107,7 @@ task merge_TR_batch {
         Int? disk
     }
     command <<<
-        bcftools merge ~{sep=' ' vcfs} -Oz -o ~{out_prefix}_TR_merged.vcf.gz
+        bcftools merge ~{sep=' ' vcfs} -Oz -o ~{out_prefix}_TR_merged.vcf.gz --threads 3
         tabix -p vcf ~{out_prefix}_TR_merged.vcf.gz
     >>>
     
