@@ -114,6 +114,8 @@ task merge_TR_batch {
     runtime {
         docker: "gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
         disks: "local-disk ~{disk} SSD"
+        maxRetries: 3
+        preemptible: 3
     }
     output {
         File outfile = "${out_prefix}_TR_merged.vcf.gz"
