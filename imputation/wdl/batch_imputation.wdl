@@ -86,6 +86,7 @@ task extract_TR {
     command <<<
         bcftools view -i 'ID="."' ~{vcf} -Oz -o ~{out_prefix}_TR.vcf.gz
         tabix -p vcf ~{out_prefix}_TR.vcf.gz
+        gsutil cp ~{out_prefix}_TR.vcf.gz ~{out_prefix}_TR.vcf.gz.tbi gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/imputation_result/~{out_prefix}
     >>>
 
     runtime {
