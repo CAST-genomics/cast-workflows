@@ -169,6 +169,7 @@ def set_genotypes(data, args, annotations):
             lines = "\n".join(vcf_file.readlines())
     else:
         print("Error: Cannot recognize tr-vcf file format. Should be either a vcf file or a vcf.gz file")
+        exit(1)
     vcf_df = pd.read_csv(StringIO(re.sub("#CHROM", "CHROM", lines)), sep="\t", comment='#')
 
     # Set up an output vcf file for normalized values
