@@ -9,14 +9,15 @@ gt="gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/acaf_threshold_v7
 samples="$WORKSPACE_BUCKET/saraj/vntr_samples/sample_ids.txt"
 regions="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/ACAN_region_50m.bed"
 
+        #--name ${chr}_acan_50mbp_aou_50k_srwgs_samples \
 time python imputation_aou.py \
         --vcf $gt \
         --ref-panel $ref \
-        --name output_${chr}_acan_50mbp_aou_10k_srwgs_samples \
+        --name test \
         --window 10 \
 	--overlap 2 \
 	--chrom $chr \
-	--mem 200 \
+	--mem 40 \
 	--samples-file $samples \
 	--regions-file $regions
 #	--cromwell

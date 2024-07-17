@@ -14,11 +14,12 @@ beagle_latest="beagle.27May24.118.jar"
 beagle=$beagle_latest
 date
 date > time.txt
-java -Xmx8g -jar $beagle \
+java -Xmx10g -jar $beagle \
         gt=$gt \
         ref=$ref \
         out=$out \
-        window=5 \
-        overlap=2 \
-	chrom=$chr && \
+        window=10 \
+        overlap=5 \
+	chrom=$chr
+	#map=genetic_map/plink.chr21.GRCh38.map
 tabix -p vcf $out.vcf.gz

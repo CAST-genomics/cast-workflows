@@ -72,6 +72,8 @@ def main():
 	parser.add_argument("--name", help="Name of the TR job", required=True, type=str)
 	parser.add_argument("--vcf", help="Name of the genotype vcf file", required=True, type=str)
 	parser.add_argument("--ref-panel", help="File id of ref genome", type=str)
+	parser.add_argument("--subset-vcf-path", help="Path to the pre-computed subset_vcf file." + \
+                            "Providing the path will skip the subset_vcf step.", type=str)
 	parser.add_argument("--mem", help="Specify run memory ", type=int, required=False, default=32)
 	parser.add_argument("--chrom", help="Specify target chromosome ", type=str, required=True)
 	parser.add_argument("--window", help="Specify window size for imputation ", type=int, required=False, default=5)
@@ -146,8 +148,13 @@ def main():
 	json_dict[wdl_workflow + ".window_size"] = args.window
 	json_dict[wdl_workflow + ".overlap"] = args.overlap
 	json_dict[wdl_workflow + ".samples_file"] = args.samples_file 
-	json_dict[wdl_workflow + ".regions_file"] = args.regions_file 
-
+	json_dict[wdl_workflow + ".regions_file"] = args.regions_file
+        if args.subset_vcf_path is not None:
+		json_dict[wdl_workflow + ".subset_vcf_path"] = args.subset_vcf_path
+		json_dict[wdl_workflow + ".skip_subset_vcf"] = "true"
+	else:
+		json_dict[wdl_workflow + ".subset_vcf_path"] = ""
+		json_dict[wdl_workflow + ".skip_subset_vcf"] = "False"
 
 
 	# Convert to json and save as a file
