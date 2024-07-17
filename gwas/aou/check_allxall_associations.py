@@ -4,6 +4,7 @@ This is meant as a quick check before performing GWAS for TRs, and independent o
 """
 import os
 import argparse
+import pandas as pd
 #import hail as hl
 
 """
@@ -25,6 +26,8 @@ def parse_args():
     arg_parser.add_argument("--pop", help="Code for the population under study",
                             choices=pop_choices, type=str, required=True)
     arg_parser.add_argument("--phenoname", help="Phenotype under study by concept ID",
+                            type=str, required=True)
+    arg_parser.add_argument("--region", help="Region to look for SNP-phenotype associations (chr:start-end)",
                             type=str, required=True)
     args = arg_parser.parse_args()
     return args
@@ -48,9 +51,11 @@ def main():
                             pop=args.pop,
                             phenoname=args.phenoname)
     print("hail_path: ", hail_path)
+
     # Read the hail matrix table for the chosen interval
-    #mt = hl.read_matrix_table(MT_WGS_PATH)
-    #mt = hl.filter_intervals(mt, [hl.parse_locus_interval(self.region,)])
+    #mt = hl.read_matrix_table(hail_path)
+    #mt = hl.filter_intervals(mt, [hl.parse_locus_interval(args.region,)])
+    #mt = mt.select(mt.Pvalue)
 
 
 if __name__ == "__main__":
