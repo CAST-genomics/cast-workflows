@@ -45,17 +45,43 @@ def init():
 def main():
     args = parse_args()
     #init()
-    
+
     # Get the corresponding hail path
     hail_path = get_hail_path(ex_type=args.type,
                             pop=args.pop,
                             phenoname=args.phenoname)
     print("hail_path: ", hail_path)
-
     # Read the hail matrix table for the chosen interval
     #mt = hl.read_matrix_table(hail_path)
+    ## OR, if complained about matrix table reading a hail table path:
+    #ht = hl.read_table(hail_path) and later
+    #print(ht.describe())
+    #print("len of hail table: {}".format(len(ht)))
+    #chrom, start_end = args.region.split(":")
+    #start, end = start_end.split("-")
+    #ht = ht.filter(hl.all(
+    #       ht.CHR=chrom,
+    #       ht.POS > int(start),
+    #       ht.POS < int(end)
+    #   ))
+    #print("len of hail table after filtering: {}".format(len(ht)))
+
     #mt = hl.filter_intervals(mt, [hl.parse_locus_interval(args.region,)])
-    #mt = mt.select(mt.Pvalue)
+    #print(mt.describe())
+    #print("len of hail matrix table after filtering: {}".format(len(mt)))
+
+    ## plot a manhattan plot
+    #filename = "allxall_region_{}_manhattan.pdf".format(args.phenoname)
+    #title = 'Region P-value for phenotype {}'.format(args.phenoname)
+    #plot = hl.plot.manhattan(mt.info.Pvalue_log10, title=title)
+    #plot.fig.savefig(filename)
+    ## If save didn't work, try
+    #from bokeh.io import save
+    # save(plot, filename)
+    ## Or try
+    #from bokeh.io import export_png
+    #export_png(plot, filename=filename)
+    # To install bokeh.io, type "pip install bokeh"
 
 
 if __name__ == "__main__":
