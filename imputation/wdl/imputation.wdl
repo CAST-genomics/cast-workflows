@@ -2,22 +2,21 @@ version 1.0
 
 workflow imputation {
     input {
-        String vcf 
-        String vcf_index 
+        String vcf
+        String vcf_index
         String ref_panel
         String ref_panel_bref
         String ref_panel_index
         String out_prefix
         String GOOGLE_PROJECT = ""
-        String GCS_OAUTH_TOKEN = ""
         String chrom
         String subset_vcf_path
         Boolean skip_subset_vcf
-        Int? mem 
-        Int? window_size 
+        Int? mem
+        Int? window_size
         Int? overlap
-        File samples_file 
-	File regions_file
+        File samples_file
+	    File regions_file
     }
 
     # If subset_vcf_path is provided from a previous run, skip calling the subset_vcf.
@@ -31,34 +30,32 @@ workflow imputation {
         input:
             samples_file=samples_file,
             regions_file=regions_file,
-            ref_panel=ref_panel, 
+            ref_panel=ref_panel,
             ref_panel_index=ref_panel_index,
             vcf=vcf,
             vcf_index=vcf_index,
             mem=mem,
             GOOGLE_PROJECT=GOOGLE_PROJECT,
-            GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN,
             out_prefix=out_prefix
         }
         File subset_vcf_file = subset_vcf.outfile
         File subset_vcf_index_file = subset_vcf.outfile_index
     }
-    
+    # Index_vcf often fails due to memory or sometimes unknown issues.
     #call index_vcf {
     #    input:
     #        vcf=subset_vcf.outfile
     #}
+
     call beagle {
-        input : 
-          #vcf=index_vcf.outfile, 
+        input :
+          #vcf=index_vcf.outfile,
           #vcf_index=index_vcf.outfile_index,
-          vcf=subset_vcf_file, 
+          vcf=subset_vcf_file,
           vcf_index=subset_vcf_index_file,
-          ref_panel=ref_panel_bref, 
+          ref_panel=ref_panel_bref,
           ref_panel_index=ref_panel_index,
           out_prefix=out_prefix,
-          GOOGLE_PROJECT=GOOGLE_PROJECT,
-          GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN,
           chrom=chrom,
           mem=mem,
           window_size=window_size,
@@ -70,7 +67,7 @@ workflow imputation {
             mem=mem
     }
     output {
-        File outfile = sort_index_beagle.outvcf 
+        File outfile = sort_index_beagle.outvcf
         File outfile_index = sort_index_beagle.outvcf_index
     }
     meta {
@@ -87,9 +84,8 @@ task subset_vcf {
         String ref_panel_index
         File? samples_file
 	File? regions_file
-        Int? mem 
+        Int? mem
         String GOOGLE_PROJECT = ""
-        String GCS_OAUTH_TOKEN = ""
         String out_prefix=out_prefix
     }
 
@@ -119,16 +115,16 @@ task subset_vcf {
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-	memory: mem + "GB"
+	    memory: mem + "GB"
         #bootDiskSizeGb: mem
-	disks: "local-disk " + mem + " SSD"
+	    disks: "local-disk " + mem + " SSD"
     }
 
     output {
         File outfile = "${out_prefix}.vcf.gz"
         File outfile_index = "${out_prefix}.vcf.gz.tbi"
         File ref_sample_ids = "ref_sample_ids.txt"
-    }    
+    }
 }
 task index_vcf {
     input {
@@ -154,23 +150,19 @@ task index_vcf {
 
 task beagle {
     input {
-        File vcf 
-        File vcf_index 
+        File vcf
+        File vcf_index
         File ref_panel
         File ref_panel_index
         String out_prefix
-        String GOOGLE_PROJECT = ""
-        String GCS_OAUTH_TOKEN = ""
         String chrom
-        Int? mem 
+        Int? mem
         Int? window_size
         Int? overlap
-    } 
+    }
 
     command <<<
         echo "vcf: ~{vcf}"
-        #export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
-        #export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         java -Xmx~{mem}g -jar /beagle.jar \
             gt=~{vcf} \
             ref=~{ref_panel} \
@@ -179,7 +171,7 @@ task beagle {
             chrom=~{chrom} \
             out=~{out_prefix}_output
     >>>
-    
+
     #file upto 300mb use mem=25
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/beagle:latest"

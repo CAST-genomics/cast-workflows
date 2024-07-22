@@ -90,11 +90,11 @@ def main():
 	wdl_workflow = "imputation"
 	wdl_file = "./{}.wdl".format(wdl_workflow)
 
-	
-	# Get token
-	token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
-		capture_output=True, check=True, encoding='utf-8')
-	token = str.strip(token_fetch_command.stdout)
+
+	# Get token. This is unnecessary as token in updated in the WDL workflow.
+	#token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
+	#	capture_output=True, check=True, encoding='utf-8')
+	#token = str.strip(token_fetch_command.stdout)
 
 	# Set up output bucket
 	bucket = os.getenv("WORKSPACE_BUCKET")
@@ -142,7 +142,7 @@ def main():
 	json_dict[wdl_workflow + ".ref_panel_index"] = args.ref_panel+".tbi"
 	json_dict[wdl_workflow + ".out_prefix"] = args.name
 	json_dict[wdl_workflow + ".GOOGLE_PROJECT"] = project
-	json_dict[wdl_workflow + ".GCS_OAUTH_TOKEN"] = token
+	#json_dict[wdl_workflow + ".GCS_OAUTH_TOKEN"] = token
 	json_dict[wdl_workflow + ".mem"] = args.mem
 	json_dict[wdl_workflow + ".chrom"] = args.chrom
 	json_dict[wdl_workflow + ".window_size"] = args.window
