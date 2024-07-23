@@ -1,3 +1,5 @@
+version 1.0
+
 import "imputation.wdl" as imputation
 
 workflow imputation_batch {
@@ -8,19 +10,20 @@ workflow imputation_batch {
         String ref_panel_bref
         String ref_panel_index
         String out_prefix
-        String GOOGLE_PROJECT = ""
+        String GOOGLE_PROJECT
         String chrom
-        String subset_vcf_path
+        #String subset_vcf_path
         Boolean skip_subset_vcf
         Int? mem
         Int? window_size
         Int? overlap
         Array[File] samples_files
-	    File regions_file
+        File regions_file
        }
        scatter (i in range(length(samples_files))) {
                File samples_file = samples_files[i]
                call imputation.imputation as imputation {
+                 input:
                     vcf=vcf,
                     vcf_index=vcf_index,
                     ref_panel=ref_panel,
@@ -29,7 +32,7 @@ workflow imputation_batch {
                     out_prefix=out_prefix,
                     GOOGLE_PROJECT=GOOGLE_PROJECT,
                     chrom=chrom,
-                    subset_vcf_path=subset_vcf_path,
+                    #subset_vcf_path=subset_vcf_path,
                     skip_subset_vcf=skip_subset_vcf,
                     mem=mem,
                     window_size=window_size,

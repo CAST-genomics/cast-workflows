@@ -10,7 +10,7 @@ workflow imputation {
         String out_prefix
         String GOOGLE_PROJECT = ""
         String chrom
-        String subset_vcf_path
+        #String subset_vcf_path
         Boolean skip_subset_vcf
         Int? mem
         Int? window_size
@@ -23,9 +23,9 @@ workflow imputation {
     # Otherwise, call subset_vcf.
     # Set the outfile accordingly.
 
-    File subset_vcf_file = subset_vcf_path
-    File subset_vcf_index_file = subset_vcf_path + ".tbi"
-    if (!skip_subset_vcf) {
+    #File subset_vcf_file = subset_vcf_path
+    #File subset_vcf_index_file = subset_vcf_path + ".tbi"
+    #if (!skip_subset_vcf) {
         call subset_vcf {
         input:
             samples_file=samples_file,
@@ -38,9 +38,9 @@ workflow imputation {
             GOOGLE_PROJECT=GOOGLE_PROJECT,
             out_prefix=out_prefix
         }
-        File subset_vcf_file = subset_vcf.outfile
-        File subset_vcf_index_file = subset_vcf.outfile_index
-    }
+        #File subset_vcf_file = subset_vcf.outfile
+        #File subset_vcf_index_file = subset_vcf.outfile_index
+    #}
     # Index_vcf often fails due to memory or sometimes unknown issues.
     #call index_vcf {
     #    input:
@@ -51,8 +51,10 @@ workflow imputation {
         input :
           #vcf=index_vcf.outfile,
           #vcf_index=index_vcf.outfile_index,
-          vcf=subset_vcf_file,
-          vcf_index=subset_vcf_index_file,
+          #vcf=subset_vcf_file,
+          #vcf_index=subset_vcf_index_file,
+          vcf=subset_vcf.outfile,
+          vcf_index=subset_vcf.outfile_index,
           ref_panel=ref_panel_bref,
           ref_panel_index=ref_panel_index,
           out_prefix=out_prefix,

@@ -86,7 +86,8 @@ def configure_cromwell(env, proxy_url):
         'cromwell_server': proxy_url.split("swagger/", 1)[0] if proxy_url else "invalid url",
         'requests_timeout': 5,
         'gcloud_token_email': env['user_email'],
-        'referer_header_url': env['leonardo_url']
+        'referer_header_url': env['leonardo_url'],
+        #'call_caching': "false"
      }
      with open(file, 'w') as filetowrite:
         filetowrite.write(json.dumps(configuration, indent=2))
