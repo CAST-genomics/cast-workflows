@@ -21,8 +21,8 @@ import warnings
 GWAS_METHODS = ["hail", "associaTR"]
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
 SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
-    "passing_samples_v7.csv")
-DEFAULTSAMPLECSV = "passing_samples_v7.csv"
+    "passing_samples_v7.1.csv")
+DEFAULTSAMPLECSV = "passing_samples_v7.1.csv"
 
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
