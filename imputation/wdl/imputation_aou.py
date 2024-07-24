@@ -24,7 +24,7 @@ from math import ceil
 import pandas as pd
 
 
-def RunWorkflow(wdl_file, json_file, json_options_file, cromwell, dryrun=False):
+def RunWorkflow(wdl_file, json_file, json_options_file, wdl_dependencies_file, cromwell, dryrun=False):
 	"""
 	Run workflow on AoU
 
@@ -39,7 +39,7 @@ def RunWorkflow(wdl_file, json_file, json_options_file, cromwell, dryrun=False):
 		Just print the command, don't actually run cromshell
 	"""
 	if cromwell is False:
-		cmd = "cromshell submit {wdl} {json} -op {options} ".format(
+		cmd = "cromshell submit {wdl} {json} -op {options}".format(
                         wdl=wdl_file,
                         json=json_file, options=json_options_file)
                         # There is no conf flag in cromshell
@@ -48,12 +48,29 @@ def RunWorkflow(wdl_file, json_file, json_options_file, cromwell, dryrun=False):
 		cmd = "java -jar -Dconfig.file={} ".format("/home/jupyter/cromwell.conf") + \
 	  			"jar_files/cromwell-87.jar run {} ".format(wdl_file) + \
 	  			"--inputs {} --options {}".format(json_file, json_options_file)
+	if wdl_dependencies_file.strip() != "":
+		cmd += " -d {otherwdl}".format(otherwdl=wdl_dependencies_file)
 	if dryrun:
 		sys.stderr.write("Run: %s\n"%cmd)
 		return
 	output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
 	print(output.decode("utf-8"))
-	
+
+def ZipWDL(wdl_dependencies_file):
+	"""
+	Put all WDL dependencies into a zip file
+
+	Arguments
+	---------
+	wdl_dependencies_file : str
+	    Zip file to put other wdls in
+	"""
+	files = ["imputation.wdl"]
+	dirname = tempfile.mkdtemp()
+	for f in files:
+		shutil.copyfile("../wdl/%s"%f, dirname+"/"+f)
+	shutil.make_archive(os.path.splitext(wdl_dependencies_file)[0], "zip", root_dir=dirname)
+
 def UploadGS(local_path, gcp_path):
 	"""
 	Upload a local file to GCP
@@ -154,10 +171,17 @@ def run_single_batch(args, samples_files):
 	with open(json_options_file, "w") as f:
 		json.dump(json_options_dict, f, indent=4)
 
+
+	# Zip all the WDL depencies
+	wdl_dependencies_file = args.name + "-wdl.zip"
+	ZipWDL(wdl_dependencies_file)
+
+
 	# Run workflow on AoU using cromwell
 	RunWorkflow(wdl_file,
                     json_file,
                     json_options_file,
+                    wdl_dependencies_file,
                     args.cromwell,
                     dryrun=args.dryrun)
 
@@ -170,18 +194,18 @@ def get_all_sample_ids():
     return sample_df
 
 def get_samples_file(samples_df, batch_idx, id_column_name="person_id"):
-    filename = "batch_{}.txt".format(batch_idx)
+    filename = "batch_{}_v2.txt".format(batch_idx)
     filepath = os.path.join("samples_files", filename)
-    with open(filename, "w+") as samples_file:
+    with open(filepath, "w+") as samples_file:
+        text = ""
         for idx, row in samples_df.iterrows():
-            print("Writing ", row[id_column_name])
-            samples_file.write(str(row[id_column_name])+"\n")
+            text += str(row[id_column_name])+"\n"
+        samples_file.write(text)
 
     # Upload the samples batch file to the workspace
     bucket = os.getenv("WORKSPACE_BUCKET")
     gs_path = os.path.join(bucket, "saraj", "samples_files_batches", filename)
     UploadGS(filepath, gs_path)
-    print("returning ", gs_path)
     return gs_path
 
 def main():
@@ -208,7 +232,7 @@ def main():
         # Get batch size and number
 	sample_ids_df = get_all_sample_ids()
         # For small tests, grab a subset
-	sample_ids_df = sample_ids_df.iloc[range(1)]
+	sample_ids_df = sample_ids_df.iloc[range(args.batch_size*10)]
 
 	num_samples = len(sample_ids_df)
 	num_batches = ceil(num_samples / args.batch_size)

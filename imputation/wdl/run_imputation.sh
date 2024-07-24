@@ -14,14 +14,14 @@ time python imputation_aou.py \
         --vcf $gt \
         --ref-panel $ref \
         --name test_batch \
-        --window 10 \
+        --window 20 \
 	--overlap 2 \
 	--chrom $chr \
-	--mem 40 \
+	--mem 100 \
 	--samples-file $samples \
 	--regions-file $regions \
-	--batch-size 2 \
-	--cromwell
+	--batch-size 100
 	#--dryrun \
+	#--cromwell
 
 

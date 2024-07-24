@@ -1,6 +1,6 @@
 version 1.0
 
-import "imputation.wdl" as imputation
+import "imputation.wdl" as imputation_workflow
 
 workflow imputation_batch {
     input {
@@ -22,7 +22,7 @@ workflow imputation_batch {
        }
        scatter (i in range(length(samples_files))) {
                File samples_file = samples_files[i]
-               call imputation.imputation as imputation {
+               call imputation_workflow.imputation as imputation {
                  input:
                     vcf=vcf,
                     vcf_index=vcf_index,
@@ -74,10 +74,9 @@ task sort_index {
         bcftools sort -Oz ~{vcf} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
     >>>
     runtime {
-        docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
-	    memory: mem + "GB"
-        #bootDiskSizeGb: mem
-	    disks: "local-disk " + mem + " SSD"
+        docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
+	memory: mem + "GB"
+	disks: "local-disk " + mem + " SSD"
         maxRetries: 2
     }
     output {
@@ -97,15 +96,17 @@ task merge_outputs {
 
     command <<<
         #mergeSTR --vcfs ~{sep=',' individual_vcfs} --out ~{out_prefix}
-        # TODO: Work with the -m flag
-        bcftools merge -Oz ~{sep=',' individual_vcfs} > ~{out_prefix}.vcf.gz
+        bcftools merge -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz
+        df -h
     >>>
+        # TODO: Work with the -m flag
     runtime {
-        docker:"gcr.io/ucsd-medicine-cast/trtools-5.0.1:latest"
+        docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
+        #docker:"gcr.io/ucsd-medicine-cast/trtools-5.0.1:latest"
 	    memory: mem + "GB"
         #bootDiskSizeGb: mem
 	    disks: "local-disk " + mem + " SSD"
-        maxRetries: 2
+        #maxRetries: 2
     }
     output {
         File merged_vcfs = "~{out_prefix}.vcf.gz"
