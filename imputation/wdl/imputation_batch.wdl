@@ -9,6 +9,7 @@ workflow imputation_batch {
         String ref_panel
         String ref_panel_bref
         String ref_panel_index
+        String genetic_map
         String out_prefix
         String GOOGLE_PROJECT
         String chrom
@@ -29,6 +30,7 @@ workflow imputation_batch {
                     ref_panel=ref_panel,
                     ref_panel_bref=ref_panel_bref,
                     ref_panel_index=ref_panel_index,
+                    genetic_map=genetic_map,
                     out_prefix=out_prefix,
                     GOOGLE_PROJECT=GOOGLE_PROJECT,
                     chrom=chrom,
@@ -51,7 +53,7 @@ workflow imputation_batch {
         call sort_index {
             input:
                 vcf=merge_outputs.merged_vcfs,
-                mem=mem
+                mem=mem*2
         }
 
         output {
@@ -72,12 +74,13 @@ task sort_index {
     String out_prefix = "merged_samples.sorted"
     command <<<
         bcftools sort -Oz ~{vcf} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
+        df -h
     >>>
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
 	memory: mem + "GB"
 	disks: "local-disk " + mem + " SSD"
-        maxRetries: 2
+        #maxRetries: 2
     }
     output {
         File sorted_vcf = "~{out_prefix}.vcf.gz"
@@ -103,9 +106,9 @@ task merge_outputs {
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
         #docker:"gcr.io/ucsd-medicine-cast/trtools-5.0.1:latest"
-	    memory: mem + "GB"
-        #bootDiskSizeGb: mem
-	    disks: "local-disk " + mem + " SSD"
+	memory: mem + "GB"
+	disks: "local-disk " + mem + " SSD"
+	#disks: "local-disk " + mem + " SSD, /dev/sda1" + mem + " SSD"
         #maxRetries: 2
     }
     output {

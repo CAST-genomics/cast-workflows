@@ -2,27 +2,27 @@
 
 # For CBL TR
 
-chr="chr15"
+chr="chr11"
 # Have to run this before:
-gt_base="data/aou_100_${chr}_phased_shapeit"
-if [ ! -e "$gt_base.vcf.gz" ]; then
-  bcftools convert -Oz "$gt_base.bcf" > "$gt_base.vcf"
-  tabix -p vcf "$gt_base.vcf.gz"
-fi
+#gt_base="data/aou_100_${chr}_phased_shapeit"
+#if [ ! -e "$gt_base.vcf.gz" ]; then
+#  bcftools convert -Oz "$gt_base.bcf" > "$gt_base.vcf"
+#  tabix -p vcf "$gt_base.vcf.gz"
+#fi
 
-gt="data/aou_100_${chr}_phased_shapeit.vcf.gz"
-#gt="../../../../imputation/cast-workflows/imputation/wdl/data/aou_100_${chr}_phased_shapit_ma.vcf.gz"
-#ref="../../../../imputation/cast-workflows/imputation/wdl/data/${chr}_final_SNP_merged_additional_TRs.vcf.gz"
+#gt="data/aou_100_${chr}_phased_shapeit.vcf.gz"
+gt="../../../../imputation/cast-workflows/imputation/wdl/data/aou_100_${chr}_phased_shapit_ma.vcf.gz"
+ref="../../../../imputation/cast-workflows/imputation/wdl/data/${chr}_final_SNP_merged_additional_TRs.vcf.gz"
 #ref="data/${chr}_final_SNP_merged_additional_TRs.bref3"
 #ref="data/${chr}_final_SNP_merged_additional_TRs_AN_AC_filled.vcf.gz"
 #ref="data/${chr}_final_SNP_merged_additional_TRs.vcf.gz"
-out="data/beagle_imputed_shapeit_phased_${chr}_100_aou_test"
+out="data/beagle_imputed_shapeit_phased_${chr}_100_aou_test_2"
 
-gt="data/output_${chr}_tr_50mbp_aou_100.vcf.gz"
-out="data/beagle_imputed_and_phased_${chr}_100_aou_50mbp"
+#gt="data/output_${chr}_tr_50mbp_aou_100.vcf.gz"
+#out="data/beagle_imputed_and_phased_${chr}_100_aou_50mbp"
 
-gt="data/output_chr15_acan_50mbp_aou_10k_srwgs_samples_output.vcf.gz"
-out="beagle_output_chr15_acan_50mbp_aou_10k"
+#gt="data/output_chr15_acan_50mbp_aou_10k_srwgs_samples_output.vcf.gz"
+#out="beagle_output_chr15_acan_50mbp_aou_10k"
 
 # For ACAN VNTR
 #chr="chr15"
@@ -33,13 +33,15 @@ out="beagle_output_chr15_acan_50mbp_aou_10k"
 ##ref="data/${chr}_final_SNP_merged_additional_TRs.bref3"
 ##ref="vntr_data/phased_ACAN_vntr_snp_650_samples.sorted.vcf.gz"
 #ref="vntr_reference/ref_phased_reheader_chr15_acan_vntr.vcf.gz"
-ref="../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/ref_phased_reheader_chr15_acan_vntr.vcf.gz"
+#ref="../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/ref_phased_reheader_chr15_acan_vntr.vcf.gz"
 
-#out="data/output_${chr}_10mb_aou_10k_srwgs_w8_o2"
+map="genetic_map/plink.${chr}_w_chr.GRCh38.map"
+
+#out="data/output_${chr}_10mb_aou_10k_srwgs_test"
 
 beagle_5_4_old="beagle.19Apr22.7c0.jar"
 beagle_latest="beagle.27May24.118.jar"
-beagle=$beagle_latest
+beagle=$beagle_5_4_old
 date
 date > time.txt
 java -Xmx10g -jar $beagle \
@@ -48,8 +50,8 @@ java -Xmx10g -jar $beagle \
         out=$out \
         window=10 \
         overlap=5 \
-	chrom=$chr
-	#map=genetic_map/plink.chr21.GRCh38.map
+	chrom=$chr \
+	map=$map
 tabix -p vcf $out.vcf.gz
 date >> time.txt
 date
