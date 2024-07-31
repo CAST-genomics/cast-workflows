@@ -140,6 +140,7 @@ def run_single_batch(args, samples_files):
 	json_dict[wdl_workflow + ".ref_panel_bref"] = args.ref_panel.replace(".vcf.gz", ".bref3")
 	json_dict[wdl_workflow + ".ref_panel"] = args.ref_panel
 	json_dict[wdl_workflow + ".ref_panel_index"] = args.ref_panel+".tbi"
+	json_dict[wdl_workflow + ".genetic_map"] = args.map
 	json_dict[wdl_workflow + ".out_prefix"] = args.name
 	json_dict[wdl_workflow + ".GOOGLE_PROJECT"] = project
 	json_dict[wdl_workflow + ".mem"] = args.mem
@@ -194,7 +195,14 @@ def get_all_sample_ids():
     return sample_df
 
 def get_samples_file(samples_df, batch_idx, id_column_name="person_id"):
-    filename = "batch_{}_v2.txt".format(batch_idx)
+    # For batches that previously failed, change the input sample name,
+    # So that the subset_vcf has to run again and do not copy the cached files
+    # From a failed attempt.
+    failed_batches_to_be_repeated = [5, 42, 100, 114, 125, 132, 215]
+    if batch_idx in failed_batches_to_be_repeated:
+        filename = "batch_{}_repeat_size_1000.txt".format(batch_idx)
+    else:
+        filename = "batch_{}_size_1000.txt".format(batch_idx)
     filepath = os.path.join("samples_files", filename)
     with open(filepath, "w+") as samples_file:
         text = ""
@@ -216,6 +224,7 @@ def main():
 	parser.add_argument("--subset-vcf-path", help="Path to the pre-computed subset_vcf file." + \
                             "Providing the path will skip the subset_vcf step.", type=str)
 	parser.add_argument("--mem", help="Specify run memory ", type=int, required=False, default=32)
+	parser.add_argument("--map", help="Path to the genetic map file", required=True, type=str)
 	parser.add_argument("--chrom", help="Specify target chromosome ", type=str, required=True)
 	parser.add_argument("--window", help="Specify window size for imputation ", type=int, required=False, default=5)
 	parser.add_argument("--overlap", help="Specify overlap size for imputation ", type=int, required=False, default=2)
@@ -232,7 +241,7 @@ def main():
         # Get batch size and number
 	sample_ids_df = get_all_sample_ids()
         # For small tests, grab a subset
-	sample_ids_df = sample_ids_df.iloc[range(args.batch_size*10)]
+	#sample_ids_df = sample_ids_df.iloc[range(args.batch_size*10)]
 
 	num_samples = len(sample_ids_df)
 	num_batches = ceil(num_samples / args.batch_size)

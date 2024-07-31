@@ -7,6 +7,7 @@ workflow imputation {
         String ref_panel
         String ref_panel_bref
         String ref_panel_index
+        String genetic_map
         String out_prefix
         String GOOGLE_PROJECT = ""
         String chrom
@@ -57,6 +58,7 @@ workflow imputation {
           vcf_index=subset_vcf.outfile_index,
           ref_panel=ref_panel_bref,
           ref_panel_index=ref_panel_index,
+          genetic_map=genetic_map,
           out_prefix=out_prefix,
           chrom=chrom,
           mem=mem,
@@ -105,21 +107,23 @@ task subset_vcf {
         # The "bcftools head" command was to check the header for the labeling if contigs e.g. chr21 vs 21.
         # bcftools head ~{vcf} > header.txt
         # Subsetting region for each chromesome
-        # Select reference samples from the actual samples (to exclude later)
+        echo "Select reference samples from the actual samples (to exclude later)"
         bcftools query -l ~{ref_panel} > ref_sample_ids.txt
-        # Exclude reference samples from the query. Otherwise beagle will give an error.
+        echo "Exclude reference samples from the query. Otherwise beagle will give an error."
         grep -v -x -f ref_sample_ids.txt ~{samples_file} > samples_file_clean.txt
-        #bcftools view -R ~{regions_file} -S samples_file_clean.txt ~{vcf} > ~{out_prefix}.vcf
-        bcftools view -Oz -R ~{regions_file} -S samples_file_clean.txt ~{vcf} > ~{out_prefix}.vcf.gz
+        echo "Subsetting the target region and samples from the vcf file"
+        bcftools view -Oz -I -R ~{regions_file} -S samples_file_clean.txt ~{vcf} > ~{out_prefix}.vcf.gz
+        echo "Indexing vcf file"
         tabix -p vcf ~{out_prefix}.vcf.gz
         df -h
     >>>
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-	    memory: mem + "GB"
+	memory: mem + "GB"
         #bootDiskSizeGb: mem
-	    disks: "local-disk " + mem + " SSD"
+	disks: "local-disk " + mem + " SSD"
+        maxRetries: 2
     }
 
     output {
@@ -156,6 +160,7 @@ task beagle {
         File vcf_index
         File ref_panel
         File ref_panel_index
+        File genetic_map
         String out_prefix
         String chrom
         Int? mem
@@ -171,7 +176,8 @@ task beagle {
             window=~{window_size} \
             overlap=~{overlap} \
             chrom=~{chrom} \
-            out=~{out_prefix}_output
+            out=~{out_prefix}_output \
+            map=~{genetic_map}
     >>>
 
     #file upto 300mb use mem=25
