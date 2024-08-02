@@ -144,6 +144,8 @@ def run_single_batch(args, samples_files):
 	json_dict[wdl_workflow + ".out_prefix"] = args.name
 	json_dict[wdl_workflow + ".GOOGLE_PROJECT"] = project
 	json_dict[wdl_workflow + ".mem"] = args.mem
+	json_dict[wdl_workflow + ".vid"] = args.vid
+	json_dict[wdl_workflow + ".motif"] = args.motif
 	json_dict[wdl_workflow + ".chrom"] = args.chrom
 	json_dict[wdl_workflow + ".window_size"] = args.window
 	json_dict[wdl_workflow + ".overlap"] = args.overlap
@@ -198,7 +200,7 @@ def get_samples_file(samples_df, batch_idx, id_column_name="person_id"):
     # For batches that previously failed, change the input sample name,
     # So that the subset_vcf has to run again and do not copy the cached files
     # From a failed attempt.
-    failed_batches_to_be_repeated = [5, 42, 100, 114, 125, 132, 215]
+    failed_batches_to_be_repeated = [5, 42, 100, 114, 125, 132, 215, 28, 50]
     if batch_idx in failed_batches_to_be_repeated:
         filename = "batch_{}_repeat_size_1000.txt".format(batch_idx)
     else:
@@ -213,12 +215,16 @@ def get_samples_file(samples_df, batch_idx, id_column_name="person_id"):
     # Upload the samples batch file to the workspace
     bucket = os.getenv("WORKSPACE_BUCKET")
     gs_path = os.path.join(bucket, "saraj", "samples_files_batches", filename)
-    UploadGS(filepath, gs_path)
+    # Do not upload the files, the files are there already.
+    # Uncommend if batches are changed.
+    #UploadGS(filepath, gs_path)
     return gs_path
 
 def main():
 	parser = argparse.ArgumentParser(__doc__)
 	parser.add_argument("--name", help="Name of the TR job", required=True, type=str)
+	parser.add_argument("--vid", help="VID for the VNTR we work with", required=True, type=int)
+	parser.add_argument("--motif", help="Motif for the VNTR we work with", required=True, type=str)
 	parser.add_argument("--vcf", help="Name of the genotype vcf file", required=True, type=str)
 	parser.add_argument("--ref-panel", help="File id of ref genome", type=str)
 	parser.add_argument("--subset-vcf-path", help="Path to the pre-computed subset_vcf file." + \
@@ -247,9 +253,11 @@ def main():
 	num_batches = ceil(num_samples / args.batch_size)
 
 	samples_files = []
-
+	failed_batches_to_avoid = [28, 50]
 
 	for batch_idx in range(num_batches):
+            if batch_idx in failed_batches_to_avoid:
+                continue
             # Set samples_files for each batch
             start = batch_idx * args.batch_size
             end = min(len(sample_ids_df), (batch_idx + 1) * args.batch_size)

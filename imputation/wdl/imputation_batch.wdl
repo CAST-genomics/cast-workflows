@@ -15,6 +15,8 @@ workflow imputation_batch {
         String chrom
         #String subset_vcf_path
         Boolean skip_subset_vcf
+        Int vid
+        String motif
         Int? mem
         Int? window_size
         Int? overlap
@@ -53,6 +55,8 @@ workflow imputation_batch {
         call sort_index {
             input:
                 vcf=merge_outputs.merged_vcfs,
+                vid=vid,
+                motif=motif,
                 mem=mem*2
         }
 
@@ -69,11 +73,26 @@ workflow imputation_batch {
 task sort_index {
     input {
         File vcf
+        Int vid
+        String motif
         Int? mem
     }
     String out_prefix = "merged_samples.sorted"
+    String sorted_prefix = "merged_samples_pre_reheader"
     command <<<
-        bcftools sort -Oz ~{vcf} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
+        echo "Sorting vcf file"
+        bcftools sort -Oz ~{vcf} > ~{sorted_prefix}.vcf.gz && tabix -p vcf ~{sorted_prefix}.vcf.gz
+        echo "Updating the header"
+        bcftools view -h ~{sorted_prefix}.vcf.gz | grep "^##" > header.txt
+        echo "##source=adVNTR ver. 1.5.0" >> header.txt
+        echo '##INFO=<ID=VID,Number=1,Type=Integer,Description="VNTR id in the VNTR database">' >> header.txt
+        echo '##INFO=<ID=RU,Number=1,Type=String,Description="Repeat unit or consensus motif of the VNTR">' >> header.txt
+        bcftools view -h ~{sorted_prefix}.vcf.gz | grep -v "^##" >> header.txt
+        bcftools reheader -h header.txt ~{sorted_prefix}.vcf.gz
+        echo "Adding VID info field"
+        zcat ~{sorted_prefix}.vcf.gz | sed 's/END=/VID=~{vid};RU=~{motif};END=/g' > ~{sorted_prefix}_w_vid.vcf.gz
+        bcftools view -Oz ~{sorted_prefix}_w_vid.vcf.gz > ~{out_prefix}.vcf.gz
+        tabix -p vcf ~{out_prefix}.vcf.gz
         df -h
     >>>
     runtime {
