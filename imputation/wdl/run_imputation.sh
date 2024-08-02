@@ -18,6 +18,8 @@ time python imputation_aou.py \
         --window 20 \
 	--overlap 2 \
 	--chrom $chr \
+	--vid 290964 \
+	--motif CTGCCCCTGGAGTAGAGGACATCAGCGGGCTTCCTTCTGGAGAAGTTCTAGAGACTG \
 	--mem 80 \
 	--map $map \
 	--samples-file $samples \

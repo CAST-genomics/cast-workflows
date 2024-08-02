@@ -7,23 +7,25 @@ aou_10k_imputed="../../imputation/wdl/data/output_chr15_acan_50mbp_aou_10k_srwgs
 aou_10k_batch_merged="../../imputation/wdl/batch_data/vntr_from_merged_samples_sorted.vcf.gz"
 aou_50k_imputed="../../imputation/wdl/data/output_chr15_acan_50mbp_aou_50k_srwgs_samples_output.sorted.vcf.gz"
 aou_1000_imputed_batch="/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/vntr_workspace/sara_main/cast-workflows/imputation/wdl/batch_data/batch_set1_output.sorted.vcf.gz"
+#aou_220k_imputed="/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/vntr_workspace/sara_main/cast-workflows/imputation/wdl/batch_data/merged_samples.sorted.vcf.gz"
+aou_220k_imputed="merged_samples.sorted_with_vid_ru.vcf.gz"
 lrwgs_data="../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/merged_samples.sorted_clean.vcf"
 
-vcf_file=$aou_10k_batch_merged
-vcf_file_reheader=${vcf_file/.vcf.gz/_reheader.vcf.gz}
-# Add advntr to the header, so tr_harmonizer can detect the file
-bcftools view -h $vcf_file | grep "^##" > header.txt
-echo "##source=adVNTR ver. 1.5.0" >> header.txt
-bcftools view -h $vcf_file | grep -v "^##" >> header.txt
-bcftools reheader -h header.txt $vcf_file | bcftools view -Oz > $vcf_file_reheader
-tabix -p vcf $vcf_file_reheader
+#vcf_file=$aou_220k_imputed
+#vcf_file_reheader=${vcf_file/.vcf.gz/_reheader.vcf.gz}
+## Add advntr to the header, so tr_harmonizer can detect the file
+#bcftools view -h $vcf_file | grep "^##" > header.txt
+#echo "##source=adVNTR ver. 1.5.0" >> header.txt
+#bcftools view -h $vcf_file | grep -v "^##" >> header.txt
+#bcftools reheader -h header.txt $vcf_file | bcftools view -Oz > $vcf_file_reheader
+#tabix -p vcf $vcf_file_reheader
 
 # Running associatr
 echo "running gwas for imputed calls"
 ./aou_gwas.py --phenotype height \
 	      --num-pcs 10 \
 	      --method associaTR \
-	      --tr-vcf $aou_1000_imputed_batch \
+	      --tr-vcf $aou_220k_imputed \
 	      --norm quantile \
 	      --annotations annotations_acan.txt \
 	      --norm-by-sex \

@@ -202,10 +202,14 @@ task sort_index_beagle {
 
     command <<<
         df -h /cromwell_root
-        zcat ~{vcf} | vcf-sort | bgzip -c > ~{basename}.sorted.vcf.gz && tabix -p vcf ~{basename}.sorted.vcf.gz
+        echo "Sorting and compressing"
+        zcat ~{vcf} | vcf-sort | bgzip -c > ~{basename}.sorted.vcf.gz
         df -h /cromwell_root
+        echo "Extracting TRs"
+        bcftools view -Oz -i 'ID="."' ~{basename}.sorted.vcf.gz > ~{basename}.sorted_TR.vcf.gz
+        tabix -p vcf ~{basename}.sorted_TR.vcf.gz
         echo "Number of TRs in the genotyped file"
-        bcftools view -i 'ID="."' ~{basename}.sorted.vcf.gz | grep -v "^#" | wc -l
+        bcftools view -i 'ID="."' ~{basename}.sorted_TR.vcf.gz | grep -v "^#" | wc -l
     >>>
 
     runtime {
@@ -215,7 +219,7 @@ task sort_index_beagle {
     }
 
     output {
-    File outvcf = "${basename}.sorted.vcf.gz"
-    File outvcf_index = "${basename}.sorted.vcf.gz.tbi"
+    File outvcf = "${basename}.sorted_TR.vcf.gz"
+    File outvcf_index = "${basename}.sorted_TR.vcf.gz.tbi"
   }
 }
