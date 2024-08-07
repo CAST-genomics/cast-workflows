@@ -36,10 +36,14 @@ def CheckRegion(region):
     if region is None: return True
     return re.match(r"\w+:\d+-\d+", region) is not None
 
-def GetOutPath(phenotype, method, region, samplefile):
+def GetCohort(samplefile):
     cohort = "ALL" #if samplefile == DEFAULTSAMPLECSV
     if samplefile != DEFAULTSAMPLECSV:
-        cohort = samplefile[:-4] #chop off .csv at the end
+        cohort = os.path.basename(samplefile[:-4]) #chop off .csv at the end
+    return cohort
+
+def GetOutPath(phenotype, method, region, samplefile):
+    cohort = GetCohort(samplefile)
     outprefix = "%s_%s_%s"%(phenotype, method, cohort)
     if region is not None:
         outprefix += "_%s"%(region.replace(":", "_").replace("-","_"))
@@ -123,35 +127,48 @@ def get_mean_rc_from_call_record(record, call, sep="/"):
     rc_2 = get_rc_from_allele_record(record, int(allele_2))
     return (rc_1 + rc_2) / 2
 
-def get_rc_from_allele(vcf_df_row, allele):
+def get_alleles(vcf_df_row):
     ref_allele = vcf_df_row["REF"].array[0]
     alt_alleles = vcf_df_row["ALT"].array[0].split(",")
-    ru = vcf_df_row["INFO"].array[0].split(";")[2].replace("RU=", "")
+    info_fields = vcf_df_row["INFO"].array[0].split(";")
+    ru = None
+    for info_field in info_fields:
+        if info_field.startswith("RU"):
+            ru = info_field.replace("RU=", "")
+    if ru is None:
+        print("Error: Repeat Unit (RU) not provided in the info field")
+        return
     ru_len = len(ru)
     #print("ru_len, ru, len ref allele", ru_len, ru, len(ref_allele))
+    len_ref_allele = len(ref_allele)
+    len_alt_alleles = [len(alt_allele) for alt_allele in alt_alleles]
+    return len_ref_allele, len_alt_alleles, ru_len
+
+def get_rc_from_allele(allele, ref_allele, alt_alleles, ru_len):
     if allele == 0:
-        ref_rc = int(len(ref_allele)/ru_len)
+        ref_rc = int(ref_allele/ru_len)
         #print("ref_rc ", ref_rc)
         return ref_rc
     else:
-        rc = int(len(alt_alleles[allele-1])/ru_len)
+        rc = int(alt_alleles[allele-1]/ru_len)
         #print("call {} allele {}".format(allele, rc))
         return rc
 
-def get_individual_rcs_from_call(vcf_df_row, call, sep="/"):
+def get_individual_rcs_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep="/"):
     allele_1, allele_2 = call.split(sep)
-    rc_1 = get_rc_from_allele(vcf_df_row, int(allele_1))
-    rc_2 = get_rc_from_allele(vcf_df_row, int(allele_2))
+    rc_1 = get_rc_from_allele(int(allele_1), ref_allele_len, alt_alleles_len, ru_len)
+    rc_2 = get_rc_from_allele(int(allele_2), ref_allele_len, alt_alleles_len, ru_len)
     return rc_1, rc_2
 
-def get_overall_rc_from_call(vcf_df_row, call, sep="/"):
+def get_overall_rc_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep="/"):
     allele_1, allele_2 = call.split(sep)
-    rc_1 = get_rc_from_allele(vcf_df_row, int(allele_1))
-    rc_2 = get_rc_from_allele(vcf_df_row, int(allele_2))
+    rc_1 = get_rc_from_allele(int(allele_1), ref_allele_len, alt_alleles_len, ru_len)
+    rc_2 = get_rc_from_allele(int(allele_2), ref_allele_len, alt_alleles_len, ru_len)
     return (rc_1 + rc_2)/2.0
 
 
-def set_genotypes(data, args, annotations):
+def set_genotypes(data, args, annotations, cohort, samples):
+    print("Reading genotypes from the vcf file")
     #print("is imputed: ", args.is_imputed)
     imputed = args.is_imputed
     # Plot phenotype histogram
@@ -165,7 +182,7 @@ def set_genotypes(data, args, annotations):
             lines = "\n".join(vcf_file.readlines())
     elif args.tr_vcf.endswith("vcf"):
         # It is an uncompressed vcf file
-        with open(args.tr_vcf, "rb") as vcf_file:
+        with open(args.tr_vcf, "r") as vcf_file:
             lines = "\n".join(vcf_file.readlines())
     else:
         print("Error: Cannot recognize tr-vcf file format. Should be either a vcf file or a vcf.gz file")
@@ -188,9 +205,14 @@ def set_genotypes(data, args, annotations):
         data.loc[:, [gene]] = np.nan
         samples_with_calls = set()
         shared_columns = []
+        print("Reading ref and alt alleles")
+        ref_allele_len, alt_alleles_len, ru_len = get_alleles(locus_calls)
+        print("Reading calls")
         for column in vcf_df.columns:
             if column.isnumeric():
                 # Corresponds to a sample id
+                if str(column) not in list(samples):
+                    continue
                 if not imputed:
                     #print("Column: ", column)
                     #print("Locus call", locus_calls[column].to_string())
@@ -204,9 +226,9 @@ def set_genotypes(data, args, annotations):
                         # Equal to no call
                         no_calls += 1
                         continue
-                    rc = get_overall_rc_from_call(locus_calls, call, sep="/")
+                    rc = get_overall_rc_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep="/")
                     # Get individual alleles for plotting
-                    rc_1, rc_2 = get_individual_rcs_from_call(locus_calls, call, sep="/")
+                    rc_1, rc_2 = get_individual_rcs_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep="/")
                     all_alleles.extend([rc_1, rc_2])
                 else: # imputed
                     if len(locus_calls[column]) == 0:
@@ -215,9 +237,9 @@ def set_genotypes(data, args, annotations):
                     call = locus_calls[column].array[0]
                     call = call.split(":")[0]
                     #print("Locus call after split ", call)
-                    rc = get_overall_rc_from_call(locus_calls, call, sep="|")
+                    rc = get_overall_rc_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep="|")
                     # Get individual alleles for plotting
-                    rc_1, rc_2 = get_individual_rcs_from_call(locus_calls, call, sep="|")
+                    rc_1, rc_2 = get_individual_rcs_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep="|")
                     all_alleles.extend([rc_1, rc_2])
 
 
@@ -231,28 +253,12 @@ def set_genotypes(data, args, annotations):
         #data = data.dropna(subset=[gene, "phenotype"])
         
         # Plot individual alleles for ACAN
+        print("Plotting alleles histogram")
         if gene == "ACAN" and args.phenotype == "height":
-            plot_histogram(all_alleles, "outputs/ACAN_alleles_height.png")
+            plot_histogram(all_alleles, "outputs/ACAN_alleles_height_{}.png".format(cohort))
         if no_calls + empty_calls > 0:
             print("Skipping {} empty calls and {} no calls for {} on vcf".format(
                     empty_calls, no_calls, gene))
-        # Normalize genotypes
-        #data.loc[:, [gene]] = stats.zscore(data[gene])
-        #data.loc[:, [gene]] = Inverse_Quantile_Normalization(data[[gene]])
-        
-        # Write output normalized file
-        #locus_normalized = data.loc[:, [gene]]
-        #normalized_file.write(shared_columns + )
-
-
-        #print("len of data after removing samples with no calls or no phenotypes {}: {}".format(
-        #        args.phenotype, len(data)))
-        #print(plotted_data.head())
-        # Plotting genotype phenotype later when we have the effect sizes.
-        #plot_genotype_phenotype(data=data,
-        #            genotype=gene,
-        #            phenotype="phenotype",
-        #            outpath="outputs/{}_genotype_{}.png".format(gene, args.phenotype))
     return data
 
 
@@ -334,10 +340,6 @@ def main():
         # Apply normalization on the entire data.
         if args.norm is not None:
             data = NormalizeData(data=data, norm=args.norm)
-    if args.method == "associaTR":
-        # Get annotations of specific TRs for plotting
-        annotations = read_annotations(args.annotations)
-        data = set_genotypes(data, args, annotations)
 
     # Add shared covars
     sampfile = args.samples
@@ -347,10 +349,19 @@ def main():
             os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
     samples = pd.read_csv(sampfile)
     samples["person_id"] = samples["person_id"].apply(str)
+    # Set cohort name which is later used to name output files
+    cohort = GetCohort(sampfile)
+    
+    # Plot genotype-phenotype plot and allele histogram
+    if args.method == "associaTR":
+        # Get annotations of specific TRs for plotting
+        annotations = read_annotations(args.annotations)
+        data = set_genotypes(data, args, annotations, cohort, samples["person_id"])
     
     data = pd.merge(data, samples)
 
     # Check we have all covars
+    print("Check all covars are present")
     req_cols = ["phenotype"] + covars
     for item in req_cols:
         if item not in data.columns:
@@ -374,10 +385,14 @@ def main():
     #runner.gwas = pd.read_csv(outpath+".tab", sep="\t")
 
     # Plot Manhattan
+    print("args.plot is ", args.plot)
     if args.plot:
+        print("In args.plot")
+        print("args.method is ", args.method)
         if args.method == "associaTR":
             annotate = True
-            p_value_threshold = -np.log10(5*10**-3)
+            p_value_threshold = -np.log10(5*10**-8)
+            print("plotting genotype phenotype for annotations ", annotations)
             for chrom, pos, gene in annotations:
                 plot_genotype_phenotype(data=data,
                         genotype=gene,
@@ -385,7 +400,7 @@ def main():
                         chrom=chrom,
                         pos=pos,
                         phenotype="phenotype",
-                        outpath="outputs/{}_genotype_{}.png".format(gene, args.phenotype))
+                        outpath="outputs/{}_genotype_{}_{}.png".format(gene, args.phenotype, cohort))
         else:
             # no text annotation on manhattan plot for hail runner
             annotate = False
@@ -405,8 +420,8 @@ def main():
                       annotate=annotate,
                       p_value_threshold=p_value_threshold,
                       extra_points=[
-                          ("chr15", 88855424, 1, "ACAN_v_s"),
-                          ("chr15", 88857434, 1, "ACAN_v_e")
+                          ("chr15", 88855424, 1, "ACAN_VNTR"),
+                          #("chr15", 88857434, 1, "ACAN_v_e")
                           ])
         PlotQQ(runner.gwas, outpath+".qq.png")
 

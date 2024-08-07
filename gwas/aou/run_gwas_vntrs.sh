@@ -11,6 +11,11 @@ aou_1000_imputed_batch="/home/jupyter/workspaces/impactofglobalandlocalancestryo
 aou_220k_imputed="merged_samples.sorted_with_vid_ru.vcf.gz"
 lrwgs_data="../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/merged_samples.sorted_clean.vcf"
 
+
+#samples="samples/passing_samples_v7.1.csv"
+#samples="samples/EUR_WHITE.csv"
+#samples="samples/AFR_BLACK.csv"
+
 #vcf_file=$aou_220k_imputed
 #vcf_file_reheader=${vcf_file/.vcf.gz/_reheader.vcf.gz}
 ## Add advntr to the header, so tr_harmonizer can detect the file
@@ -22,12 +27,25 @@ lrwgs_data="../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/
 
 # Running associatr
 echo "running gwas for imputed calls"
+samples="samples/AFR_BLACK.csv"
 ./aou_gwas.py --phenotype height \
 	      --num-pcs 10 \
 	      --method associaTR \
 	      --tr-vcf $aou_220k_imputed \
 	      --norm quantile \
 	      --annotations annotations_acan.txt \
+	      --samples $samples \
+	      --norm-by-sex \
+	      --is-imputed \
+	      --plot
+samples="samples/EUR_WHITE.csv"
+./aou_gwas.py --phenotype height \
+	      --num-pcs 10 \
+	      --method associaTR \
+	      --tr-vcf $aou_220k_imputed \
+	      --norm quantile \
+	      --annotations annotations_acan.txt \
+	      --samples $samples \
 	      --norm-by-sex \
 	      --is-imputed \
 	      --plot
@@ -37,7 +55,9 @@ echo "running gwas for advntr calls"
 	      --num-pcs 10 \
 	      --method associaTR \
 	      --tr-vcf $lrwgs_data \
+	      --annotations annotations_acan.txt \
 	      --norm quantile \
+	      --samples $samples \
 	      --norm-by-sex \
 	      --annotations annotations_acan.txt \
 	      --plot

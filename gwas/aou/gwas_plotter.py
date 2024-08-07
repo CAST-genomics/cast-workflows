@@ -12,35 +12,43 @@ import seaborn as sns
 
 def plot_histogram(data, outpath):
     plt.clf()
-    plot = sns.histplot(data)
+    plot = sns.histplot(data, binwidth=1)
     plt.savefig(outpath)
 
 def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, outpath):
     plt.clf()
     plotted_data = data[[genotype, phenotype]].dropna()
     plotted_data = plotted_data.astype(float)
-    if len(gwas.loc[(gwas["chrom"] == chrom) &\
-                        (gwas["pos"] == pos), 'beta']) == 0:
-        print("No gwas data for chrom {} position {}".format(
+    if len(gwas) == 1:
+        if gwas.iloc[0]["chrom"] != chrom or \
+                int(gwas.iloc[0]["pos"]) != int(pos):
+            print("No gwas data for chrom {} position {}".format(
                 chrom, pos))
-        return
-    effect_size = gwas.loc[(gwas["chrom"] == chrom) &\
-                        (gwas["pos"] == pos), 'beta'].item()
+            return
+    else: # To avoid warning on single element series
+        if len(gwas.loc[(gwas["chrom"] == chrom) &\
+                        (int(gwas["pos"]) == int(pos)), 'beta']) == 0:
+            print("No gwas data for chrom {} position {}".format(
+                chrom, pos))
+            return
+    if len(gwas) == 1:
+        effect_size = gwas.iloc[0]["beta"]
+    else: # To avoid warning on single element series
+        effect_size = gwas.loc[(gwas["chrom"] == chrom) &\
+                        (int(gwas["pos"]) == int(pos)), 'beta'].item()
     plot = sns.jointplot(
             data=plotted_data,
             alpha=0.5,
             x=genotype,
             y=phenotype)
-    #print("effect size {:.4}".format(effect_size))
+    print("effect size {:.4}".format(effect_size))
     # Draw a line corresponding to the effect size
-    #point_1 = [min(data[genotype]), min(data[phenotype])]
     x_0 = data[genotype].mean()
     y_0 = data[phenotype].mean()
     x_1 = data[genotype].mean() - 2 * data[genotype].std()
     x_2 = data[genotype].mean() + 2 * data[genotype].std()
 
     point_1 = [x_1,
-               #data[phenotype].mean() - data[phenotype].std()]
                y_0 + (x_1 - x_0) * effect_size]
     point_2 = [x_2,
                y_0 + (x_2 - x_0) * effect_size]
@@ -143,9 +151,10 @@ def PlotQQ(gwas, outpath):
         max_lim = xlim_max if xlim_max<ylim_max else ylim_max
         min_lim = xlim_min if xlim_min>ylim_min else ylim_min
         ax.plot([min_lim,max_lim],[min_lim,max_lim],'r-')
-        
-        ax.set_xlim([xlim_min, xlim_max])
-        ax.set_ylim([ylim_min, ylim_max])
+
+        if xlim_min < xlim_max and ylim_min < ylim_max:
+            ax.set_xlim([xlim_min, xlim_max])
+            ax.set_ylim([ylim_min, ylim_max])
         ax.set_xlabel("Expected $-log_{10}(p)$")
         ax.set_ylabel("Observed $-log_{10}(p)$")
 
