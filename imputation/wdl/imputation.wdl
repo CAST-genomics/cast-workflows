@@ -11,23 +11,16 @@ workflow imputation {
         String out_prefix
         String GOOGLE_PROJECT = ""
         String chrom
-        #String subset_vcf_path
         Boolean skip_subset_vcf
         Int? mem
         Int? window_size
         Int? overlap
         File samples_file
-	    File regions_file
+	File regions_file
     }
+    # skip_subset_vcf is deprecated and should be removed
 
-    # If subset_vcf_path is provided from a previous run, skip calling the subset_vcf.
-    # Otherwise, call subset_vcf.
-    # Set the outfile accordingly.
-
-    #File subset_vcf_file = subset_vcf_path
-    #File subset_vcf_index_file = subset_vcf_path + ".tbi"
-    #if (!skip_subset_vcf) {
-        call subset_vcf {
+    call subset_vcf {
         input:
             samples_file=samples_file,
             regions_file=regions_file,
@@ -39,21 +32,9 @@ workflow imputation {
             GOOGLE_PROJECT=GOOGLE_PROJECT,
             out_prefix=out_prefix
         }
-        #File subset_vcf_file = subset_vcf.outfile
-        #File subset_vcf_index_file = subset_vcf.outfile_index
-    #}
-    # Index_vcf often fails due to memory or sometimes unknown issues.
-    #call index_vcf {
-    #    input:
-    #        vcf=subset_vcf.outfile
-    #}
 
     call beagle {
         input :
-          #vcf=index_vcf.outfile,
-          #vcf_index=index_vcf.outfile_index,
-          #vcf=subset_vcf_file,
-          #vcf_index=subset_vcf_index_file,
           vcf=subset_vcf.outfile,
           vcf_index=subset_vcf.outfile_index,
           ref_panel=ref_panel_bref,
@@ -112,10 +93,7 @@ task subset_vcf {
         echo "Exclude reference samples from the query. Otherwise beagle will give an error."
         grep -v -x -f ref_sample_ids.txt ~{samples_file} > samples_file_clean.txt
         echo "Subsetting the target region and samples from the vcf file"
-        bcftools view -Oz -I -R ~{regions_file} -S samples_file_clean.txt ~{vcf} > ~{out_prefix}.vcf.gz
-        echo "Indexing vcf file"
-        tabix -p vcf ~{out_prefix}.vcf.gz
-        df -h
+        bcftools view -Oz -I -R ~{regions_file} -S samples_file_clean.txt ~{vcf} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
     >>>
 
     runtime {
@@ -132,6 +110,7 @@ task subset_vcf {
         File ref_sample_ids = "ref_sample_ids.txt"
     }
 }
+
 task index_vcf {
     input {
       File vcf

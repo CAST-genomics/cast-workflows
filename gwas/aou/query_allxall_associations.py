@@ -6,6 +6,7 @@ import os
 import argparse
 import pandas as pd
 import seaborn as sns
+from matplotlib import pyplot as plt
 import hail as hl
 
 """
@@ -46,16 +47,49 @@ def get_hail_path(ex_type, pop, phenoname):
 def init():
     hl.init(default_reference = "GRCh38")
 
-def annotate_points(plot):
+def annotate_points(plot, population, region_chrom):
     ax = plot.ax
+    points = [ \
+            ("chr15", 88855424, "ACAN VNTR", {"AFR": 67.44,
+                                         "EUR": 14.45,
+                                         "META": 41.2}),
+            ("chr11", 2161570, "INS VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+            ("chr13", 113231980, "CUL4A VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+                  ]
     # Annotate points
-    for point in [("chr15", 88855424, "ACAN", 41.2),
-                  ]:
-        chrom, position, label, p_value = point
+    for point in points:
+        chrom, position, label, p_value_dict = point
+        # Pick the annotation passed by the user
+        if region_chrom != chrom:
+            continue
         x = position
-        y = p_value
+        y = p_value_dict[population]
         ax.text(x=x, y=y, s=label, fontsize="medium")
         ax.scatter(x=position, y=y, color="red", marker="^")
+
+def plot_figures(ht, args, region_chrom):
+    ## plot a manhattan plot
+    filename = "figures/allxall_region_{}_pop_{}_manhattan.png".format(args.phenoname, args.pop)
+    title = 'Region P-value for phenotype {}'.format(args.phenoname)
+    data = ht.to_pandas()
+    plot = sns.relplot(data=data, x="POS", y="Pvalue_log10",
+        s=30, aspect=4, linewidth=0, hue="CHR", palette="tab10", legend=None)
+    annotate_points(plot, args.pop, region_chrom)
+    plot.fig.savefig(filename)
+
+    ## Plot effect sizes
+    plt.clf()
+    filename = "figures/allxall_{}_pop_{}_effect_sizes.png".format(args.phenoname, args.pop)
+    title = 'Region effect sizes for phenotype {}'.format(args.phenoname)
+    plot = sns.relplot(data=data, x="POS", y="BETA",
+        s=30, aspect=4, linewidth=0, hue="CHR", palette="tab10", legend=None)
+    annotate_points(plot, args.pop, region_chrom)
+    plot.fig.savefig(filename)
+
 
 def main():
     args = parse_args()
@@ -65,18 +99,7 @@ def main():
     ht_path, mt_path = get_hail_path(ex_type=args.type,
                             pop=args.pop,
                             phenoname=args.phenoname)
-    print("hail_table_path: ", ht_path)
-    print("hail_mt_path: ", mt_path)
-    # Read the hail matrix table for the chosen interval
-    #mt = hl.read_matrix_table(mt_path)
-    #mt = hl.filter_intervals(mt, [hl.parse_locus_interval(args.region,)])
-    #print(mt.describe())
-    #print("len of hail matrix table after filtering: {}".format(len(mt)))
-    ## OR, if complained about matrix table reading a hail table path:
     ht = hl.read_table(ht_path)
-    print(ht.describe())
-    print("len of hail table: {}".format(ht.count()))
-    print(ht.show())
     chrom, start_end = args.region.split(":")
     start, end = start_end.split("-")
     ht = ht.filter(hl.all(
@@ -85,18 +108,7 @@ def main():
            ht.POS < int(end)
        ))
     print("len of hail table after filtering: {}".format(ht.count()))
-
-
-    ## plot a manhattan plot
-    filename = "allxall_region_{}_manhattan.png".format(args.phenoname)
-    title = 'Region P-value for phenotype {}'.format(args.phenoname)
-    data = ht.to_pandas()
-    print("df ", data)
-    print("columns", data.columns)
-    plot = sns.relplot(data=data, x="POS", y="Pvalue_log10",
-        s=30, aspect=4, linewidth=0, hue="CHR", palette="tab10", legend=None)
-    annotate_points(plot)
-    plot.fig.savefig(filename)
+    plot_figures(ht, args, chrom)
 
 
 if __name__ == "__main__":
