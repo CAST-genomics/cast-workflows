@@ -69,12 +69,28 @@
 
 # ADHD, SCZ and OCD with SLC6A4 VNTR
 # SLC6A4 VNTR chr17:30221385-30221590
-region="chr17:25221385-35221590"
+#region="chr17:25221385-35221590"
 #phenotypes="313.1" # ADHD
 # 295 295.1 MB_287.1 Schizophrenia
 # MB_289 300.3 ocd
-phenotypes="313.1 295 295.1 MB_287.1 MB_289 300.3"
+#phenotypes="313.1 295 295.1 MB_287.1 MB_289 300.3"
 
+# ADHD, OCD with DRD4 VNTR
+# DRD4 VNTR chr11:639988-640180
+#region="chr11:1-5640180"
+#phenotypes="313.1 MB_289 300.3"
+
+
+# Polyarthritis and IL4 VNTR
+# IL4 VNTR chr5:132680584-132680794
+#region="chr5:127680584-137680794"
+#phenotypes="MS_708 740.1 MS_705 MS_708.1 MS_705.1 714 714.1 836818 MS_708.11" # All phenotypes with at least 1000 cases
+
+
+# age of onset BD and PER3 VNTR
+# PER3 VNTR chr1:7829873-7830144
+region="chr1:2829873-12830144"
+phenotypes="MB_286.1 296.1 MB_286.11 MB_286.12 836803"
 
 for phenotype in $phenotypes; do
   python query_allxall_associations.py \

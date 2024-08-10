@@ -77,10 +77,16 @@ def annotate_points(data, plot, population, region_chrom):
             ("chr5", 1393581, "SLC6A3-1 VNTR", {"AFR": 0,
                                          "EUR": 0,
                                          "META": 0}),
-            #("chr5", 1414387, "SLC6A3-2 VNTR", {"AFR": 0,
-            #                             "EUR": 0,
-            #                             "META": 0}),
             ("chr17", 30221385, "SLC6A4 VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+            ("chr11", 639988, "DRD4 VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+            ("chr5", 132680584, "IL4 VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+            ("chr1", 7829873, "PER3 VNTR", {"AFR": 0,
                                          "EUR": 0,
                                          "META": 0}),
                   ]
@@ -89,6 +95,10 @@ def annotate_points(data, plot, population, region_chrom):
         chrom, position, label, p_value_dict = point
         # Pick the annotation passed by the user
         if region_chrom != chrom:
+            continue
+        if data["POS"].min() > position:
+            continue
+        if data["POS"].max() < position:
             continue
         index = len(data[data["POS"] < position])
         x = position
