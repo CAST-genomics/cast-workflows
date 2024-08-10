@@ -62,6 +62,27 @@ def annotate_points(data, plot, population, region_chrom):
             ("chr13", 113231980, "CUL4A VNTR", {"AFR": 0,
                                          "EUR": 0,
                                          "META": 0}),
+            ("chr2", 113130529, "IL1RN VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+            ("chr12", 56717496, "NACA VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+            ("chr1", 165761973, "TMCO1 VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+            ("chr8", 116622815, "TMCO1 VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+            ("chr5", 1393581, "SLC6A3-1 VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+            #("chr5", 1414387, "SLC6A3-2 VNTR", {"AFR": 0,
+            #                             "EUR": 0,
+            #                             "META": 0}),
+            ("chr17", 30221385, "SLC6A4 VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
                   ]
     # Annotate points
     for point in points:
@@ -70,41 +91,57 @@ def annotate_points(data, plot, population, region_chrom):
         if region_chrom != chrom:
             continue
         index = len(data[data["POS"] < position])
-        x = index
+        x = position
         y = p_value_dict[population]
         ax.text(x=x, y=y, s=label, fontsize="medium")
         ax.scatter(x=x, y=y, color="red", marker="^")
 
-def plot_figures(data, args, region_chrom,
-                 p_value_threshold=-np.log10(5*10**-8)):
-    
-    # Figure filename
-    filename = "figures/allxall_manhattan_{}_pop_{}.png".format(args.phenoname, args.pop)
-    title = 'Region P-value for phenotype {}'.format(args.phenoname)
-    data['ind'] = data.index
+def plot_manhattan(data, x, y, region_chrom,
+                   filename, title,
+                   args,
+                   p_value_threshold=-np.log10(5*10**-8)):
+
     # Plot a Manhattan plot based on the dataframe
-    plot = sns.relplot(data=data, x="ind", y="Pvalue_log10",
-        s=30, aspect=4, linewidth=0, hue="CHR", palette="tab10", legend=None)
-    chrom_df = data.groupby("CHR")["ind"].median()
+    plot = sns.relplot(data=data, x=x, y=y,
+        s=30, aspect=4, linewidth=0,
+        hue='CHR', palette="tab10", legend=None,
+        )
+    chrom_series = data.groupby("CHR")[x].median()
 
     # Set labels
     plot.ax.set_xlabel("Chromosome")
-    plot.ax.set_xticks(chrom_df)
-    plot.ax.set_xticklabels(chrom_df.index)
+    plot.ax.set_xticks(chrom_series)
+    plot.ax.set_xticklabels(chrom_series.index)
     annotate_points(data, plot, args.pop, region_chrom)
 
     # Put the threshold
     plot.ax.axhline(p_value_threshold, linestyle="--", linewidth=1)
     plot.fig.savefig(filename, bbox_inches="tight")
+    plt.clf()
+
+def plot_figures(data, args, region_chrom):
+    #print(data.columns)
+    data['ind'] = data.index
+    filename = "figures/allxall_manhattan_{}_pop_{}.png".format(args.phenoname, args.pop)
+    title = 'Region P-value for phenotype {}'.format(args.phenoname)
+    plot_manhattan(data=data,
+                   x="POS",
+                   y="Pvalue_log10",
+                   filename=filename,
+                   region_chrom=region_chrom,
+                   args=args,
+                   title=title)
 
     ## Plot effect sizes
-    plt.clf()
     filename = "figures/allxall_effect_sizes_{}_pop_{}.png".format(args.phenoname, args.pop)
     title = 'Region effect sizes for phenotype {}'.format(args.phenoname)
-    plot = sns.relplot(data=data, x="ind", y="BETA",
-        s=30, aspect=4, linewidth=0, hue="CHR", palette="tab10", legend=None)
-    annotate_points(data, plot, args.pop, region_chrom)
-    plot.fig.savefig(filename, bbox_inches="tight")
+    plot_manhattan(data=data,
+                   x="POS",
+                   y="BETA",
+                   filename=filename,
+                   region_chrom=region_chrom,
+                   args=args,
+                   title=title)
 
 
 def main():
@@ -113,6 +150,10 @@ def main():
 
     chrom, start_end = args.region.split(":")
     start, end = start_end.split("-")
+    start = int(start)
+    end = int(end)
+
+    df_dump_filename = "outputs/df_dump_{}_{}.csv".format(chrom, args.phenoname)
     if not args.local:
         # Get the corresponding hail path
         ht_path, mt_path = get_hail_path(ex_type=args.type,
@@ -128,13 +169,17 @@ def main():
         print("len of hail table after filtering: {}".format(ht.count()))
         # Save the dataframe for a later local run.
         data = ht.to_pandas()
-        data.to_csv("outputs/df_dump.csv")
+        data["POS"] = data["POS"].astype(int)
+        data.to_csv(df_dump_filename)
     else:
         # Load data locally
-        data = pd.read_csv("outputs/df_dump.csv")
-        data = data[((data["CHR"] == chrom) & \
-                     (data["POS"] > int(start)) & \
-                     (data["POS"] < int(end)))]
+        data = pd.read_csv(df_dump_filename)
+        print("# variants loaded", len(data))
+        data["POS"] = data["POS"].astype(int)
+        data = data[(data["CHR"] == chrom) & \
+                    (data["POS"] > start) & \
+                    (data["POS"] < end)]
+        print("# variants after filtering", len(data))
 
     plot_figures(data=data, args=args, region_chrom=chrom)
 
