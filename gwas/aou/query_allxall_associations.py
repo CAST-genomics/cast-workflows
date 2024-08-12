@@ -89,6 +89,21 @@ def annotate_points(data, plot, population, region_chrom):
             ("chr1", 7829873, "PER3 VNTR", {"AFR": 0,
                                          "EUR": 0,
                                          "META": 0}),
+            ("chr9", 27573484, "C9orf72 VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+            ("chrX", 71453055, "TAF1 VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+            ("chr21", 43776443 , "CSTB VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+            ("chr20", 4699397 , "PRNP VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
+            ("chr1", 1435799 , "VWA1 VNTR", {"AFR": 0,
+                                         "EUR": 0,
+                                         "META": 0}),
                   ]
     # Annotate points
     for point in points:
