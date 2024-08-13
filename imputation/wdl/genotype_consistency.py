@@ -129,16 +129,8 @@ def compare_pair(first_name, first_allele_len,
           concordance * 100))
 
 def compare_gt(motif_len, position, repeat_count_thresholds, caller_filename, beagle_filename):
-    #hipstr_filename = "data/CBL_test.filtered.sorted.vcf.gz"
-    #hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(caller_filename, position)
-    #caller_filename = "vntr_reference/ref_phased_output_chr15_acan_vntr_apr_22.vcf.gz"
     hipstr_call_gt, hipstr_allele_len, hipstr_samples = read_vcf_file(caller_filename, position)
-    
-    #beagle_filename = "data/CBL_aou_100_phasing_impute_beagle_apr_22_bref.vcf.gz"
-    #beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_185_lrwgs_w8_o2.vcf.gz"
-    #beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_275_lrwgs_w8_o2.vcf.gz"
     beagle_call_gt, beagle_allele_len, beagle_samples = read_vcf_file(beagle_filename, position)
-
 
     #shapeit_filename = "data/CBL_aou_100_phase_shapeit_impute_beagle_apr_22_bref.vcf.gz"
     #shapeit_filename = "data/CBL_aou_100_phase_shapeit_impute_beagle_iflag_apr_22_bref.vcf.gz"
@@ -171,11 +163,12 @@ def compare_gt(motif_len, position, repeat_count_thresholds, caller_filename, be
 def check_for_acan():
     print("======= for ACAN VNTR =======")
     # For ACAN VNTR
-    repeat_count_thresholds = [0]
+    repeat_count_thresholds = [0, 1]
     position = "88855424"
     motif_len = 57
-    beagle_filename = "../../../../nichole_imputation/cast-workflows/imputation/wdl/data/output_chr15_10mb_aou_275_lrwgs_w8_o2.vcf.gz"
-    caller_filename = "../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/ref_phased_output_chr15_acan_vntr_apr_22.vcf.gz"
+    beagle_filename = ""
+    caller_filename = "ACAN_merged_samples.sorted.vcf.gz"
+    #caller_filename = "../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/ref_phased_output_chr15_acan_vntr_apr_22.vcf.gz"
     compare_gt(motif_len, position, repeat_count_thresholds,
                     caller_filename=caller_filename,
                     beagle_filename=beagle_filename)
@@ -193,8 +186,8 @@ def check_for_cbl():
 
 
 if __name__ == "__main__":
-    #check_for_acan()
-    check_for_cbl()
+    check_for_acan()
+    #check_for_cbl()
     exit(0)
     # For other test TR on chr14
     motif_len = -1

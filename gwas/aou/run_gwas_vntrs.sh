@@ -13,27 +13,28 @@ lrwgs_data="../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/
 
 # Running associatr
 echo "running gwas for imputed calls"
-samples="samples/AFR_BLACK.csv"
-./aou_gwas.py --phenotype height \
-	      --num-pcs 10 \
-	      --method associaTR \
-	      --tr-vcf $aou_220k_imputed \
-	      --norm quantile \
-	      --annotations annotations_acan.txt \
-	      --samples $samples \
-	      --norm-by-sex \
-	      --is-imputed \
-	      --plot
 samples="samples/EUR_WHITE.csv"
 ./aou_gwas.py --phenotype height \
 	      --num-pcs 10 \
 	      --method associaTR \
 	      --tr-vcf $aou_220k_imputed \
-	      --norm quantile \
 	      --annotations annotations_acan.txt \
 	      --samples $samples \
-	      --norm-by-sex \
 	      --is-imputed \
+	      --norm-by-sex \
+	      --norm quantile \
+	      --plot
+exit 0
+samples="samples/AFR_BLACK.csv"
+./aou_gwas.py --phenotype height \
+	      --num-pcs 10 \
+	      --method associaTR \
+	      --tr-vcf $aou_220k_imputed \
+	      --annotations annotations_acan.txt \
+	      --samples $samples \
+	      --is-imputed \
+	      --norm-by-sex \
+	      --norm quantile \
 	      --plot
 exit 0
 echo "running gwas for advntr calls"

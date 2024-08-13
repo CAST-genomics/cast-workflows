@@ -356,9 +356,14 @@ def main():
     if args.method == "associaTR":
         # Get annotations of specific TRs for plotting
         annotations = read_annotations(args.annotations)
-        data = set_genotypes(data, args, annotations, cohort, samples["person_id"])
+        # This is necessary for genotype-phenotype plot
+        #data = set_genotypes(data, args, annotations, cohort, samples["person_id"])
     
     data = pd.merge(data, samples)
+
+    print("For phenotype, mean {:.4f} and sd {:.4f}".format(
+        data["phenotype"].mean(),
+        data["phenotype"].std()))
 
     # Check we have all covars
     print("Check all covars are present")
