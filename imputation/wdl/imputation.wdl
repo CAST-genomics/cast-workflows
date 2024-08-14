@@ -101,7 +101,8 @@ task subset_vcf {
 	memory: mem + "GB"
         #bootDiskSizeGb: mem
 	disks: "local-disk " + mem + " SSD"
-        maxRetries: 2
+        maxRetries: 3
+        preemptible: 3
     }
 
     output {
