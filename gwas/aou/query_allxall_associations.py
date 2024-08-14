@@ -31,7 +31,8 @@ def parse_args():
                             choices=pop_choices, type=str, required=True)
     arg_parser.add_argument("--phenoname", help="Phenotype under study by concept ID.",
                             type=str, required=True)
-    arg_parser.add_argument("--region", help="Region to look for SNP-phenotype associations (chr:start-end).",
+    arg_parser.add_argument("--region", help="Region to look for SNP-phenotype associations (chr:start-end). " + \
+                            "Does not currently provide whole genome.",
                             type=str, required=True)
     arg_parser.add_argument("--annotate", help="csv file with points to use as annotations on the plots.",
                             type=str, required=False)
@@ -59,20 +60,22 @@ def annotate_points(data, plot, population, region_chrom, annotate_filename):
     # Annotate points
     for idx, point in points_df.iterrows():
         position = point["position"]
-        # Pick the annotation passed by the user
-        if region_chrom != point["chrom"]:
-            continue
-        if data["POS"].min() > position:
-            continue
-        if data["POS"].max() < position:
-            continue
+        # Pick the annotation passed by the user within the chosen region
+        if region_chrom is not None:
+            if region_chrom != point["chrom"]:
+                continue
+            if data["POS"].min() > position:
+                continue
+            if data["POS"].max() < position:
+                continue
         index = len(data[data["POS"] < position])
         x = position
         y = point[population]
         ax.text(x=x, y=y, s=point["name"], fontsize="medium")
         ax.scatter(x=x, y=y, color="red", marker="^")
 
-def plot_manhattan(data, x, y, region_chrom,
+def plot_manhattan(data, x, y,
+                   region_chrom,
                    filename, title,
                    pop,
                    annotate_filename,
@@ -85,12 +88,20 @@ def plot_manhattan(data, x, y, region_chrom,
         s=30, aspect=4, linewidth=0,
         hue='CHR', palette="tab10", legend=None,
         )
-    chrom_series = data.groupby("CHR")[x].median()
 
     # Set labels
-    plot.ax.set_xlabel("Chromosome")
-    plot.ax.set_xticks(chrom_series)
-    plot.ax.set_xticklabels(chrom_series.index)
+    if region_chrom == None:
+        # Plot is for the whole chromosome, so we need xticks to
+        # refer to chromosomes rather than coordinates
+        plot.ax.set_xlabel("Chromosome")
+        chrom_series = data.groupby("CHR")[x].median()
+        plot.ax.set_xticks(chrom_series)
+        plot.ax.set_xticklabels(chrom_series.index)
+    else:
+        # Plot is for a region in one specific chromosome.
+        plot.ax.set_xlabel(region_chrom)
+
+    # Annotate VNTR positions
     if annotate_filename is not None:
         annotate_points(data, plot, pop, region_chrom, annotate_filename)
 
@@ -111,7 +122,7 @@ def plot_figures(data, pop, phenoname, annotate_filename, region_chrom):
                    region_chrom=region_chrom,
                    pop=pop,
                    annotate_filename=annotate_filename,
-                   title=title)
+                   title=title,)
 
     ## Plot effect sizes
     filename = "figures/allxall_effect_sizes_{}_pop_{}.png".format(phenoname, pop)
@@ -128,27 +139,35 @@ def plot_figures(data, pop, phenoname, annotate_filename, region_chrom):
 
 def main():
     args = parse_args()
-    #init()
 
-    chrom, start_end = args.region.split(":")
-    start, end = start_end.split("-")
-    start = int(start)
-    end = int(end)
+    if args.region is not None:
+        # Plotting for the selected region
+        chrom, start_end = args.region.split(":")
+        start, end = start_end.split("-")
+        start = int(start)
+        end = int(end)
+        df_dump_filename = "outputs/df_dump_{}_{}.csv".format(chrom, args.phenoname)
+    else:
+        # Plotting for the whole genome
+        chrom, start, end = None, None, None
+        df_dump_filename = "outputs/df_dump_wg_{}.csv".format(args.phenoname)
 
     if not os.path.exists("outputs"):
         os.mkdir("outputs")
     if not os.path.exists("figures"):
         os.mkdir("figures")
 
-    df_dump_filename = "outputs/df_dump_{}_{}.csv".format(chrom, args.phenoname)
+    
     if not args.local:
+        init()
         # Get the corresponding hail path
         ht_path, mt_path = get_hail_path(ex_type=args.type,
                                 pop=args.pop,
                                 phenoname=args.phenoname)
         # Read the hail table and filter according to the region
         ht = hl.read_table(ht_path)
-        ht = ht.filter(hl.all(
+        if chrom is not None:
+            ht = ht.filter(hl.all(
                ht.CHR == chrom,
                ht.POS > int(start),
                ht.POS < int(end)
@@ -161,12 +180,13 @@ def main():
     else:
         # Load data locally
         data = pd.read_csv(df_dump_filename)
-        print("# variants loaded", len(data))
+        print("Num variants loaded: ", len(data))
         data["POS"] = data["POS"].astype(int)
-        data = data[(data["CHR"] == chrom) & \
+        if chrom is not None:
+            data = data[(data["CHR"] == chrom) & \
                     (data["POS"] > start) & \
                     (data["POS"] < end)]
-        print("# variants after filtering for position", len(data))
+        print("Num variants after filtering for position:", len(data))
 
     plot_figures(data=data,
                  pop=args.pop,
