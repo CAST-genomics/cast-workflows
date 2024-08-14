@@ -9,6 +9,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 import hail as hl
 import numpy as np
+import warnings
 
 """
 All hail files are located on gs://fc-aou-datasets-controlled/AllxAll/v1/
@@ -24,15 +25,17 @@ def parse_args():
     pop_choices = ["AFR", "AMR", "EAS", "EUR", "MID", "SAS", "META"]
 
     # Define arguments
-    arg_parser.add_argument("--type", help="Type of the association test",
+    arg_parser.add_argument("--type", help="Type of the association test.",
                             choices=ex_type_choices, type=str, required=True)
-    arg_parser.add_argument("--pop", help="Code for the population under study",
+    arg_parser.add_argument("--pop", help="Code for the population under study.",
                             choices=pop_choices, type=str, required=True)
-    arg_parser.add_argument("--phenoname", help="Phenotype under study by concept ID",
+    arg_parser.add_argument("--phenoname", help="Phenotype under study by concept ID.",
                             type=str, required=True)
-    arg_parser.add_argument("--region", help="Region to look for SNP-phenotype associations (chr:start-end)",
+    arg_parser.add_argument("--region", help="Region to look for SNP-phenotype associations (chr:start-end).",
                             type=str, required=True)
-    arg_parser.add_argument("--local", help="Run based on the latest local run, instead of a hail query",
+    arg_parser.add_argument("--annotate", help="csv file with points to use as annotations on the plots.",
+                            type=str, required=False)
+    arg_parser.add_argument("--local", help="Run based on the latest local run, instead of a hail query.",
                             action="store_true")
     args = arg_parser.parse_args()
     return args
@@ -50,66 +53,14 @@ def get_hail_path(ex_type, pop, phenoname):
 def init():
     hl.init(default_reference = "GRCh38")
 
-def annotate_points(data, plot, population, region_chrom):
+def annotate_points(data, plot, population, region_chrom, annotate_filename):
     ax = plot.ax
-    points = [ \
-            ("chr15", 88855424, "ACAN VNTR", {"AFR": 67.44,
-                                         "EUR": 14.45,
-                                         "META": 41.2}),
-            ("chr11", 2161570, "INS VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr13", 113231980, "CUL4A VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr2", 113130529, "IL1RN VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr12", 56717496, "NACA VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr1", 165761973, "TMCO1 VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr8", 116622815, "TMCO1 VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr5", 1393581, "SLC6A3-1 VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr17", 30221385, "SLC6A4 VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr11", 639988, "DRD4 VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr5", 132680584, "IL4 VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr1", 7829873, "PER3 VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr9", 27573484, "C9orf72 VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chrX", 71453055, "TAF1 VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr21", 43776443 , "CSTB VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr20", 4699397 , "PRNP VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-            ("chr1", 1435799 , "VWA1 VNTR", {"AFR": 0,
-                                         "EUR": 0,
-                                         "META": 0}),
-                  ]
+    points_df = pd.read_csv(annotate_filename)
     # Annotate points
-    for point in points:
-        chrom, position, label, p_value_dict = point
+    for idx, point in points_df.iterrows():
+        position = point["position"]
         # Pick the annotation passed by the user
-        if region_chrom != chrom:
+        if region_chrom != point["chrom"]:
             continue
         if data["POS"].min() > position:
             continue
@@ -117,14 +68,17 @@ def annotate_points(data, plot, population, region_chrom):
             continue
         index = len(data[data["POS"] < position])
         x = position
-        y = p_value_dict[population]
-        ax.text(x=x, y=y, s=label, fontsize="medium")
+        y = point[population]
+        ax.text(x=x, y=y, s=point["name"], fontsize="medium")
         ax.scatter(x=x, y=y, color="red", marker="^")
 
 def plot_manhattan(data, x, y, region_chrom,
                    filename, title,
-                   args,
+                   pop,
+                   annotate_filename,
                    p_value_threshold=-np.log10(5*10**-8)):
+    # Filter warning for tight layout in matplotlib
+    warnings.filterwarnings("ignore", module="seaborn\..*")
 
     # Plot a Manhattan plot based on the dataframe
     plot = sns.relplot(data=data, x=x, y=y,
@@ -137,35 +91,38 @@ def plot_manhattan(data, x, y, region_chrom,
     plot.ax.set_xlabel("Chromosome")
     plot.ax.set_xticks(chrom_series)
     plot.ax.set_xticklabels(chrom_series.index)
-    annotate_points(data, plot, args.pop, region_chrom)
+    if annotate_filename is not None:
+        annotate_points(data, plot, pop, region_chrom, annotate_filename)
 
     # Put the threshold
     plot.ax.axhline(p_value_threshold, linestyle="--", linewidth=1)
     plot.fig.savefig(filename, bbox_inches="tight")
     plt.clf()
 
-def plot_figures(data, args, region_chrom):
+def plot_figures(data, pop, phenoname, annotate_filename, region_chrom):
     #print(data.columns)
     data['ind'] = data.index
-    filename = "figures/allxall_manhattan_{}_pop_{}.png".format(args.phenoname, args.pop)
-    title = 'Region P-value for phenotype {}'.format(args.phenoname)
+    filename = "figures/allxall_manhattan_{}_pop_{}.png".format(phenoname, pop)
+    title = 'Region P-value for phenotype {}'.format(phenoname)
     plot_manhattan(data=data,
                    x="POS",
                    y="Pvalue_log10",
                    filename=filename,
                    region_chrom=region_chrom,
-                   args=args,
+                   pop=pop,
+                   annotate_filename=annotate_filename,
                    title=title)
 
     ## Plot effect sizes
-    filename = "figures/allxall_effect_sizes_{}_pop_{}.png".format(args.phenoname, args.pop)
-    title = 'Region effect sizes for phenotype {}'.format(args.phenoname)
+    filename = "figures/allxall_effect_sizes_{}_pop_{}.png".format(phenoname, pop)
+    title = 'Region effect sizes for phenotype {}'.format(phenoname)
     plot_manhattan(data=data,
                    x="POS",
                    y="BETA",
                    filename=filename,
                    region_chrom=region_chrom,
-                   args=args,
+                   pop=pop,
+                   annotate_filename=annotate_filename,
                    title=title)
 
 
@@ -177,6 +134,11 @@ def main():
     start, end = start_end.split("-")
     start = int(start)
     end = int(end)
+
+    if not os.path.exists("outputs"):
+        os.mkdir("outputs")
+    if not os.path.exists("figures"):
+        os.mkdir("figures")
 
     df_dump_filename = "outputs/df_dump_{}_{}.csv".format(chrom, args.phenoname)
     if not args.local:
@@ -204,9 +166,13 @@ def main():
         data = data[(data["CHR"] == chrom) & \
                     (data["POS"] > start) & \
                     (data["POS"] < end)]
-        print("# variants after filtering", len(data))
+        print("# variants after filtering for position", len(data))
 
-    plot_figures(data=data, args=args, region_chrom=chrom)
+    plot_figures(data=data,
+                 pop=args.pop,
+                 phenoname=args.phenoname,
+                 annotate_filename=args.annotate,
+                 region_chrom=chrom)
 
 
 if __name__ == "__main__":

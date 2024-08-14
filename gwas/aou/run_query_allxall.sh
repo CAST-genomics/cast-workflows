@@ -12,11 +12,11 @@
 # 1mbp region
 #region="chr11:1661570-2661976"
 # 10mbp region
-#region="chr11:1-12161976"
+region="chr11:1-12161976"
 # whole chromosome
 #region="chr11:1-135127769"
 # Type 2 Diabetes, 2 phenonames
-#phenotypes="EM_202.2 250.2"
+phenotypes="EM_202.2 250.2"
 
 # Stroke, CAD and IL1RN VNTR
 # IL1RN VNTR chr2:113130529-113130872
@@ -127,7 +127,7 @@
 
 # motor neuropathy and VWA1
 # VWA1 VNTR chr1:1435799-1435818
-region="chr1:1-6435818" # 5mbp region
+#region="chr1:1-6435818" # 5mbp region
 #phenotypes="GE_972.1" # Hereditary neuropathy n=3072
 #phenotypes="357" # Inflammatory and toxic neuropathy n=1700
 # 250.6 #Polyneuropathy in diabetes n=1568
@@ -138,12 +138,13 @@ region="chr1:1-6435818" # 5mbp region
 # 377.3 Optic neuritis/neuropathy n=400
 # NS_343.1 Peripheral autonomic neuropathy n=265
 # NS_337.6 Idiopathic progressive neuropathy n=229
-phenotypes="GE_972.1 357 250.6 356 SO_380.1 836811 NS_337.3 377.3"
+#phenotypes="GE_972.1 357 250.6 356 SO_380.1 836811 NS_337.3 377.3"
 
 for phenotype in $phenotypes; do
   python query_allxall_associations.py \
 	--type ACAF \
         --pop META \
 	--phenoname $phenotype \
-	--region $region
+	--region $region \
+	--annotate annotation_points.csv
 done
