@@ -193,19 +193,20 @@ def get_all_sample_ids():
     # all samples passing the sample tests are in
     # data/passing_samples_v7.1.csv
     sample_df = pd.read_csv("data/passing_samples_v7.1.csv")
-    print(sample_df.head())
     return sample_df
 
 def get_samples_file(samples_df, batch_idx, id_column_name="person_id"):
     # For batches that previously failed, change the input sample name,
     # So that the subset_vcf has to run again and do not copy the cached files
     # From a failed attempt.
-    failed_batches_to_be_repeated = [5, 42, 100, 114, 125, 132, 215, 28, 50]
+    failed_batches_to_be_repeated = []
     if batch_idx in failed_batches_to_be_repeated:
         filename = "batch_{}_repeat_size_1000.txt".format(batch_idx)
     else:
         filename = "batch_{}_size_1000.txt".format(batch_idx)
     filepath = os.path.join("samples_files", filename)
+    if not os.path.exists("samples_files"):
+        os.mkdir("samples_files")
     with open(filepath, "w+") as samples_file:
         text = ""
         for idx, row in samples_df.iterrows():
@@ -253,7 +254,7 @@ def main():
 	num_batches = ceil(num_samples / args.batch_size)
 
 	samples_files = []
-	failed_batches_to_avoid = [28, 50]
+	failed_batches_to_avoid = []
 
 	for batch_idx in range(num_batches):
             if batch_idx in failed_batches_to_avoid:
@@ -261,8 +262,6 @@ def main():
             # Set samples_files for each batch
             start = batch_idx * args.batch_size
             end = min(len(sample_ids_df), (batch_idx + 1) * args.batch_size)
-            print("for batch size {} and len {}, start idx is {} end idx is {}".format(
-                    args.batch_size, len(sample_ids_df), start, end))
             partial_samples_df = sample_ids_df.iloc[range(start, end)]
             samples_files.append(get_samples_file(partial_samples_df, batch_idx))
 
