@@ -54,7 +54,7 @@ Optional arguments:
 * `--MAF`: Apply minor allele frequency QC. Default=0.01
 * `--HWE`: Apply HWE p-value cutoff QC. Default=1e-15
 * `--GQ`: Apply minimun genotype score QC. Default=20
-* `--beagle-dosages`: AApply beagle dosages flag to associaTR. Default=false
+* `--beagle-dosages`: Apply beagle dosages flag to associaTR. Default=false
 
 
 ## Important file locations:
