@@ -88,12 +88,11 @@ task sort_index {
         echo '##INFO=<ID=VID,Number=1,Type=Integer,Description="VNTR id in the VNTR database">' >> header.txt
         echo '##INFO=<ID=RU,Number=1,Type=String,Description="Repeat unit or consensus motif of the VNTR">' >> header.txt
         bcftools view -h ~{sorted_prefix}.vcf.gz | grep -v "^##" >> header.txt
-        bcftools reheader -h header.txt ~{sorted_prefix}.vcf.gz
+        bcftools reheader -h header.txt ~{sorted_prefix}.vcf.gz > ~{sorted_prefix}_rh.vcf.gz
         echo "Adding VID info field"
-        zcat ~{sorted_prefix}.vcf.gz | sed 's/END=/VID=~{vid};RU=~{motif};END=/g' > ~{sorted_prefix}_w_vid.vcf.gz
-        bcftools view -Oz ~{sorted_prefix}_w_vid.vcf.gz > ~{out_prefix}.vcf.gz
+        zcat ~{sorted_prefix}_rh.vcf.gz | sed 's/END=/VID=~{vid};RU=~{motif};END=/g' > ~{sorted_prefix}_w_vid.vcf
+        bcftools view -Oz ~{sorted_prefix}_w_vid.vcf > ~{out_prefix}.vcf.gz
         tabix -p vcf ~{out_prefix}.vcf.gz
-        df -h
     >>>
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
