@@ -6,14 +6,11 @@ import subprocess
 
 
 
-region = sys.argv[1]
+bed = sys.argv[1]
+num_samples = int(sys.argv[2])
+num_variants = int(sys.argv[3])
 
-bed = region+"_plink.bed"
-fam = region+"_plink.fam"
-bim = region+"_plink.bim"
-
-num_samples = int(subprocess.check_output(['wc', '-l', fam]).split()[0])
-num_variants = int(subprocess.check_output(['wc', '-l', bim]).split()[0])
+fileprefix = bed[:-4] #chop of .bed
 
 genotypes = np.empty((num_variants, num_samples), dtype=np.float32)
 
@@ -24,4 +21,4 @@ for i in range(0, num_variants):
 
 genotypes[genotypes == -9] = 0 #convert missing to reference for now TODO
 
-np.save(region+".npy", genotypes.astype(np.int8))
+np.save(fileprefix+".npy", genotypes.astype(np.int8))
