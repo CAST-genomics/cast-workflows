@@ -124,19 +124,6 @@ def plot_figures(data, pop, phenoname, annotate_filename, region_chrom):
                    annotate_filename=annotate_filename,
                    title=title,)
 
-    ## Plot effect sizes
-    filename = "figures/allxall_effect_sizes_{}_pop_{}.png".format(phenoname, pop)
-    title = 'Region effect sizes for phenotype {}'.format(phenoname)
-    plot_manhattan(data=data,
-                   x="POS",
-                   y="BETA",
-                   filename=filename,
-                   region_chrom=region_chrom,
-                   pop=pop,
-                   annotate_filename=annotate_filename,
-                   title=title)
-
-
 def main():
     args = parse_args()
 

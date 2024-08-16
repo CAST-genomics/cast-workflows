@@ -1,15 +1,13 @@
 #!/bin/bash
 
 echo "" > summary_gwas.txt
-#aou_220k_imputed="/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/vntr_workspace/sara_main/cast-workflows/imputation/wdl/batch_data/merged_samples.sorted.vcf.gz"
-aou_220k_imputed="merged_samples.sorted_with_vid_ru.vcf.gz"
-lrwgs_data="../../../../imputation/cast-workflows/imputation/wdl/vntr_reference/merged_samples.sorted_clean.vcf"
+aou_220k_imputed="data/merged_samples_all_rh.sorted.vcf.gz"
+ref="data/ACAN_ref_lrwgs.sorted.vcf.gz"
 
 
 #samples="samples/passing_samples_v7.1.csv"
 #samples="samples/EUR_WHITE.csv"
 #samples="samples/AFR_BLACK.csv"
-
 
 # Running associatr
 echo "running gwas for imputed calls"
@@ -30,12 +28,23 @@ samples="samples/AFR_BLACK.csv"
 	      --num-pcs 10 \
 	      --method associaTR \
 	      --tr-vcf $aou_220k_imputed \
+	      --samples $samples \
+	      --is-imputed \
+	      --norm-by-sex \
+	      --norm quantile \
 	      --annotations annotations_acan.txt \
+	      --plot
+samples="samples/passing_samples_v7.1.csv"
+./aou_gwas.py --phenotype height \
+	      --num-pcs 10 \
+	      --method associaTR \
+	      --tr-vcf $aou_220k_imputed \
 	      --samples $samples \
 	      --is-imputed \
 	      --norm-by-sex \
 	      --norm quantile \
 	      --plot
+	      #--annotations annotations_acan.txt \
 exit 0
 echo "running gwas for advntr calls"
 ./aou_gwas.py --phenotype height \
@@ -49,6 +58,21 @@ echo "running gwas for advntr calls"
 	      --annotations annotations_acan.txt \
 	      --plot
 #	      --tr-vcf merged_samples.vcf \
+exit 0
+echo "running gwas for reference"
+samples="samples/passing_samples_v7.1.csv"
+./aou_gwas.py --phenotype height \
+	      --num-pcs 10 \
+	      --method associaTR \
+	      --tr-vcf $ref\
+	      --samples $samples \
+	      --norm-by-sex \
+	      --norm quantile \
+	      --annotations annotations_acan.txt \
+	      --plot
+exit 0
+
+
 # Running Hail
 #./aou_gwas.py --phenotype height \
 #	      --num-pcs 10 \

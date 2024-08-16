@@ -47,6 +47,8 @@ def GetOutPath(phenotype, method, region, samplefile):
     outprefix = "%s_%s_%s"%(phenotype, method, cohort)
     if region is not None:
         outprefix += "_%s"%(region.replace(":", "_").replace("-","_"))
+    if not os.path.exists("outputs"):
+        os.mkdir("outputs")
     return "outputs/" + outprefix + ".gwas"
 
 def GetFloatFromPC(x):
@@ -208,7 +210,11 @@ def set_genotypes(data, args, annotations, cohort, samples):
         print("Reading ref and alt alleles")
         ref_allele_len, alt_alleles_len, ru_len = get_alleles(locus_calls)
         print("Reading calls")
+        counter = 0
         for column in vcf_df.columns:
+            counter += 1
+            if counter % 1000 == 0:
+                print("reading call ", counter)
             if column.isnumeric():
                 # Corresponds to a sample id
                 if str(column) not in list(samples):
@@ -261,6 +267,24 @@ def set_genotypes(data, args, annotations, cohort, samples):
                     empty_calls, no_calls, gene))
     return data
 
+def print_stats(data, locus):
+    print("For phenotype, mean {:.4f} and sd {:.4f}".format(
+        data["phenotype"].mean(),
+        data["phenotype"].std()))
+    print(data["phenotype"].describe())
+    print("For genotype, mean {:.4f} and sd {:.4f}".format(
+        data[locus].mean(),
+        data[locus].std()))
+    print(data[locus].describe())
+    min_height = data["phenotype"].min()
+    max_height = data["phenotype"].max()
+    samples_w_min_height = data[data["phenotype"]==min_height]
+    print("samples_w_min_height: ", len(samples_w_min_height))
+    samples_w_max_height = data[data["phenotype"]==max_height]
+    print("samples_w_max_height: ", len(samples_w_max_height))
+    
+    print("median genotype at samples_w_min_height: ", samples_w_min_height[locus].median())
+    print("median genotype at samples_w_max_height: ", samples_w_max_height[locus].median())
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
@@ -354,16 +378,14 @@ def main():
     
     # Plot genotype-phenotype plot and allele histogram
     if args.method == "associaTR":
-        # Get annotations of specific TRs for plotting
-        annotations = read_annotations(args.annotations)
-        # This is necessary for genotype-phenotype plot
-        #data = set_genotypes(data, args, annotations, cohort, samples["person_id"])
+        if args.annotations is not None:
+            # Get annotations of specific TRs for plotting
+            annotations = read_annotations(args.annotations)
+            # This is necessary for genotype-phenotype plot
+            # To run a quick check, randomly subsample the samples
+            data = set_genotypes(data, args, annotations, cohort, samples["person_id"])
     
     data = pd.merge(data, samples)
-
-    print("For phenotype, mean {:.4f} and sd {:.4f}".format(
-        data["phenotype"].mean(),
-        data["phenotype"].std()))
 
     # Check we have all covars
     print("Check all covars are present")
@@ -397,9 +419,10 @@ def main():
         if args.method == "associaTR":
             annotate = True
             p_value_threshold = -np.log10(5*10**-8)
-            print("plotting genotype phenotype for annotations ", annotations)
-            for chrom, pos, gene in annotations:
-                plot_genotype_phenotype(data=data,
+            if args.annotations is not None:
+                print("plotting genotype phenotype for annotations ", annotations)
+                for chrom, pos, gene in annotations:
+                    plot_genotype_phenotype(data=data,
                         genotype=gene,
                         gwas=runner.gwas,
                         chrom=chrom,
