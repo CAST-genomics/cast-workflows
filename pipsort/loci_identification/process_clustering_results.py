@@ -52,7 +52,6 @@ for i in range(num_clusters):
     log.write(csv_string)
 log.close()
 
-exit(0)
 
 grouped = fam_with_ancestry.groupby(['label', 'ancestry_pred']).size().unstack().fillna(0)
 grouped.plot(kind='bar', stacked=True)
