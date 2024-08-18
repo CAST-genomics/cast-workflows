@@ -10,6 +10,7 @@ import time
 
 npy = sys.argv[1]
 fileprefix = sys.argv[2]
+logfile = sys.argv[3]
 
 start = time.time()
 m = np.load(npy)
@@ -25,22 +26,39 @@ print("time to load and preprocess matrix = ", end - start)
 
 start = time.time()
 
-kmeans = MiniBatchKMeans(n_clusters=3,
+num_clusters = [1,3,5]
+
+cost_str = fileprefix
+
+best_cost = np.inf
+best_k = 1
+
+for k in num_clusters:
+    kmeans = MiniBatchKMeans(n_clusters=k, init='k-means++',
                          random_state=0, n_init='auto').fit(m)
+    labels = kmeans.predict(m)
+    np.save(fileprefix+"_kmeans_labels_"+str(k)+"clusters", labels)
+    cost = kmeans.inertia_
+    if cost < best_cost:
+        best_cost = cost
+        best_k = k
+    cost_str += " "+ str(cost)
+
+cost_str += " " + str(best_cost) + " " + str(best_k) + "\n"
+with open(logfile, "w") as log:
+    log.write(cost_str)
 
 end = time.time()
 print("fit time = ", end - start)
 
 start = time.time()
-labels = kmeans.predict(m)
-np.save(fileprefix+"_kmeans_labels", labels)
 end = time.time()
 print("predict time = ", end - start)
 
 #PCA
 start = time.time()
 from sklearn.decomposition import PCA
-pca = PCA(n_components=2)
+pca = PCA(n_components=3)
 pca.fit(m.T)
 end = time.time()
 print("pca time = ", end - start)
