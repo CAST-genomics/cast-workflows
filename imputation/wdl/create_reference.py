@@ -12,7 +12,7 @@ import sys
 import tempfile
 
 
-def RunWorkflow(json_file, json_options_file, dryrun=False):
+def RunWorkflow(json_file, json_options_file, cromwell=False, dryrun=False):
 	"""
 	Run workflow on AoU
 
@@ -26,8 +26,10 @@ def RunWorkflow(json_file, json_options_file, dryrun=False):
 	dryrun : bool
 		Just print the command, don't actually run cromshell
 	"""
-	#cmd = "cromshell submit ../wdl/beagle.wdl {json} -op {options}".format(json=json_file, options=json_options_file)
-	cmd = "java -jar -Dconfig.file={} ".format("/home/jupyter/cromwell.conf") + \
+        if not cromwell:
+            cmd = "cromshell submit ../wdl/beagle.wdl {json} -op {options}".format(json=json_file, options=json_options_file)
+        else:
+	    cmd = "java -jar -Dconfig.file={} ".format("/home/jupyter/cromwell.conf") + \
 				"cromwell-87.jar run create_reference.wdl " + \
 				"--inputs {} --options {}".format(json_file, json_options_file)
 	if dryrun:
@@ -55,10 +57,17 @@ def main():
 	parser = argparse.ArgumentParser(__doc__)
 	parser.add_argument("--name", help="Name of the TR job", required=True, type=str)
 	parser.add_argument("--snp-vcf", help="Name of the genotype vcf file including snps", required=True, type=str)
-	parser.add_argument("--region", help="region in the SNP file to be extracted", required=True, type=str)
-	parser.add_argument("--samples", help="samples to be used for creating the reference", required=True, type=str)
+	parser.add_argument("--regions", help="A file with regions in the SNP file to be extracted",
+                                required=True, type=str)
+	parser.add_argument("--samples", help="A file with Sample ids to be used for creating the reference",
+                                required=True, type=str)
 	parser.add_argument("--vntr-vcf", help="Name of the genotype vcf file including vntr(s)", required=True, type=str)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
+	parser.add_argument("--cromwell", help="Run in cromwell instead of the default cromshell.", action="store_true")
+	parser.add_argument("--mem", help="Memory and disk in each task", type=int, required=False, default=20)
+	parser.add_argument("--window", help="Beagle window size", type=int, required=False, default=20)
+	parser.add_argument("--map", help="Path to the genetic map file", required=True, type=str)
+	parser.add_argument("--chrom", help="Specify target chromosome ", type=str, required=True)
 
 	args = parser.parse_args()
 
@@ -85,8 +94,12 @@ def main():
 	json_dict["create_reference.snp_vcf_index"]=args.snp_vcf+".tbi"
 	json_dict["create_reference.vntr_vcf"] = args.vntr_vcf
 	json_dict["create_reference.vntr_vcf_index"]=args.vntr_vcf+".tbi"
-	json_dict["create_reference.region"] = args.region
+	json_dict["create_reference.regions"] = args.regions
 	json_dict["create_reference.samples"] = args.samples
+	json_dict["create_reference.mem"] = args.mem
+	json_dict["create_reference.window"] = args.window
+	json_dict["create_reference.map"] = args.map
+	json_dict["create_reference.chrom"] = args.chrom
 	json_dict["create_reference.out_prefix"] = args.name
 	json_dict["create_reference.GOOGLE_PROJECT"] = project
 
@@ -103,7 +116,7 @@ def main():
 		json.dump(json_options_dict, f, indent=4)
 
 	# Run workflow on AoU using cromwell
-	RunWorkflow(json_file, json_options_file, dryrun=args.dryrun)
+	RunWorkflow(json_file, json_options_file, dryrun=args.dryrun, cromwell=args.cromwell)
 
 
 if __name__ == "__main__":
