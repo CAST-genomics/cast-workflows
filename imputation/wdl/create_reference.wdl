@@ -6,7 +6,7 @@ workflow create_reference {
         String vntr_vcf_index
         String snp_vcf  
         String snp_vcf_index
-        String region
+        String regions
         String samples
         String out_prefix
         String GOOGLE_PROJECT = ""
@@ -21,7 +21,7 @@ workflow create_reference {
           vntr_vcf_index=vntr_vcf_index,
           snp_vcf=snp_vcf, 
           snp_vcf_index=snp_vcf_index,
-          region=region,
+          regions=regions,
           samples=samples,
           out_prefix=out_prefix,
           mem=mem,
@@ -42,7 +42,8 @@ workflow create_reference {
     }
     call bref {
         input:
-          vcf=sort_index_beagle.outvcf
+          mem=mem,
+          vcf=sort_index_beagle.outvcf,
           vcf_index=sort_index_beagle.outvcf_index
     }
     output {
@@ -61,7 +62,7 @@ task merge_vntr_snps {
         String vntr_vcf_index
         String snp_vcf
         String snp_vcf_index
-        String region
+        String regions
         String samples
         String out_prefix
         String GOOGLE_PROJECT
@@ -74,7 +75,7 @@ task merge_vntr_snps {
       export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
       export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
       echo "getting a subset of the vcf file based on a region and a sample list(bcftools)"
-      bcftools view -O z -r ~{region} -S ~{samples} -e 'POS=87296520' ~{snp_vcf} > ~{snp_region_file}.vcf.gz
+      bcftools view -O z -R ~{regions} -S ~{samples} -e 'POS=87296520' ~{snp_vcf} > ~{snp_region_file}.vcf.gz
       bcftools sort -O z  ~{snp_region_file}.vcf.gz > ~{snp_region_file}.sorted.vcf.gz
       echo "number of variants in unsorted file"
       zcat ~{snp_region_file}.vcf.gz | grep -v "^#" | wc -l
@@ -129,7 +130,7 @@ task beagle_phase {
       grep MemTotal /proc/meminfo | awk '{print $2}'
       echo "running beagle for phasing"
       date
-      java -Xmx20g -jar /beagle.jar \
+      java -Xmx~{mem}g -jar /beagle.jar \
             gt=~{vcf} \
             chrom=~{chrom} \
             map=~{map} \
@@ -153,13 +154,14 @@ task bref {
     input {
         File vcf
         File vcf_index
+        Int mem
     }
     String basename = basename(vcf, ".vcf.gz")
     command <<<
-        zcat ~{vcf} | java -jar bref.jar > ~{basename}.bref3
+        zcat ~{vcf} | java -jar /bref3.jar > ~{basename}.bref3
     >>>
     runtime {
-        docker:"gcr.io/ucsd-medicine-cast/beagle:latest"
+        docker:"sarajava/beagle:v4"
 	memory: mem + "GB"
 	disks: "local-disk " + mem + " SSD"
     }
@@ -173,12 +175,11 @@ task sort_index_beagle {
       File vcf
     }
 
-    String basename = basename(vcf, ".vcf.gz")
-
     command <<<
-        bcftools sort -Oz ~{vcf} > ~{basename}.sorted.vcf.gz && tabix -p vcf ~{basename}.sorted.vcf.gz
+        tabix -p vcf ~{vcf}
+        bcftools sort -Oz ~{vcf} > vntr_ref.sorted.vcf.gz && tabix -p vcf vntr_ref.sorted.vcf.gz
         echo "Number of TRs in the vcf file"
-        bcftools view -i 'ID="."' ~{basename}.sorted.vcf.gz | grep -v "^##" | wc -l
+        bcftools view -i 'ID="."' vntr_ref.sorted.vcf.gz | grep -v "^#" | wc -l
     >>>
 
     runtime {
@@ -186,7 +187,7 @@ task sort_index_beagle {
     }
 
     output {
-    File outvcf = "${basename}.sorted.vcf.gz"
-    File outvcf_index = "${basename}.sorted.vcf.gz.tbi"
+    File outvcf = "vntr_ref.sorted.vcf.gz"
+    File outvcf_index = "vntr_ref.sorted.vcf.gz.tbi"
   }
 }
