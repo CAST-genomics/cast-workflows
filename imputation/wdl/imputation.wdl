@@ -152,6 +152,8 @@ task beagle {
         echo "vcf: ~{vcf}"
         java -Xmx~{mem}g -jar /beagle.jar \
             gt=~{vcf} \
+            ap=true \
+            gp=true \
             ref=~{ref_panel} \
             window=~{window_size} \
             overlap=~{overlap} \
