@@ -130,14 +130,24 @@ task genotype {
         sleep ~{sleep_seconds}
         echo "num reads $(samtools view -c ~{target_bam_file})"
         echo "num reads in region $(samtools view -c --region-file ~{region_file} ~{target_bam_file}) "
-        /usr/bin/time -v advntr genotype  \
-        --alignment_file ~{target_bam_file} \
-        --models ~{vntr_db}  \
-        --working_directory . \
-        -vid ~{vntr_id} \
-        --outfmt vcf \
-        --log_pacbio_reads \
-        --pacbio > ~{genotype_output}
+        if [[ "~{vntr_id}" == "ALL" ]] ; then
+		/usr/bin/time -v advntr genotype  \
+		--alignment_file ~{target_bam_file} \
+		--models ~{vntr_db}  \
+		--working_directory . \
+		--outfmt vcf \
+		--log_pacbio_reads \
+		--pacbio > ~{genotype_output}
+        else
+		/usr/bin/time -v advntr genotype  \
+		--alignment_file ~{target_bam_file} \
+		--models ~{vntr_db}  \
+		--working_directory . \
+		-vid ~{vntr_id} \
+		--outfmt vcf \
+		--log_pacbio_reads \
+		--pacbio > ~{genotype_output}
+        fi
     >>>
 
     runtime {

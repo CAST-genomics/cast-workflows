@@ -45,7 +45,8 @@ def parse_input_args():
                          type=str, required=True,
                          help="The VNTR id used for this analysis. " + \
                               "VNTR id should correspond to the region flag otherwise" + \
-                              "there will be no spanning reads.")
+                              "there will be no spanning reads. Use comma separated ids or " + \
+                              "'ALL' for all VNTRs in the database.")
     parser.add_argument("--cromwell",
                          action="store_true", required=False,
                          help="Run with cromwell instead of the default cromshell.")
@@ -103,7 +104,6 @@ def write_input_json(input_json_filename,
                      region_file,
                      vntr_id,
                      google_project):
-
 
     data = {"run_advntr.bam_files": samples_files,
             "run_advntr.region_file": region_file,
