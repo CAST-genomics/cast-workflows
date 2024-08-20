@@ -353,9 +353,11 @@ if __name__ == "__main__":
     target_samples = select_samples(args.sample_count, dataset=args.dataset)
     # For test run on local server
     #target_samples = pd.DataFrame({'grch38-bam':["./HG00438.bam"]})
-    output_parent_dir = "batch_genotyping/run_v2"
+    output_parent_dir = "batch_genotyping/run_v3"
+    run_batches = False
+    merge_batches = not run_batches
     # Run WDL workflow based on input files and output name.
-    if False:
+    if run_batches:
         run_genotype_command(target_samples_df=target_samples,
                     output_name=args.output_name,
                     output_parent_dir=output_parent_dir,
@@ -368,8 +370,8 @@ if __name__ == "__main__":
                     )
     num_batches = get_num_batches(sample_count=args.sample_count,
                                    batch_size=args.batch_size)
-    
-    run_merge_command(num_batches=num_batches,
+    if merge_batches:
+        run_merge_command(num_batches=num_batches,
                       output_parent_dir=output_parent_dir,
                       output_name=args.output_name,
                       cromwell=args.cromwell,
