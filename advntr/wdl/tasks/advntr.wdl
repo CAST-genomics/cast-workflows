@@ -9,6 +9,7 @@ workflow run_advntr {
         String region_file
         String google_project
         String vntr_id
+        Int mem
     }
 
     scatter (i in range(length(bam_files))) {
@@ -20,13 +21,15 @@ workflow run_advntr {
                 google_project=google_project,
                 vntr_id=vntr_id,
                 sleep_seconds=i,
+                mem=mem
         }
     }
 
     call merge_sort {
         input:
             individual_vcfs = advntr_single_sample.out_vcf,
-            individual_vcf_indexes = advntr_single_sample.out_vcf_index
+            individual_vcf_indexes = advntr_single_sample.out_vcf_index,
+            mem = mem
     }
 
     output {
@@ -43,18 +46,20 @@ task merge_sort {
     input {
         Array[File] individual_vcfs
         Array[File] individual_vcf_indexes
+        Int mem
     }
 
     String out_prefix = "merged_samples"
 
     command <<<
-        bcftools merge -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
+        bcftools merge --force-single -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
         bcftools sort -Oz ~{out_prefix}.vcf.gz > ~{out_prefix}.sorted.vcf.gz && tabix -p vcf ~{out_prefix}.sorted.vcf.gz
     >>>
 
     runtime {
-        docker:"gcr.io/ucsd-medicine-cast/trtools-5.0.1:latest"
-        maxRetries: 2
+        docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
+        memory: mem + "GB"
+        disks: "local-disk ${mem} SSD"
     }
 
     output {

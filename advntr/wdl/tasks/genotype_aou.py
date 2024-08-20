@@ -1,11 +1,14 @@
 import os
 import subprocess
 import argparse
+import shutil
 from time import sleep
 from datetime import datetime
 
 import json
 import pandas as pd
+import tempfile
+
 
 def parse_input_args():
     parser = argparse.ArgumentParser(
@@ -47,6 +50,9 @@ def parse_input_args():
                               "VNTR id should correspond to the region flag otherwise" + \
                               "there will be no spanning reads. Use comma separated ids or " + \
                               "'ALL' for all VNTRs in the database.")
+    parser.add_argument("--mem",
+                         type=int, required=False, default=4,
+                         help="Memory allocation on the wdl nodes[4].")
     parser.add_argument("--cromwell",
                          action="store_true", required=False,
                          help="Run with cromwell instead of the default cromshell.")
@@ -91,9 +97,11 @@ def select_samples(sample_count, dataset):
 def write_input_merge_json(input_json_filename,
                      batch_vcf_filenames,
                      batch_vcf_index_filenames,
+                     mem,
                         ):
     data = {"run_merge_advntr.per_batch_vcfs": batch_vcf_filenames,
-            "run_merge_advntr.per_batch_vcf_indexes": batch_vcf_index_filenames}
+            "run_merge_advntr.per_batch_vcf_indexes": batch_vcf_index_filenames,
+            "run_merge_advntr.mem": mem}
 
     with open(input_json_filename, "w+") as input_json_file:
         json.dump(data, input_json_file)
@@ -103,11 +111,13 @@ def write_input_json(input_json_filename,
                      samples_files,
                      region_file,
                      vntr_id,
+                     mem,
                      google_project):
 
     data = {"run_advntr.bam_files": samples_files,
             "run_advntr.region_file": region_file,
             "run_advntr.vntr_id": vntr_id,
+            "run_advntr.mem": mem,
             "run_advntr.google_project": google_project}
 
     with open(input_json_filename, "w+") as input_json_file:
@@ -152,12 +162,12 @@ def run_workflow(wdl_file, json_file,
         cmd = "cromshell submit {wdl} {json} -op {options}".format(
                         wdl=wdl_file,
                         json=json_file, options=json_options_file)
+        if wdl_dependencies_file and wdl_dependencies_file.strip() != "":
+            cmd += " -d {otherwdl}".format(otherwdl=wdl_dependencies_file)
     else:
         cmd = "java -jar -Dconfig.file={} ".format(config_file) + \
                   "jar_files/cromwell-87.jar run {} ".format(wdl_file) + \
                   "--inputs {} --options {}".format(json_file, json_options_file)
-    if wdl_dependencies_file.strip() != "":
-        cmd += " -d {otherwdl}".format(otherwdl=wdl_dependencies_file)
     if dryrun:
         sys.stderr.write("Run: %s\n"%cmd)
         return
@@ -176,7 +186,7 @@ def zip_dependencies(wdl_dependencies_file, files):
     """
     dirname = tempfile.mkdtemp()
     for f in files:
-        shutil.copyfile("../wdl/%s"%f, dirname+"/"+f)
+        shutil.copyfile("./%s"%f, dirname+"/"+f)
     shutil.make_archive(os.path.splitext(wdl_dependencies_file)[0], "zip", root_dir=dirname)
 
 
@@ -187,7 +197,7 @@ def get_file_path_from_template(template, google_project):
     filename = process.stdout.decode('utf-8').strip()
     return filename
 
-def run_merge_command(num_batches, output_name, output_parent_dir):
+def run_merge_command(num_batches, output_name, output_parent_dir, mem, cromwell):
 
     # Write options file including output directory in the bucket.
     options_json = "aou_merge_options.json"
@@ -215,42 +225,28 @@ def run_merge_command(num_batches, output_name, output_parent_dir):
         # Get the filename for vcf file
         template = "{}".format(bucket) + \
                 "/saraj/{}/{}_{}/".format(output_parent_dir, output_name, batch_idx) + \
-                "run_advntr/*/call-sort_index/merged_samples.sorted.vcf.gz"
+                "run_advntr/*/call-merge_sort/merged_samples.sorted.vcf.gz"
         filename = get_file_path_from_template(template=template,
                 google_project=google_project)
         if len(filename) > 0:
             batch_vcf_filenames.append(filename)
+            batch_vcf_index_filenames.append(filename + ".tbi")
         else:
             print("VCF file not added to the input file because file does not exist for template ",
-                    template)
-        # Get the filename for vcf index file
-        template = "{}".format(bucket) + \
-                "/saraj/{}/{}_{}/".format(output_parent_dir, output_name, batch_idx) + \
-                "run_advntr/*/call-sort_index/merged_samples.sorted.vcf.gz.tbi"
-        filename = get_file_path_from_template(template=template,
-                google_project=google_project)
-        if len(filename) > 0:
-            batch_vcf_index_filenames.append(filename)
-        else:
-            print("VCF Index file not added to the input file because file does not exist for template ",
                     template)
     # Gcloud token is updated every time write_input_json is called.
     write_input_merge_json(input_json_filename=input_json,
                      batch_vcf_filenames=batch_vcf_filenames,
-                     batch_vcf_index_filenames=batch_vcf_index_filenames)
+                     batch_vcf_index_filenames=batch_vcf_index_filenames,
+                     mem=mem)
 
-
-    # Zip all the WDL depencies
-    wdl_dependencies_file = args.name + "-merge-wdl.zip"
-    zip_dependencies(wdl_dependencies_file=wdl_dependencies_file,
-                    files=["advntr.wdl"])
 
     # Run workflow
     run_workflow(wdl_file=wdl_file,
                     json_file=input_json,
                     json_options_file=options_json,
                     config_file=config_file,
-                    wdl_dependencies_file=wdl_dependencies_file,
+                    wdl_dependencies_file=None,
                     cromwell=cromwell)
 
 
@@ -277,7 +273,11 @@ def is_output_dir_empty(directory, google_project):
     return True
 
 # Calls the wdl workflow based on input sample filenames
-def run_genotype_command(target_samples_df, output_name, output_parent_dir, region_file, vntr_id, cromwell, args):
+def run_genotype_command(target_samples_df, output_name,
+                         output_parent_dir, region_file,
+                         vntr_id, cromwell,
+                         batch_size, sample_count,
+                         mem):
 
     # Write options file including output directory in the bucket.
     options_json = "aou_genotype_options.json"
@@ -300,15 +300,15 @@ def run_genotype_command(target_samples_df, output_name, output_parent_dir, regi
     input_json = "aou_genotype_inputs.json"
     wdl_file = "advntr.wdl"
 
-    num_batches = get_num_batches(sample_count=args.sample_count,
-                                   batch_size=args.batch_size)
+    num_batches = get_num_batches(sample_count=sample_count,
+                                   batch_size=batch_size)
 
     for batch_idx in range(num_batches):
         start_time = datetime.now()
         # Get the indexes of samples in the current batch.
         # Then call the wdl workflow for only one batch at a time.
-        first_sample_idx = batch_idx * args.batch_size
-        last_sample_idx = min((batch_idx + 1) * args.batch_size, args.sample_count)
+        first_sample_idx = batch_idx * batch_size
+        last_sample_idx = min((batch_idx + 1) * batch_size, sample_count)
         samples_files = list(target_samples_df['alignment_file'])[first_sample_idx:last_sample_idx]
         # Write output directory in options file.
         output_dir = output_path_gcloud + "_" + str(batch_idx)
@@ -319,11 +319,12 @@ def run_genotype_command(target_samples_df, output_name, output_parent_dir, regi
                          samples_files=samples_files,
                          region_file=region_file,
                          vntr_id=vntr_id,
+                         mem=mem,
                          google_project=google_project,
                          )
 
         # Zip all the WDL depencies
-        wdl_dependencies_file = args.name + "-wdl.zip"
+        wdl_dependencies_file = output_name + "advntr-wdl.zip"
         zip_dependencies(wdl_dependencies_file=wdl_dependencies_file,
                         files=["advntr_single.wdl"])
 
@@ -354,16 +355,22 @@ if __name__ == "__main__":
     #target_samples = pd.DataFrame({'grch38-bam':["./HG00438.bam"]})
     output_parent_dir = "batch_genotyping/run_v2"
     # Run WDL workflow based on input files and output name.
-    run_genotype_command(target_samples_df=target_samples,
+    if False:
+        run_genotype_command(target_samples_df=target_samples,
                     output_name=args.output_name,
                     output_parent_dir=output_parent_dir,
                     region_file=args.region_file,
                     vntr_id=args.vntr_id,
-                    cromwell=args.cromwell)
-
+                    cromwell=args.cromwell,
+                    batch_size=args.batch_size,
+                    sample_count=args.sample_count,
+                    mem=args.mem,
+                    )
     num_batches = get_num_batches(sample_count=args.sample_count,
                                    batch_size=args.batch_size)
     
     run_merge_command(num_batches=num_batches,
                       output_parent_dir=output_parent_dir,
-                      output_name=args.output_name)
+                      output_name=args.output_name,
+                      cromwell=args.cromwell,
+                      mem=args.mem)
