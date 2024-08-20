@@ -4,22 +4,20 @@ version 1.0
 workflow advntr_single_sample {
     input {
         String bam_file
-        String region
+        String region_file
         String google_project
-        String gcloud_token
         String vntr_id
         Int sleep_seconds
     }
     call download_input {
         input :
         bam_file = bam_file,
-        region = region,
+        region_file = region_file,
         google_project = google_project,
-        gcloud_token = gcloud_token,
     }
     call genotype {
         input :
-        region = region,
+        region_file = region_file,
         vntr_id = vntr_id,
         target_bam_file = download_input.target_bam_file,
         target_bam_index_file = download_input.target_bam_index_file,
@@ -49,11 +47,11 @@ task sort_index {
   String basename = basename(vcf, ".vcf")
 
   command <<<
-    cat ~{vcf} | vcf-sort | bgzip -c > ~{basename}.sorted.vcf.gz && tabix -p vcf ~{basename}.sorted.vcf.gz
+    bcftools sort -Oz ~{vcf}  > ~{basename}.sorted.vcf.gz && tabix -p vcf ~{basename}.sorted.vcf.gz
   >>>
 
   runtime {
-        docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
+         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
          maxRetries: 3
     }
 
@@ -66,9 +64,8 @@ task sort_index {
 task download_input {
     input {
         String bam_file
-        String region
+        File region_file
         String google_project
-        String gcloud_token
     }
 
 
@@ -78,7 +75,6 @@ task download_input {
     String sorted_target_bam_index = "target_~{sample_id}.bam.bai"
     String sample_id = sub(basename(bam_file), ".bam", "")
 
-    #/google-cloud-sdk/bin/gcloud init --skip-diagnostics
     command <<<
         ls -lh .
         export HTSLIB_CONFIGURE_OPTIONS="--enable-gcs"
@@ -88,10 +84,9 @@ task download_input {
         export gcloud_token=$(/google-cloud-sdk/bin/gcloud auth application-default print-access-token --project ~{google_project})
         export GCS_OAUTH_TOKEN=${gcloud_token}
         export GCS_REQUESTER_PAYS_PROJECT="~{google_project}"
-        samtools view -hb -o ~{unsorted_target_bam} --use-index ~{bam_file} ~{region}
+        samtools view -hb -o ~{unsorted_target_bam} --use-index --region-file ~{region_file} ~{bam_file}
         samtools sort -o ~{sorted_target_bam} ~{unsorted_target_bam}
         samtools index ~{sorted_target_bam}
-        ls -lh .
     >>>
 
     runtime {
@@ -107,7 +102,7 @@ task download_input {
 
 task genotype {
     input {
-        String region
+        File region_file
         String vntr_id
         File target_bam_file
         File target_bam_index_file
@@ -134,7 +129,7 @@ task genotype {
     command <<<
         sleep ~{sleep_seconds}
         echo "num reads $(samtools view -c ~{target_bam_file})"
-        echo "num reads in region $(samtools view -c ~{target_bam_file} ~{region}) "
+        echo "num reads in region $(samtools view -c --region-file ~{region_file} ~{target_bam_file}) "
         /usr/bin/time -v advntr genotype  \
         --alignment_file ~{target_bam_file} \
         --models ~{vntr_db}  \
