@@ -6,9 +6,8 @@ workflow run_advntr {
 
     input {
         Array[String] bam_files
-        String region
+        String region_file
         String google_project
-        String gcloud_token
         String vntr_id
     }
 
@@ -17,28 +16,22 @@ workflow run_advntr {
         call advntr_single.advntr_single_sample as advntr_single_sample {
             input:
                 bam_file=bam_file,
-                region=region,
+                region_file=region_file,
                 google_project=google_project,
-                gcloud_token=gcloud_token,
                 vntr_id=vntr_id,
                 sleep_seconds=i,
         }
     }
 
-    call merge_outputs {
+    call merge_sort {
         input:
             individual_vcfs = advntr_single_sample.out_vcf,
             individual_vcf_indexes = advntr_single_sample.out_vcf_index
     }
 
-    call advntr_single.sort_index as sort_index {
-        input:
-            vcf=merge_outputs.merged_vcfs
-    }
-
     output {
-        File merged_vcf = sort_index.out_vcf
-        File merged_vcf_index = sort_index.out_vcf_index
+        File merged_vcf = merge_sort.merged_vcf
+        File merged_vcf_index = merge_sort.merged_vcf_index
     }
 
     meta {
@@ -46,7 +39,7 @@ workflow run_advntr {
     }
 }
 
-task merge_outputs {
+task merge_sort {
     input {
         Array[File] individual_vcfs
         Array[File] individual_vcf_indexes
@@ -55,13 +48,17 @@ task merge_outputs {
     String out_prefix = "merged_samples"
 
     command <<<
-        mergeSTR --vcfs ~{sep=',' individual_vcfs} --out ~{out_prefix}
+        bcftools merge -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
+        bcftools sort -Oz ~{out_prefix}.vcf.gz > ~{out_prefix}.sorted.vcf.gz && tabix -p vcf ~{out_prefix}.sorted.vcf.gz
     >>>
+
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/trtools-5.0.1:latest"
-        maxRetries: 3
+        maxRetries: 2
     }
+
     output {
-        File merged_vcfs = "~{out_prefix}.vcf"
+        File merged_vcf = "~{out_prefix}.sorted.vcf.gz"
+        File merged_vcf_index = "~{out_prefix}.sorted.vcf.gz.tbi"
     }
 }

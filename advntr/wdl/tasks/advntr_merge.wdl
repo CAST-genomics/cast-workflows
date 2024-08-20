@@ -17,6 +17,7 @@ workflow run_merge_advntr {
 
     output {
         File merged_vcfs = merge_outputs.merged_vcfs
+        File merged_vcfs_index = merge_outputs.merged_vcfs_index
     }
 
     meta {
@@ -33,12 +34,15 @@ task merge_outputs {
     String out_prefix = "merged_samples"
 
     command <<<
-        mergeSTR --vcfs ~{sep=',' individual_vcfs} --out ~{out_prefix}
+        #mergeSTR --vcfs ~{sep=',' individual_vcfs} --out ~{out_prefix}
+        bcftools merge -Oz ~{sep=',' individual_vcfs} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
+        bcftools sort -Oz ~{out_prefix}.vcf.gz > ~{out_prefix}.sorted.vcf.gz && tabix -p vcf ~{out_prefix}.sorted.vcf.gz
     >>>
     runtime {
-        docker:"gcr.io/ucsd-medicine-cast/trtools-5.0.1:latest"
+        docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
     }
     output {
-        File merged_vcfs = "~{out_prefix}.vcf"
+        File merged_vcfs = "~{out_prefix}.sorted.vcf.gz"
+        File merged_vcfs_index = "~{out_prefix}.sorted.vcf.gz.tbi"
     }
 }

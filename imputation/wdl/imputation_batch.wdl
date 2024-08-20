@@ -98,7 +98,6 @@ task sort_index {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
 	memory: mem + "GB"
 	disks: "local-disk " + mem + " SSD"
-        #maxRetries: 2
     }
     output {
         File sorted_vcf = "~{out_prefix}.vcf.gz"
@@ -118,16 +117,13 @@ task merge_outputs {
     command <<<
         #mergeSTR --vcfs ~{sep=',' individual_vcfs} --out ~{out_prefix}
         bcftools merge -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz
-        df -h
     >>>
         # TODO: Work with the -m flag
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-        #docker:"gcr.io/ucsd-medicine-cast/trtools-5.0.1:latest"
 	memory: mem + "GB"
 	disks: "local-disk " + mem + " SSD"
-	#disks: "local-disk " + mem + " SSD, /dev/sda1" + mem + " SSD"
-        #maxRetries: 2
+        maxRetries: 2
     }
     output {
         File merged_vcfs = "~{out_prefix}.vcf.gz"
