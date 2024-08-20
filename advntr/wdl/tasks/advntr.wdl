@@ -52,7 +52,7 @@ task merge_sort {
     String out_prefix = "merged_samples"
 
     command <<<
-        bcftools merge --force-single -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
+        bcftools merge --force-single --merge all -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
         bcftools sort -Oz ~{out_prefix}.vcf.gz > ~{out_prefix}.sorted.vcf.gz && tabix -p vcf ~{out_prefix}.sorted.vcf.gz
     >>>
 

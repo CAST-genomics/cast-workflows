@@ -32,10 +32,12 @@ task merge_outputs {
         Int mem
     }
 
-    String out_prefix = "merged_samples"
+    String out_prefix = "merged_samples_batches"
 
     command <<<
-        bcftools merge --force-single -Oz ~{sep=',' individual_vcfs} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
+        echo "Merging vcfs"
+        bcftools merge --merge all -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
+        echo "Sorting and indexing vcfs"
         bcftools sort -Oz ~{out_prefix}.vcf.gz > ~{out_prefix}.sorted.vcf.gz && tabix -p vcf ~{out_prefix}.sorted.vcf.gz
     >>>
     runtime {
