@@ -67,7 +67,7 @@ RUN pip install scikit-learn==0.16.1
 RUN pip install Keras==2.3.1
 RUN pip install cython==0.29.24
 RUN pip install biopython==1.76
-RUN pip install pysam==0.9.1.4
+RUN pip install pysam==0.20.0
 RUN pip install networkx==1.11
 RUN pip install protobuf==3.17.3
 RUN pip install tensorflow==1.13.2
