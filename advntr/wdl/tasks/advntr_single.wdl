@@ -132,8 +132,7 @@ task genotype {
     String sample_id = sub(basename(target_bam_file), ".bam", "")
 
     # VNTR_db is placed in the docker file. So the path is within the docker image.
-    String vntr_db = "/adVNTR/vntr_db/hg38_VNTRs_by_TRF.db"
-    #String reference_name = "/adVNTR/hg38_reference/hg38full.fa"
+    String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs.db"
 
     #--log_pacbio_reads \
 
@@ -159,7 +158,7 @@ task genotype {
     >>>
 
     runtime {
-        docker:"sarajava/advntr:1.5.0_v12"
+        docker:"sarajava/advntr:1.5.0_v13"
         memory: mem + "GB"
     }
 
