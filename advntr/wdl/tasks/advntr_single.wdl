@@ -133,11 +133,13 @@ task genotype {
 
     # VNTR_db is placed in the docker file. So the path is within the docker image.
     String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs.db"
+    #String vntr_db = "/adVNTR/vntr_db/hg38_VNTRs_by_TRF.db"
 
     #--log_pacbio_reads \
 
     command <<<
         sleep ~{sleep_seconds}
+        samtools --version
         # To suppress warnings on pysam about old index file
         touch ~{target_bam_index_file}
         echo "Num reads in input bam file $(samtools view -c ~{target_bam_file})"
@@ -160,7 +162,7 @@ task genotype {
     >>>
 
     runtime {
-        docker:"sarajava/advntr:1.5.0_v13"
+        docker:"sarajava/advntr:1.5.0_v14"
         memory: mem + "GB"
     }
 
