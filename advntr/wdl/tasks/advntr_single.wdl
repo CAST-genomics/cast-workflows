@@ -138,7 +138,9 @@ task genotype {
 
     command <<<
         sleep ~{sleep_seconds}
-        echo "num reads $(samtools view -c ~{target_bam_file})"
+        # To suppress warnings on pysam about old index file
+        touch ~{target_bam_index_file}
+        echo "Num reads in input bam file $(samtools view -c ~{target_bam_file})"
         if [[ "~{vntr_id}" == "ALL" ]] ; then
                 /usr/bin/time -v advntr genotype  \
                 --alignment_file ~{target_bam_file} \
