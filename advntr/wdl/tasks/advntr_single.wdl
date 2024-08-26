@@ -149,7 +149,8 @@ task genotype {
                 --models ~{vntr_db}  \
                 --working_directory . \
                 --outfmt vcf \
-                --pacbio > ~{genotype_output}
+                --pacbio \
+                -vid $(cat /adVNTR/vntr_db/phenotype_associated_vntrs_comma.txt | tr -d \\r\\n ) > ~{genotype_output}
         else
                 /usr/bin/time -v advntr genotype  \
                 --alignment_file ~{target_bam_file} \
