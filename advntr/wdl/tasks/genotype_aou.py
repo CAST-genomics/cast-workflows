@@ -353,7 +353,7 @@ if __name__ == "__main__":
     target_samples = select_samples(args.sample_count, dataset=args.dataset)
     # For test run on local server
     #output_parent_dir = "batch_genotyping/run_p_vntrs_g_vntrs"
-    output_parent_dir = "batch_genotyping/p_vntrs_10_samples"
+    output_parent_dir = "batch_genotyping/{}".format(args.output_name)
     run_batches = True
     merge_batches = not run_batches
     # Run WDL workflow based on input files and output name.

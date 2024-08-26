@@ -133,9 +133,7 @@ task genotype {
 
     # VNTR_db is placed in the docker file. So the path is within the docker image.
     String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs.db"
-    #String vntr_db = "/adVNTR/vntr_db/hg38_VNTRs_by_TRF.db"
-
-    #--log_pacbio_reads \
+    #String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs_lt_500bp.db"
 
     command <<<
         sleep ~{sleep_seconds}
@@ -163,7 +161,7 @@ task genotype {
     >>>
 
     runtime {
-        docker:"sarajava/advntr:1.5.0_v14"
+        docker:"sarajava/advntr:1.5.0_v15"
         memory: mem + "GB"
     }
 
