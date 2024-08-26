@@ -29,7 +29,7 @@ workflow run_advntr {
         input:
             individual_vcfs = advntr_single_sample.out_vcf,
             individual_vcf_indexes = advntr_single_sample.out_vcf_index,
-            mem = mem
+            mem = mem*2
     }
 
     output {
@@ -52,8 +52,24 @@ task merge_sort {
     String out_prefix = "merged_samples"
 
     command <<<
-        bcftools merge --force-single --merge all -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
-        bcftools sort -Oz ~{out_prefix}.vcf.gz > ~{out_prefix}.sorted.vcf.gz && tabix -p vcf ~{out_prefix}.sorted.vcf.gz
+        echo "Calling merge"
+        date
+        bcftools merge --force-single --merge all -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz
+        date
+        echo "Merged"
+        echo "Indexing"
+        date
+        tabix -p vcf ~{out_prefix}.vcf.gz
+        date
+        echo "Indexed"
+        echo "Calling Sort"
+        date
+        bcftools sort -Oz ~{out_prefix}.vcf.gz > ~{out_prefix}.sorted.vcf.gz
+        echo "Sorted"
+        date
+        echo "Indexed"
+        tabix -p vcf ~{out_prefix}.sorted.vcf.gz
+        date
     >>>
 
     runtime {
