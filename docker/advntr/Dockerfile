@@ -77,7 +77,15 @@ RUN pip install tensorflow==1.13.2
 # hg38_VNTRs_by_TRF.db is a much larger database (826MB) compared to the p_vntrs_g_vntrs.db which is 19MB.
 #COPY hg38_VNTRs_by_TRF.db vntr_db/hg38_VNTRs_by_TRF.db
 COPY p_vntrs_g_vntrs.db vntr_db/p_vntrs_g_vntrs.db
-COPY disease_associated_all_vntrs_v5_comma.txt vntr_db/phenotype_associated_vntrs_comma.txt
+COPY p_vntrs_g_vntrs.bed vntr_db/p_vntrs_g_vntrs.bed
+COPY p_vntrs_g_vntrs_lt_500bp.db vntr_db/p_vntrs_g_vntrs_lt_500bp.db
+COPY p_vntrs_g_vntrs_gte_500bp.db vntr_db/p_vntrs_g_vntrs_gte_500bp.db
+COPY p_vntrs_g_vntrs_lt_1000bp.db vntr_db/p_vntrs_g_vntrs_lt_1000bp.db
+COPY p_vntrs_g_vntrs_gte_1000bp.db vntr_db/p_vntrs_g_vntrs_gte_1000bp.db
+COPY p_vntrs_g_vntrs_lt_2000bp.db vntr_db/p_vntrs_g_vntrs_lt_2000bp.db
+COPY p_vntrs_g_vntrs_gte_2000bp.db vntr_db/p_vntrs_g_vntrs_gte_2000bp.db
+COPY p_vntrs_g_vntrs_lt_500bp_first_1000_vntrs.db vntr_db/p_vntrs_g_vntrs_lt_500bp_first_1000_vntrs.db
+COPY disease_associated_all_vntrs_v6_comma.txt vntr_db/phenotype_associated_vntrs_comma.txt
 COPY extract_target_region.py /adVNTR
 
 RUN ls -lh .
