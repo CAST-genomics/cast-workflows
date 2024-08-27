@@ -132,8 +132,11 @@ task genotype {
     String sample_id = sub(basename(target_bam_file), ".bam", "")
 
     # VNTR_db is placed in the docker file. So the path is within the docker image.
-    String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs.db"
-    #String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs_lt_500bp.db"
+    #String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs.db"
+    String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs_lt_500bp_first_1000_vntrs.db"
+
+    # To get all p-vntr ids
+    #-vid $(cat /adVNTR/vntr_db/phenotype_associated_vntrs_comma.txt | tr -d \\r\\n ) > ~{genotype_output}
 
     command <<<
         sleep ~{sleep_seconds}
@@ -147,8 +150,7 @@ task genotype {
                 --models ~{vntr_db}  \
                 --working_directory . \
                 --outfmt vcf \
-                --pacbio \
-                -vid $(cat /adVNTR/vntr_db/phenotype_associated_vntrs_comma.txt | tr -d \\r\\n ) > ~{genotype_output}
+                --pacbio > ~{genotype_output}
         else
                 /usr/bin/time -v advntr genotype  \
                 --alignment_file ~{target_bam_file} \
@@ -161,7 +163,7 @@ task genotype {
     >>>
 
     runtime {
-        docker:"sarajava/advntr:1.5.0_v15"
+        docker:"sarajava/advntr:1.5.0_v16"
         memory: mem + "GB"
     }
 
