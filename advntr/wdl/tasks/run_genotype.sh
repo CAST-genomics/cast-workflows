@@ -3,7 +3,7 @@
 # Batch size was 50 on the ACAN run
 batch_size=50
 mem=20
-output="p_vntrs_10_samples_fast"
+output="p_g_vntrs_4_samples_first_1000"
 region_file="$WORKSPACE_BUCKET/saraj/p_vntrs_g_vntrs/p_vntrs_g_vntrs_merged.bed"
 #region_file="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/ACAN_region_1k_each_side.bed"
 vntr_id="ALL"
@@ -14,8 +14,8 @@ p_vntr_ids_fast="290964,4237,674126,628764,376172,450626,49244,239917,705182,983
 
 time python genotype_aou.py \
   --dataset lrwgs \
-  --sample-count 10 \
-  --batch-size 5 \
+  --sample-count 4 \
+  --batch-size 2 \
   --output-name $output \
   --region-file $region_file \
   --mem $mem \
