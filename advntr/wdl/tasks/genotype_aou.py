@@ -35,6 +35,13 @@ def parse_input_args():
                              "The batch size should be such that downloading " + \
                              "inputs can finish under 1 hour that is when gcloud " + \
                              "token expires [default=20].")
+    parser.add_argument("--only-batch-index",
+                         required=False,
+                         type=int,
+                         help="Only run one batch at a time and exit (0-indexed). " + \
+                              "This is useful when running a large batch " + \
+                              "and not wanting to run everything at the same time. " + \
+                              "This feature is optional. If not provided all batches will run.")
     parser.add_argument("--output-name",
                         required=True,
                         type=str,
@@ -277,7 +284,8 @@ def run_genotype_command(target_samples_df, output_name,
                          output_parent_dir, region_file,
                          vntr_id, cromwell,
                          batch_size, sample_count,
-                         mem):
+                         mem, only_batch_index,
+                         ):
 
     # Write options file including output directory in the bucket.
     options_json = "aou_genotype_options.json"
@@ -304,6 +312,8 @@ def run_genotype_command(target_samples_df, output_name,
                                    batch_size=batch_size)
 
     for batch_idx in range(num_batches):
+        if only_batch_index is not None and batch_idx != only_batch_index:
+            continue
         start_time = datetime.now()
         # Get the indexes of samples in the current batch.
         # Then call the wdl workflow for only one batch at a time.
@@ -338,7 +348,6 @@ def run_genotype_command(target_samples_df, output_name,
 
         duration = datetime.now() - start_time
         print("Running batch {} finished in time {}".format(batch_idx, duration))
-        sleep(60)
 
 
 def get_num_batches(sample_count, batch_size):
@@ -367,6 +376,7 @@ if __name__ == "__main__":
                     batch_size=args.batch_size,
                     sample_count=args.sample_count,
                     mem=args.mem,
+                    only_batch_index=args.only_batch_index,
                     )
     num_batches = get_num_batches(sample_count=args.sample_count,
                                    batch_size=args.batch_size)

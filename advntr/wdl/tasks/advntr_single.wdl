@@ -140,6 +140,8 @@ task genotype {
 
     command <<<
         sleep ~{sleep_seconds}
+        echo "Num processors on this device is"
+        nproc
         samtools --version
         # To suppress warnings on pysam about old index file
         touch ~{target_bam_index_file}
@@ -167,6 +169,7 @@ task genotype {
     runtime {
         docker:"sarajava/advntr:1.5.0_v16"
         memory: mem + "GB"
+        cpu: "16"
     }
 
     output {

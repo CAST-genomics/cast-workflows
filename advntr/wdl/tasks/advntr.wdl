@@ -52,6 +52,7 @@ task merge_sort {
     String out_prefix = "merged_samples"
 
     command <<<
+        touch ~{sep=' ' individual_vcf_indexes}
         echo "Calling merge"
         date
         bcftools merge --force-single --merge all -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz
