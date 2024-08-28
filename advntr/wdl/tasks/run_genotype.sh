@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Batch size was 50 on the ACAN run
-batch_size=50
-mem=40
-output="all_p_vntrs"
+batch_size=400
+mem=30
+output="all_p_vntrs_test"
 region_file="$WORKSPACE_BUCKET/saraj/p_vntrs_g_vntrs/p_vntrs_g_vntrs_merged.bed"
 #region_file="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/ACAN_region_1k_each_side.bed"
 #vntr_id="ALL"
@@ -16,6 +16,7 @@ vntr_id=$p_vntr_ids
 
 time python genotype_aou.py \
   --dataset lrwgs \
+  --only-batch-index 1 \
   --sample-count 4 \
   --batch-size 2 \
   --output-name $output \
