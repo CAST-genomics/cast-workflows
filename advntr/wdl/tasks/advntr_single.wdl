@@ -55,7 +55,6 @@ task sort_index {
     bcftools view -h ~{vcf} | grep "^##" > header.txt
     cat header.txt | grep "contig" |sed 's/##contig=<ID=/##contig=<ID=chr/g' >> header.txt
     bcftools view -h ~{vcf} | grep -v "^##" >> header.txt
-    cat header.txt
     echo "Header created. Now running reheader"
     bcftools reheader -h header.txt ~{vcf} > ~{basename}_rh.vcf
     echo "Add IDs to entries"
@@ -135,7 +134,7 @@ task genotype {
 
     # VNTR_db is placed in the docker file. So the path is within the docker image.
     String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs.db"
-    #String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs_lt_500bp.db"
+    #String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs_gte_500bp.db"
 
     # To get all p-vntr ids
     #            -vid $(cat /adVNTR/vntr_db/phenotype_associated_vntrs_comma.txt | tr -d \\r\\n ) \
