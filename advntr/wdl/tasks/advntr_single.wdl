@@ -51,15 +51,17 @@ task sort_index {
   String basename = basename(vcf, ".vcf")
 
   command <<<
-    # Update the contig name in the header
+    echo "Update the contig name in the header"
     bcftools view -h ~{vcf} | grep "^##" > header.txt
     cat header.txt | grep "contig" |sed 's/##contig=<ID=/##contig=<ID=chr/g' >> header.txt
     bcftools view -h ~{vcf} | grep -v "^##" >> header.txt
     cat header.txt
     echo "Header created. Now running reheader"
     bcftools reheader -h header.txt ~{vcf} > ~{basename}_rh.vcf
+    echo "Add IDs to entries"
+    bcftools annotate --set-id +'%CHROM\_%POS' ~{basename}_rh.vcf > ~{basename}_rh_id.vcf
     # Sort and index
-    bcftools sort -Oz ~{basename}_rh.vcf  > ~{basename}.sorted.vcf.gz && tabix -p vcf ~{basename}.sorted.vcf.gz
+    bcftools sort -Oz ~{basename}_rh_id.vcf  > ~{basename}.sorted.vcf.gz && tabix -p vcf ~{basename}.sorted.vcf.gz
   >>>
 
   runtime {
@@ -133,7 +135,7 @@ task genotype {
 
     # VNTR_db is placed in the docker file. So the path is within the docker image.
     String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs.db"
-    #String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs_lt_500bp_first_1000_vntrs.db"
+    #String vntr_db = "/adVNTR/vntr_db/p_vntrs_g_vntrs_lt_500bp.db"
 
     # To get all p-vntr ids
     #            -vid $(cat /adVNTR/vntr_db/phenotype_associated_vntrs_comma.txt | tr -d \\r\\n ) \
