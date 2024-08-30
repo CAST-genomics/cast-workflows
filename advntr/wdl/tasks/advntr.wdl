@@ -55,7 +55,7 @@ task merge_sort {
         touch ~{sep=' ' individual_vcf_indexes}
         echo "Calling merge"
         date
-        bcftools merge --force-single --merge all -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz
+        bcftools merge --force-single --merge id -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz
         date
         echo "Merged"
         echo "Indexing"
@@ -65,12 +65,7 @@ task merge_sort {
         echo "Indexed"
         echo "Calling Sort"
         date
-        bcftools sort -Oz ~{out_prefix}.vcf.gz > ~{out_prefix}.sorted.vcf.gz
-        echo "Sorted"
-        date
-        echo "Indexed"
-        tabix -p vcf ~{out_prefix}.sorted.vcf.gz
-        date
+        bcftools sort -Oz ~{out_prefix}.vcf.gz > ~{out_prefix}.sorted.vcf.gz && tabix -p vcf ~{out_prefix}.sorted.vcf.gz
     >>>
 
     runtime {
