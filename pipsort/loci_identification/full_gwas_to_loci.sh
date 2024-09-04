@@ -10,8 +10,8 @@ pop2=AFR
 gsutil cp "${WORKSPACE_BUCKET}/gwas/$phen_name/$fname_gwas1" ./
 gsutil cp "${WORKSPACE_BUCKET}/gwas/$phen_name/$fname_gwas2" ./
 
-python find_peak_centers.py --infile $fname_gwas1 --outfile ${phen_name}_${pop1}_peaks.csv --pval_cutoff $fsl1 --pval_col p_value --pos_col pos --chr_col chrom
-python find_peak_centers.py --infile $fname_gwas2 --outfile ${phen_name}_${pop2}_peaks.csv --pval_cutoff $fsl2 --pval_col p_value --pos_col pos --chr_col chrom
+python find_peak_centers.py --infile $fname_gwas1 --outfile ${phen_name}_${pop1}_peaks.csv --pval_cutoff $fsl1 --pval_col p_value --pos_col pos --chr_col chrom --comment "#"
+python find_peak_centers.py --infile $fname_gwas2 --outfile ${phen_name}_${pop2}_peaks.csv --pval_cutoff $fsl2 --pval_col p_value --pos_col pos --chr_col chrom --comment "#"
 
 python add_rsid_col.py ${phen_name}_${pop1}_peaks.csv ,
 python add_rsid_col.py ${phen_name}_${pop2}_peaks.csv ,
