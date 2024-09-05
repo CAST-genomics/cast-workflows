@@ -21,9 +21,10 @@ workflow create_reference {
           vntr_vcf_index=vntr_vcf_index,
           snp_vcf=snp_vcf, 
           snp_vcf_index=snp_vcf_index,
-          regions=regions,
+          all_regions=regions,
           samples=samples,
           out_prefix=out_prefix,
+          chrom=chrom,
           mem=mem,
           GOOGLE_PROJECT=GOOGLE_PROJECT,
     }
@@ -62,21 +63,30 @@ task merge_vntr_snps {
         String vntr_vcf_index
         String snp_vcf
         String snp_vcf_index
-        String regions
+        String all_regions
         String samples
+        String chrom
         String out_prefix
         String GOOGLE_PROJECT
         Int mem
     } 
     String snp_region_file="~{out_prefix}_partial"
+    String regions="regions.bed"
+    String all_regions_basename=basename(all_regions)
     String vntr_vcf_sample_subset="vntr_vcf_sample_subset.vcf.gz"
 
     command <<<
       export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
       export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+      echo "Copying regions file"
+      gsutil cp ~{all_regions} .
+      grep -w ~{chrom} ~{all_regions_basename} > ~{regions}
+      echo "Region file (current chromosome)"
+      cat ~{regions}
       echo "getting a subset of the vcf file based on a region and a sample list(bcftools)"
       bcftools view -O z -R ~{regions} -S ~{samples} -e 'POS=87296520' ~{snp_vcf} > ~{snp_region_file}.vcf.gz
-      bcftools sort -O z  ~{snp_region_file}.vcf.gz > ~{snp_region_file}.sorted.vcf.gz
+      echo "Sorting"
+      bcftools sort -O z ~{snp_region_file}.vcf.gz > ~{snp_region_file}.sorted.vcf.gz
       echo "number of variants in unsorted file"
       zcat ~{snp_region_file}.vcf.gz | grep -v "^#" | wc -l
       echo "number of variants in sorted file"
