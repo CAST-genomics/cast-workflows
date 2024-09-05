@@ -35,6 +35,7 @@ task merge_outputs {
     String out_prefix = "merged_samples_batches"
 
     command <<<
+        touch ~{sep=' ' individual_vcf_indexes}
         echo "Merging vcfs"
         bcftools merge --merge id -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
         echo "Sorting and indexing vcfs"

@@ -86,7 +86,7 @@ task merge_vntr_snps {
       tabix -p vcf ~{snp_region_file}.sorted.vcf.gz
       # VNTR region
       echo "subset samples from the vntr file"
-      bcftools view -O z -S ~{samples} ~{vntr_vcf} > ~{vntr_vcf_sample_subset}
+      bcftools view -O z -S ~{samples} -R ~{regions} ~{vntr_vcf} > ~{vntr_vcf_sample_subset}
       tabix -p vcf ~{vntr_vcf_sample_subset}
       echo "concat with sorted files"
       bcftools concat -O z --allow-overlaps ~{snp_region_file}.sorted.vcf.gz ~{vntr_vcf_sample_subset} > vntr_snp.vcf.gz

@@ -204,13 +204,23 @@ def get_file_path_from_template(template, google_project):
     filename = process.stdout.decode('utf-8').strip()
     return filename
 
-def run_merge_command(num_batches, output_name, output_parent_dir, mem, cromwell):
-
+def run_merge_command(num_batches, num_samples,
+                      batch_size, only_batch_index,
+                      output_name, output_parent_dir,
+                      mem, cromwell):
+    merge_batches_individually = False
     # Write options file including output directory in the bucket.
     options_json = "aou_merge_options.json"
     bucket = os.getenv("WORKSPACE_BUCKET")
     google_project = os.getenv("GOOGLE_PROJECT")
     output_path_gcloud = os.path.join(bucket, "saraj", output_parent_dir, "merged_outputs")
+
+    if merge_batches_individually and not is_output_dir_empty(directory=output_path_gcloud,
+                               google_project=google_project):
+        print("Error: Output merge directory should be empty before running the workflow "+ \
+              "in order to merge the files from the latest run properly. "
+              )
+        exit(1)
 
     # Config file includes gcloud file system setup.
     config_file = "/home/jupyter/cromwell.conf"
@@ -228,19 +238,44 @@ def run_merge_command(num_batches, output_name, output_parent_dir, mem, cromwell
     # cromwell workflow root directory.
     batch_vcf_filenames = []
     batch_vcf_index_filenames = []
-    for batch_idx in range(num_batches):
-        # Get the filename for vcf file
-        template = "{}".format(bucket) + \
-                "/saraj/{}/{}_{}/".format(output_parent_dir, output_name, batch_idx) + \
-                "run_advntr/*/call-merge_sort/merged_samples.sorted.vcf.gz"
-        filename = get_file_path_from_template(template=template,
-                google_project=google_project)
-        if len(filename) > 0:
-            batch_vcf_filenames.append(filename)
-            batch_vcf_index_filenames.append(filename + ".tbi")
-        else:
-            print("VCF file not added to the input file because file does not exist for template ",
-                    template)
+    if merge_batches_individually:
+        for batch_idx in range(num_batches):
+            if batch_idx != only_batch_index:
+                continue
+            # Get the filename for vcf file
+            #template = "{}".format(bucket) + \
+            #        "/saraj/{}/{}_{}/".format(output_parent_dir, output_name, batch_idx) + \
+            #        "run_advntr/*/call-merge_sort/merged_samples.sorted.vcf.gz"
+            for sample_idx_in_batch in range(batch_size):
+                if batch_idx * batch_size + sample_idx_in_batch > num_samples:
+                    break
+                template = "{}".format(bucket) + \
+                    "/saraj/{}/{}_{}/".format(output_parent_dir, output_name, batch_idx) + \
+                    "run_advntr/*/call-advntr_single_sample/shard-{}/".format(sample_idx_in_batch) + \
+                    "advntr_single_sample/*/call-sort_index/*.sorted.vcf.gz"
+                filename = get_file_path_from_template(template=template,
+                        google_project=google_project)
+                if len(filename) > 0:
+                    batch_vcf_filenames.append(filename)
+                    batch_vcf_index_filenames.append(filename + ".tbi")
+                else:
+                    print("VCF file not added to the input file because file does not exist for template ",
+                            template)
+    else:
+        # All batches are individually merged. Now merge at the next level
+        for batch_idx in range(num_batches):
+            template = "{}".format(bucket) + \
+                    "/saraj/vntr_reference_panel/batches/" + \
+                    "merged_samples_p_g_vntrs_batch_{}.sorted.vcf.gz".format(batch_idx)
+            filename = get_file_path_from_template(template=template,
+                    google_project=google_project)
+            if len(filename) > 0:
+                batch_vcf_filenames.append(filename)
+                batch_vcf_index_filenames.append(filename + ".tbi")
+            else:
+                print("VCF file not added to the input file because file does not exist for template ",
+                        template)
+
     # Gcloud token is updated every time write_input_json is called.
     write_input_merge_json(input_json_filename=input_json,
                      batch_vcf_filenames=batch_vcf_filenames,
@@ -363,7 +398,7 @@ if __name__ == "__main__":
     # For test run on local server
     #output_parent_dir = "batch_genotyping/run_p_vntrs_g_vntrs"
     output_parent_dir = "batch_genotyping/{}".format(args.output_name)
-    run_batches = True
+    run_batches = False
     merge_batches = not run_batches
     # Run WDL workflow based on input files and output name.
     if run_batches:
@@ -382,7 +417,10 @@ if __name__ == "__main__":
                                    batch_size=args.batch_size)
     if merge_batches:
         run_merge_command(num_batches=num_batches,
+                      num_samples=args.sample_count,
+                      batch_size=args.batch_size,
                       output_parent_dir=output_parent_dir,
                       output_name=args.output_name,
                       cromwell=args.cromwell,
+                      only_batch_index=args.only_batch_index,
                       mem=args.mem)

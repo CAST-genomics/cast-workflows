@@ -4,7 +4,7 @@
 batch_size=300
 #batch_size=2
 mem=30
-batch_idx=0
+batch_idx=3
 output="p_g_vntrs_batch_${batch_idx}"
 #output="p_vntrs_merge_id_repeat_2"
 #output="p_g_vntrs_gte_500bp_test"
