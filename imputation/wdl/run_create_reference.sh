@@ -2,9 +2,10 @@
 
 chr="chr15"
 
-mem=20
+mem=60
 #mem=4
-window=20
+#window=20
+window=10
 #window=3
 #regions="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/ACAN_region_50m.bed"
 #regions="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/ACAN_region_10m.bed"
