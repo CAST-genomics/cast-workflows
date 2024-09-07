@@ -9,6 +9,7 @@ def filter_vcf(filename, sr_threshold, ml_threshold, out_filename, verbose=False
     num_updated_calls = 0
     num_calls = 0
     num_prev_no_call = 0
+    num_all_no_calls = 0
     num_unique_alleles = []
     with open(out_filename, "w+") as output_file:
         with open(filename, "r") as input_file:
@@ -22,6 +23,7 @@ def filter_vcf(filename, sr_threshold, ml_threshold, out_filename, verbose=False
                 # Variant line
                 output_words = []
                 words = line.strip().split()
+                has_at_least_one_call = False
                 for idx, word in enumerate(words):
                     if idx < 9:
                         output_words.append(word)
@@ -43,17 +45,20 @@ def filter_vcf(filename, sr_threshold, ml_threshold, out_filename, verbose=False
                         else:
                             unique_alleles[int(alleles[0])] += 1
                             unique_alleles[int(alleles[1])] += 1
+                        has_at_least_one_call = True
                     else:
                         # Not passing filters. Replace with a no call.
                         output_words.append("./.:0:0:0:0")
                         num_updated_calls += 1
                         num_calls += 1
-                
+                if not has_at_least_one_call:
+                    num_all_no_calls += 1
                 # Fix the spacing
                 output_line = "\t".join(output_words)
                 output_file.write(output_line + '\n')
                 # Update unique alleles
                 num_unique_alleles.append(len(unique_alleles))
+
     if verbose:
         print("Filter done with sr_threshold {} ml_threshold {}.".format(
                 sr_threshold, ml_threshold))
@@ -63,6 +68,7 @@ def filter_vcf(filename, sr_threshold, ml_threshold, out_filename, verbose=False
                 num_updated_calls,
                 float(num_updated_calls)/num_calls*100,
                 ))
+        print("{} loci had all none / no calls".format(num_all_no_calls))
     return float(num_updated_calls)/num_calls*100, num_unique_alleles
 
 def plot_heatmap(data, filename):
@@ -92,15 +98,15 @@ def filter_search(vcf, out_vcf):
 def plot_hist(data, threshold, filename):
     plt.clf()
     bins = list(range(threshold + 1))
-    bins_shifted = [pos-0.5 for pos in bins[1:]]
+    bins_shifted = [pos for pos in bins[1:]]
     bins_labels = [str(pos) for pos in bins[1:]]
-    #ax = sns.histplot(data,
-    #                  stat="percent",
-    #plt.hist(data,
-    #                  bins=bins,
-    ax = sns.ecdfplot(data,
-                      stat="proportion",
-                      complementary=True)
+    ax = sns.histplot(data,
+                      bins=bins,
+                      stat="density",
+                      cumulative=True)
+    #ax = sns.ecdfplot(data,
+    #                  stat="proportion",
+    #                  complementary=True)
     #ax = plt.gca()
     ax.set_xticks(bins_shifted, bins_labels)
     ax.set_title("Allele distribution capped at {}".format(threshold))
@@ -114,10 +120,16 @@ if __name__ == "__main__":
     out_vcf = "data/filtered_merged_samples_p_g_vntrs_all.sorted.vcf"
     #filter_search(vcf, out_vcf)
     _, alleles_dist = filter_vcf(filename=vcf,
-                   sr_threshold=0,
-                   ml_threshold=0,
-                   out_filename=out_vcf)
+                   sr_threshold=4,
+                   ml_threshold=0.9,
+                   out_filename=out_vcf,
+                   verbose=True)
     threshold = 20
+    num_h_calls = sum([1 for item in alleles_dist if item == 1])
+    print("num loci with only 1 allele: ", num_h_calls)
+    num_too_many_calls = sum([1 for item in alleles_dist if item >= threshold])
+    print("num loci with >= {} alleles: {}".format(threshold, num_too_many_calls))
+    #print("max uniq alleles: ", max(alleles_dist))
     alleles_dist_capped = [min(threshold, item) for item in alleles_dist]
     plot_hist(alleles_dist_capped, threshold, "allele_distribution.png")
 
