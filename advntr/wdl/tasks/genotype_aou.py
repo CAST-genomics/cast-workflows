@@ -320,6 +320,7 @@ def run_genotype_command(target_samples_df, output_name,
                          vntr_id, cromwell,
                          batch_size, sample_count,
                          mem, only_batch_index,
+                         repeat_experiments,
                          ):
 
     # Write options file including output directory in the bucket.
@@ -345,7 +346,6 @@ def run_genotype_command(target_samples_df, output_name,
 
     num_batches = get_num_batches(sample_count=sample_count,
                                    batch_size=batch_size)
-
     for batch_idx in range(num_batches):
         if only_batch_index is not None and batch_idx != only_batch_index:
             continue
@@ -354,7 +354,14 @@ def run_genotype_command(target_samples_df, output_name,
         # Then call the wdl workflow for only one batch at a time.
         first_sample_idx = batch_idx * batch_size
         last_sample_idx = min((batch_idx + 1) * batch_size, sample_count)
-        samples_files = list(target_samples_df['alignment_file'])[first_sample_idx:last_sample_idx]
+        # For repeat experiments
+        if repeat_experiments and batch_idx == 0:
+            samples_indices = [20, 38, 67, 85, 87, 116, 188, 212, 298]
+            samples_files = []
+            for samples_idx in samples_indices:
+                samples_files.append(list(target_samples_df['alignment_file'])[samples_idx])
+        elif not repeat_experiments:
+            samples_files = list(target_samples_df['alignment_file'])[first_sample_idx:last_sample_idx]
         # Write output directory in options file.
         output_dir = output_path_gcloud + "_" + str(batch_idx)
         write_options_json(options_json_filename=options_json,
@@ -398,8 +405,9 @@ if __name__ == "__main__":
     # For test run on local server
     #output_parent_dir = "batch_genotyping/run_p_vntrs_g_vntrs"
     output_parent_dir = "batch_genotyping/{}".format(args.output_name)
-    run_batches = False
+    run_batches = True
     merge_batches = not run_batches
+    repeat_experiments = True
     # Run WDL workflow based on input files and output name.
     if run_batches:
         run_genotype_command(target_samples_df=target_samples,
@@ -412,6 +420,7 @@ if __name__ == "__main__":
                     sample_count=args.sample_count,
                     mem=args.mem,
                     only_batch_index=args.only_batch_index,
+                    repeat_experiments=repeat_experiments,
                     )
     num_batches = get_num_batches(sample_count=args.sample_count,
                                    batch_size=args.batch_size)

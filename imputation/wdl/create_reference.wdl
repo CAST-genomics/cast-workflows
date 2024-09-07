@@ -76,6 +76,7 @@ task merge_vntr_snps {
     String vntr_vcf_sample_subset="vntr_vcf_sample_subset.vcf.gz"
 
     command <<<
+      df -h
       export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
       export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
       echo "Copying regions file"
@@ -84,26 +85,26 @@ task merge_vntr_snps {
       echo "Region file (current chromosome)"
       cat ~{regions}
       echo "getting a subset of the vcf file based on a region and a sample list(bcftools)"
-      bcftools view -O z -R ~{regions} -S ~{samples} -e 'POS=87296520' ~{snp_vcf} > ~{snp_region_file}.vcf.gz
-      echo "Sorting"
-      bcftools sort -O z ~{snp_region_file}.vcf.gz > ~{snp_region_file}.sorted.vcf.gz
+      bcftools view -O z -I -R ~{regions} ~{snp_vcf} > ~{snp_region_file}_no_sample_sort.vcf.gz
+      echo "Sorting sample ids"
+      bcftools view -O z -S ~{samples} ~{snp_region_file}_no_sample_sort.vcf.gz > ~{snp_region_file}.vcf.gz
+      bcftools sort -O z -o ~{snp_region_file}.sorted.vcf.gz ~{snp_region_file}.vcf.gz
       echo "number of variants in unsorted file"
       zcat ~{snp_region_file}.vcf.gz | grep -v "^#" | wc -l
-      echo "number of variants in sorted file"
-      zcat ~{snp_region_file}.sorted.vcf.gz | grep -v "^#" | wc -l
-      rm ~{snp_region_file}.vcf.gz
       date
-      tabix -p vcf ~{snp_region_file}.sorted.vcf.gz
+      tabix -p vcf ~{snp_region_file}.vcf.gz
       # VNTR region
+      export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
       echo "subset samples from the vntr file"
       bcftools view -O z -S ~{samples} -R ~{regions} ~{vntr_vcf} > ~{vntr_vcf_sample_subset}
       tabix -p vcf ~{vntr_vcf_sample_subset}
       echo "concat with sorted files"
-      bcftools concat -O z --allow-overlaps ~{snp_region_file}.sorted.vcf.gz ~{vntr_vcf_sample_subset} > vntr_snp.vcf.gz
+      bcftools concat -O z --allow-overlaps ~{snp_region_file}.vcf.gz ~{vntr_vcf_sample_subset} > vntr_snp.vcf.gz
       echo "sort the resulting file"
-      bcftools sort -O z vntr_snp.vcf.gz > vntr_snp.sorted.vcf.gz
+      bcftools sort -O z -o vntr_snp.sorted.vcf.gz vntr_snp.vcf.gz
       echo "number of variants in pre sorted file"
       zcat vntr_snp.vcf.gz | grep -v "^#" | wc -l
+      echo "number of variants in sorted file"
       zcat vntr_snp.sorted.vcf | grep -v "^#" | wc -l
       tabix -p vcf vntr_snp.sorted.vcf.gz
     >>>
@@ -118,6 +119,7 @@ task merge_vntr_snps {
     output {
        File vntr_snp_vcf = "vntr_snp.sorted.vcf.gz"
        File vntr_snp_vcf_index = "vntr_snp.sorted.vcf.gz.tbi"
+       File partial_snp = "~{snp_region_file}.vcf.gz"
     }
 }
 
