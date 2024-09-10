@@ -15,12 +15,24 @@ workflow create_reference {
         String map
         String chrom
     }
-    call merge_vntr_snps {
+   
+    call subset_snps {
         input:
-          vntr_vcf=vntr_vcf, 
-          vntr_vcf_index=vntr_vcf_index,
           snp_vcf=snp_vcf, 
           snp_vcf_index=snp_vcf_index,
+          all_regions=regions,
+          samples=samples,
+          out_prefix=out_prefix,
+          chrom=chrom,
+          mem=mem,
+          GOOGLE_PROJECT=GOOGLE_PROJECT,
+    }
+    call merge_vntr_snps {
+        input:
+          snp_vcf=subset_snps.snp_vcf, 
+          snp_vcf_index=subset_snps.snp_vcf_index,
+          vntr_vcf=vntr_vcf, 
+          vntr_vcf_index=vntr_vcf_index,
           all_regions=regions,
           samples=samples,
           out_prefix=out_prefix,
@@ -57,10 +69,8 @@ workflow create_reference {
     }
 }
 
-task merge_vntr_snps {
+task subset_snps {
     input {
-        String vntr_vcf
-        String vntr_vcf_index
         String snp_vcf
         String snp_vcf_index
         String all_regions
@@ -93,13 +103,52 @@ task merge_vntr_snps {
       zcat ~{snp_region_file}.vcf.gz | grep -v "^#" | wc -l
       date
       tabix -p vcf ~{snp_region_file}.vcf.gz
-      # VNTR region
+    >>>
+    
+  
+    runtime {
+	memory: mem + "GB"
+	disks: "local-disk " + mem + " SSD"
+        docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
+    }
+
+    output {
+       File snp_vcf = "~{snp_region_file}.vcf.gz"
+       File snp_vcf_index = "~{snp_region_file}.vcf.gz.tbi"
+    }
+}
+
+task merge_vntr_snps {
+    input {
+        String vntr_vcf
+        String vntr_vcf_index
+        String snp_vcf
+        String snp_vcf_index
+        String all_regions
+        String samples
+        String chrom
+        String out_prefix
+        String GOOGLE_PROJECT
+        Int mem
+    } 
+    String regions="regions.bed"
+    String all_regions_basename=basename(all_regions)
+    String vntr_vcf_sample_subset="vntr_vcf_sample_subset.vcf.gz"
+
+    command <<<
+      df -h
+      export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
       export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+      echo "Copying regions file"
+      gsutil cp ~{all_regions} .
+      grep -w ~{chrom} ~{all_regions_basename} > ~{regions}
+      echo "Region file (current chromosome)"
+      cat ~{regions}
       echo "subset samples from the vntr file"
       bcftools view -O z -S ~{samples} -R ~{regions} ~{vntr_vcf} > ~{vntr_vcf_sample_subset}
       tabix -p vcf ~{vntr_vcf_sample_subset}
       echo "concat with sorted files"
-      bcftools concat -O z --allow-overlaps ~{snp_region_file}.vcf.gz ~{vntr_vcf_sample_subset} > vntr_snp.vcf.gz
+      bcftools concat -O z --allow-overlaps ~{snp_vcf} ~{vntr_vcf_sample_subset} > vntr_snp.vcf.gz
       echo "sort the resulting file"
       bcftools sort -O z -o vntr_snp.sorted.vcf.gz vntr_snp.vcf.gz
       echo "number of variants in pre sorted file"
@@ -119,7 +168,6 @@ task merge_vntr_snps {
     output {
        File vntr_snp_vcf = "vntr_snp.sorted.vcf.gz"
        File vntr_snp_vcf_index = "vntr_snp.sorted.vcf.gz.tbi"
-       File partial_snp = "~{snp_region_file}.vcf.gz"
     }
 }
 

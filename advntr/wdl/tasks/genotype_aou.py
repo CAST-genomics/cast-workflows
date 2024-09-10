@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import argparse
 import shutil
@@ -63,6 +64,9 @@ def parse_input_args():
     parser.add_argument("--cromwell",
                          action="store_true", required=False,
                          help="Run with cromwell instead of the default cromshell.")
+    parser.add_argument("--dryrun",
+                         action="store_true", required=False,
+                         help="Print the command and exit. Do not run.")
     args = parser.parse_args()
     return args
 
@@ -76,7 +80,7 @@ def download_manifest_file(manifest_file):
 def select_samples(sample_count, dataset):
     if dataset == "lrwgs":
         manifest_file = "manifest_lrwgs.csv"
-        selected_columns = ["grch38-bam", "grch38-bai"]
+        selected_columns = ["research_id", "grch38-bam", "grch38-bai"]
         if not os.path.exists(manifest_file):
             print("Warning: The manifest file for long reads WGS is not present or not correctly named.")
             download_manifest_file(manifest_file)
@@ -94,10 +98,12 @@ def select_samples(sample_count, dataset):
 
     selected_samples = selected_samples[selected_columns]
     selected_samples = selected_samples.rename(columns={
-                            selected_columns[0] : "alignment_file",
-                            selected_columns[1] : "alignment_index_file"})
+                            selected_columns[0] : "research_id",
+                            selected_columns[1] : "alignment_file",
+                            selected_columns[2] : "alignment_index_file",
+                            })
 
-    return selected_samples[["alignment_file", "alignment_index_file"]]
+    return selected_samples[["alignment_file", "alignment_index_file", "research_id"]]
 
 
 # Write the input json file for when results from all batches are being merged.
@@ -151,7 +157,7 @@ def run_single_command(command):
 def run_workflow(wdl_file, json_file,
                   json_options_file, config_file,
                   wdl_dependencies_file,
-                  cromwell, dryrun=False):
+                  cromwell, dryrun):
     """
     Run workflow on AoU
 
@@ -207,7 +213,7 @@ def get_file_path_from_template(template, google_project):
 def run_merge_command(num_batches, num_samples,
                       batch_size, only_batch_index,
                       output_name, output_parent_dir,
-                      mem, cromwell):
+                      mem, cromwell, dryrun):
     merge_batches_individually = False
     # Write options file including output directory in the bucket.
     options_json = "aou_merge_options.json"
@@ -236,8 +242,8 @@ def run_merge_command(num_batches, num_samples,
     # Add a template for each merged file resulting from one batch.
     # The wildcard is placed so that we do not have to know the
     # cromwell workflow root directory.
-    batch_vcf_filenames = []
-    batch_vcf_index_filenames = []
+    batch_vcf_filenames = ["{}/saraj/vntr_reference_panel/p_g_vntrs/merged_lrwgs_samples_p_g_vntrs.sorted.vcf.gz".format(bucket)]
+    batch_vcf_index_filenames = [batch_vcf_filenames[0]+".tbi"]
     if merge_batches_individually:
         for batch_idx in range(num_batches):
             if batch_idx != only_batch_index:
@@ -266,7 +272,7 @@ def run_merge_command(num_batches, num_samples,
         for batch_idx in range(num_batches):
             template = "{}".format(bucket) + \
                     "/saraj/vntr_reference_panel/batches/" + \
-                    "merged_samples_p_g_vntrs_batch_{}.sorted.vcf.gz".format(batch_idx)
+                    "merged_samples_missing_batch_{}.sorted.vcf.gz".format(batch_idx)
             filename = get_file_path_from_template(template=template,
                     google_project=google_project)
             if len(filename) > 0:
@@ -289,7 +295,8 @@ def run_merge_command(num_batches, num_samples,
                     json_options_file=options_json,
                     config_file=config_file,
                     wdl_dependencies_file=None,
-                    cromwell=cromwell)
+                    cromwell=cromwell,
+                    dryrun=dryrun)
 
 
 
@@ -320,7 +327,7 @@ def run_genotype_command(target_samples_df, output_name,
                          vntr_id, cromwell,
                          batch_size, sample_count,
                          mem, only_batch_index,
-                         repeat_experiments,
+                         dryrun,
                          ):
 
     # Write options file including output directory in the bucket.
@@ -354,14 +361,7 @@ def run_genotype_command(target_samples_df, output_name,
         # Then call the wdl workflow for only one batch at a time.
         first_sample_idx = batch_idx * batch_size
         last_sample_idx = min((batch_idx + 1) * batch_size, sample_count)
-        # For repeat experiments
-        if repeat_experiments and batch_idx == 0:
-            samples_indices = [20, 38, 67, 85, 87, 116, 188, 212, 298]
-            samples_files = []
-            for samples_idx in samples_indices:
-                samples_files.append(list(target_samples_df['alignment_file'])[samples_idx])
-        elif not repeat_experiments:
-            samples_files = list(target_samples_df['alignment_file'])[first_sample_idx:last_sample_idx]
+        samples_files = list(target_samples_df['alignment_file'])[first_sample_idx:last_sample_idx]
         # Write output directory in options file.
         output_dir = output_path_gcloud + "_" + str(batch_idx)
         write_options_json(options_json_filename=options_json,
@@ -386,7 +386,8 @@ def run_genotype_command(target_samples_df, output_name,
                         json_options_file=options_json,
                         config_file=config_file,
                         wdl_dependencies_file=wdl_dependencies_file,
-                        cromwell=cromwell)
+                        cromwell=cromwell,
+                        dryrun=dryrun)
 
         duration = datetime.now() - start_time
         print("Running batch {} finished in time {}".format(batch_idx, duration))
@@ -402,12 +403,12 @@ if __name__ == "__main__":
 
     # Find the selected set of samples we want to run the workflow on.
     target_samples = select_samples(args.sample_count, dataset=args.dataset)
+
     # For test run on local server
     #output_parent_dir = "batch_genotyping/run_p_vntrs_g_vntrs"
     output_parent_dir = "batch_genotyping/{}".format(args.output_name)
-    run_batches = True
+    run_batches = False
     merge_batches = not run_batches
-    repeat_experiments = True
     # Run WDL workflow based on input files and output name.
     if run_batches:
         run_genotype_command(target_samples_df=target_samples,
@@ -420,7 +421,7 @@ if __name__ == "__main__":
                     sample_count=args.sample_count,
                     mem=args.mem,
                     only_batch_index=args.only_batch_index,
-                    repeat_experiments=repeat_experiments,
+                    dryrun=args.dryrun,
                     )
     num_batches = get_num_batches(sample_count=args.sample_count,
                                    batch_size=args.batch_size)
@@ -432,4 +433,6 @@ if __name__ == "__main__":
                       output_name=args.output_name,
                       cromwell=args.cromwell,
                       only_batch_index=args.only_batch_index,
-                      mem=args.mem)
+                      mem=args.mem,
+                      dryrun=args.dryrun,
+                      )

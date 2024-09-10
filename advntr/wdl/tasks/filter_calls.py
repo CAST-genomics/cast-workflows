@@ -1,9 +1,60 @@
 import os
+import gzip
+import sys
 import seaborn as sns
 import pandas as pd
 import statistics
+from scipy.stats import ks_2samp
 from collections import defaultdict
 from matplotlib import pyplot as plt
+
+def read_vcf(filename, locus):
+    alleles_distribution_dict = defaultdict(int)#lambda: sys.float_info.epsilon)
+    alleles_distribution = []
+    num_no_call = 0
+    if filename.endswith("gz"):
+        input_file = gzip.open(filename, "rt")
+        lines = input_file.readlines()
+    else:
+        input_file = open(filename, "r")
+        lines = input_file.readlines()
+
+    for line_idx, line in enumerate(lines):
+        if line.startswith("#"):
+            continue
+        
+        # Variant line
+        output_words = []
+        words = line.strip().split()
+        has_at_least_one_call = False
+        if locus is not None:
+            locus_chr, locus_pos = locus
+            if words[0].strip() != locus_chr or \
+               words[1].strip() != str(locus_pos):
+                   continue
+        for idx, word in enumerate(words):
+            if idx < 9:
+                continue
+            genotype = word.split(":")[0]
+            if "/" in genotype:
+                sep = "/"
+            elif "|" in genotype:
+                sep = "|"
+            else:
+                print("Genotype {} does not have valid seperator".format(genotype))
+            alleles = word.split(":")[0].split(sep)
+            if alleles[0] == "." or alleles[1] == ".":
+                #print("call is ", word)
+                num_no_call += 1
+                pass
+            else:
+                alleles_distribution_dict[int(alleles[0])] += 1
+                alleles_distribution_dict[int(alleles[1])] += 1
+    max_allele_rc = int(max(alleles_distribution_dict.keys()))
+    print("num_no_call is {}".format(num_no_call))
+    for idx in range(max_allele_rc):
+        alleles_distribution.append(float(alleles_distribution_dict[idx]))
+    return alleles_distribution
 
 def filter_vcf(filename, sr_threshold, ml_threshold, out_filename, verbose=False):
     num_updated_calls = 0
@@ -113,12 +164,7 @@ def plot_hist(data, threshold, filename):
     ax.set(xlabel="Number of unique alleles", ylabel="Proportion of VNTRs")
     ax.get_figure().savefig(filename)
 
-if __name__ == "__main__":
-    #vcf = "data/merged_samples.sorted_batch_1.vcf"
-    vcf = "data/merged_samples_p_g_vntrs_all.sorted.vcf"
-    #out_vcf = "data/filtered_merged_samples.sorted_batch_1.vcf"
-    out_vcf = "data/filtered_merged_samples_p_g_vntrs_all.sorted.vcf"
-    #filter_search(vcf, out_vcf)
+def plot_distributions(vcf, out_vcf):
     _, alleles_dist = filter_vcf(filename=vcf,
                    sr_threshold=4,
                    ml_threshold=0.9,
@@ -131,5 +177,47 @@ if __name__ == "__main__":
     print("num loci with >= {} alleles: {}".format(threshold, num_too_many_calls))
     #print("max uniq alleles: ", max(alleles_dist))
     alleles_dist_capped = [min(threshold, item) for item in alleles_dist]
-    plot_hist(alleles_dist_capped, threshold, "allele_distribution.png")
+    plot_hist(alleles_dist_capped, threshold, "unique_allele_distribution.png")
 
+def validate_genotypes(vcf1, vcf2, verbose=False):
+    alleles_dist1 = read_vcf(filename=vcf1,
+                   locus=("chr15", "88855424"),
+                   )
+    alleles_dist2 = read_vcf(filename=vcf2,
+                   locus=("chr15", "88855424"),
+                   )
+    if False:
+        # extend the distributions with 0 values
+        if len(alleles_dist1) < len(alleles_dist2):
+            len_diff = len(alleles_dist2) - len(alleles_dist1)
+            alleles_dist1.extend([sys.float_info.epsilon] * len_diff)
+        elif len(alleles_dist2) < len(alleles_dist1):
+            len_diff = len(alleles_dist1) - len(alleles_dist2)
+            alleles_dist2.extend([sys.float_info.epsilon] * len_diff)
+        if len(alleles_dist1) != len(alleles_dist2):
+            print("Error! two allele distributions are not the same length after padding.")
+    if verbose:
+        print("for dist 1 len {} min {} mean {} max {}".format(
+            len(alleles_dist1),
+            min(alleles_dist1),
+            statistics.mean(alleles_dist1),
+            max(alleles_dist1)))
+        print("for dist 2 len {} min {} mean {} max {}".format(
+            len(alleles_dist2),
+            min(alleles_dist2),
+            statistics.mean(alleles_dist2),
+            max(alleles_dist2)))
+    diff = ks_2samp(alleles_dist1, alleles_dist2)
+    print("ks_2samp between the two distributions is: {}".format(diff))
+
+
+if __name__ == "__main__":
+    #vcf = "data/merged_samples.sorted_batch_1.vcf"
+    vcf = "data/merged_samples_p_g_vntrs_all.sorted.vcf"
+    vcf_prev_ref = "data/ACAN_merged_samples.sorted.vcf"
+    vcf_srwgs = "data/merged_samples_all_rh.sorted.vcf.gz"
+    #out_vcf = "data/filtered_merged_samples.sorted_batch_1.vcf"
+    out_vcf = "data/filtered_merged_samples_p_g_vntrs_all.sorted.vcf"
+    #filter_search(vcf, out_vcf)
+    #plot_distributions(vcf, out_vcf)
+    validate_genotypes(vcf1=vcf, vcf2=vcf_prev_ref, verbose=True)
