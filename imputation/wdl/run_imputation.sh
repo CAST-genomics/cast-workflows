@@ -10,7 +10,7 @@ ref="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/ref_phased_output_chr15_acan_v
 ## Run with AoU data
 # VCF file with all samples
 gt="gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/acaf_threshold_v7.1/vcf/acaf_threshold.${chr}.vcf.bgz"
-#gt="gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/acan_data_all/output_chr15_acan_50mbp_aou_10_samples.vcf.gz"
+#gt="$WORKSPACE_BUCKET/saraj/acan_data_all/output_chr15_acan_50mbp_aou_10_samples.vcf.gz"
 
 # VCF file for all aou samples, only acan region 10mbp
 #gt="$WORKSPACE_BUCKET/saraj/vntr_samples/aou_all_chr15_acan_10mbp.vcf.gz"

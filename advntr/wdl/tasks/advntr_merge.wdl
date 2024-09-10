@@ -37,7 +37,7 @@ task merge_outputs {
     command <<<
         touch ~{sep=' ' individual_vcf_indexes}
         echo "Merging vcfs"
-        bcftools merge --merge id -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
+        bcftools merge --force-samples --merge id -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
         echo "Sorting and indexing vcfs"
         bcftools sort -Oz ~{out_prefix}.vcf.gz > ~{out_prefix}.sorted.vcf.gz && tabix -p vcf ~{out_prefix}.sorted.vcf.gz
     >>>

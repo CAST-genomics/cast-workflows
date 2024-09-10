@@ -5,7 +5,7 @@ batch_size=300
 #batch_size=2
 mem=60
 batch_idx=0
-output="p_g_vntrs_batch_${batch_idx}_repeat"
+output="p_g_vntrs_batch_all_repeat_missing_id"
 #output="p_vntrs_merge_id_repeat_2"
 #output="p_g_vntrs_gte_500bp_test"
 region_file="$WORKSPACE_BUCKET/saraj/p_vntrs_g_vntrs/p_vntrs_g_vntrs_merged.bed"
@@ -21,9 +21,9 @@ vntr_id="ALL"
 time python genotype_aou.py \
   --dataset lrwgs \
   --sample-count 1027 \
-  --only-batch-index $batch_idx \
   --batch-size $batch_size \
   --output-name $output \
   --region-file $region_file \
   --mem $mem \
+  --only-batch-index $batch_idx \
   --vntr-id $vntr_id

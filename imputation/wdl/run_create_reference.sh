@@ -1,6 +1,7 @@
 #!/bin/bash
 
-for chr_idx in $(seq 1 22) "X" "Y"; do
+#for chr_idx in $(seq 1 22) "X"; do
+for chr_idx in "22" ; do
   chr="chr${chr_idx}"
   echo "Running for $chr"
   mem=60
@@ -17,10 +18,10 @@ for chr_idx in $(seq 1 22) "X" "Y"; do
   snp_vcf="gs://fc-aou-datasets-controlled/v7/wgs/long_read/joint_vcf/GRCh38/cohort_for_GLNexus_2023Q1_1027.g.vcf.bgz"
   #vntr_vcf="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/ACAN_merged_samples.sorted.vcf.gz"
   #vntr_vcf="$WORKSPACE_BUCKET/saraj/acan_data_test/merged_4_samples_batches.sorted.vcf.gz"
-  vntr_vcf="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/p_g_vntrs/merged_samples_p_g_vntrs_all.sorted.vcf.gz"
+  vntr_vcf="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/p_g_vntrs/merged_lrwgs_samples_p_g_vntrs.sorted.vcf.gz"
   #sample_list="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/vntr_samples_650_train.txt"
   #sample_list="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/vntr_samples_20_small_test.txt"
-  sample_list="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/p_g_vntrs/sample_ids_lrwgs_p_g_vntrs.sorted.txt"
+  sample_list="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/p_g_vntrs/sample_ids_lrwgs_1003_p_g_vntrs.sorted.txt"
   map="$WORKSPACE_BUCKET/saraj/genetic_map/plink.${chr}_w_chr.GRCh38.map"
   
   date
@@ -30,11 +31,10 @@ for chr_idx in $(seq 1 22) "X" "Y"; do
   	--vntr-vcf $vntr_vcf \
   	--regions $regions \
   	--samples $sample_list \
-          --window $window \
+        --window $window \
   	--chrom $chr \
   	--mem $mem \
   	--map $map
-  	#--cromwell \
   
   date
 done

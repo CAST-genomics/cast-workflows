@@ -7,7 +7,7 @@ from cyvcf2 import VCF
 def get_hipstr_call():
     # Copying from Nichole's script
     # Copy hipstr calls from the bucket
-    # gsutil cp gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/cromwell-execution/targetTR/4519d903-dde6-4c8e-b1ee-bcc2d7cd6dd7/call-sort_index/CBL_test.filtered.sorted.vcf.gz .
+    # gsutil cp $WORKSPACE_BUCKET/cromwell-execution/targetTR/4519d903-dde6-4c8e-b1ee-bcc2d7cd6dd7/call-sort_index/CBL_test.filtered.sorted.vcf.gz .
     # Extract useful columns from the hipstr call (adjust filenames)
     # !{ echo -en "CHROM\tPOS\tID\t"; bcftools query -l CBL_test.filtered.sorted.vcf.gz | paste -s;bcftools query -f '%CHROM %POS [\t%GB]\n' CBL_test.filtered.sorted.vcf.gz; } > hipstr_CBL.txt
     # Extract useful columns from the imputation call (adjust filenames)
