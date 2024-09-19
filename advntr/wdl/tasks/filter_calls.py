@@ -62,53 +62,60 @@ def filter_vcf(filename, sr_threshold, ml_threshold, out_filename, verbose=False
     num_prev_no_call = 0
     num_all_no_calls = 0
     num_unique_alleles = []
+    if filename.endswith("gz"):
+        input_file = gzip.open(filename, "rt")
+        lines = input_file.readlines()
+    else:
+        input_file = open(filename, "r")
+        lines = input_file.readlines()
     with open(out_filename, "w+") as output_file:
-        with open(filename, "r") as input_file:
-            for line in input_file.readlines():
-                unique_alleles = defaultdict(int)
-                # Copy header lines as is
-                if line.startswith("#"):
-                    output_file.write(line)
+        for line in lines:
+            unique_alleles = defaultdict(int)
+            # Copy header lines as is
+            if line.startswith("#"):
+                output_file.write(line)
+                continue
+            
+            # Variant line
+            output_words = []
+            words = line.strip().split()
+            has_at_least_one_call = False
+            for idx, word in enumerate(words):
+                if idx < 9:
+                    output_words.append(word)
                     continue
-                
-                # Variant line
-                output_words = []
-                words = line.strip().split()
-                has_at_least_one_call = False
-                for idx, word in enumerate(words):
-                    if idx < 9:
-                        output_words.append(word)
-                        continue
-                    max_likelihood = float(word.split(":")[4])
-                    spanning_read = int(word.split(":")[2])
-                    if word.startswith("./."):
-                        num_calls += 1
-                        num_prev_no_call += 1
-                        num_updated_calls += 1
-                    elif max_likelihood >= ml_threshold and \
-                       spanning_read >= sr_threshold:
-                        # Passing filters
-                        output_words.append(word)
-                        num_calls += 1
-                        alleles = word.split(":")[0].split("/")
-                        if alleles[0] == "." or alleles[1] == ".":
-                            print("call is ", word)
-                        else:
-                            unique_alleles[int(alleles[0])] += 1
-                            unique_alleles[int(alleles[1])] += 1
-                        has_at_least_one_call = True
+                max_likelihood = float(word.split(":")[4])
+                spanning_read = int(word.split(":")[2])
+                if word.startswith("./."):
+                    num_calls += 1
+                    num_prev_no_call += 1
+                    num_updated_calls += 1
+                elif max_likelihood >= ml_threshold and \
+                   spanning_read >= sr_threshold:
+                    # Passing filters
+                    output_words.append(word)
+                    num_calls += 1
+                    alleles = word.split(":")[0].split("/")
+                    if alleles[0] == "." or alleles[1] == ".":
+                        print("call is ", word)
                     else:
-                        # Not passing filters. Replace with a no call.
-                        output_words.append("./.:0:0:0:0")
-                        num_updated_calls += 1
-                        num_calls += 1
-                if not has_at_least_one_call:
-                    num_all_no_calls += 1
-                # Fix the spacing
-                output_line = "\t".join(output_words)
-                output_file.write(output_line + '\n')
-                # Update unique alleles
-                num_unique_alleles.append(len(unique_alleles))
+                        unique_alleles[int(alleles[0])] += 1
+                        unique_alleles[int(alleles[1])] += 1
+                    has_at_least_one_call = True
+                else:
+                    # Not passing filters. Replace with a no call.
+                    output_words.append("./.:0:0:0:0")
+                    num_updated_calls += 1
+                    num_calls += 1
+            if not has_at_least_one_call:
+                num_all_no_calls += 1
+            # Fix the spacing
+            output_line = "\t".join(output_words)
+            output_file.write(output_line + '\n')
+            # Update unique alleles
+            num_unique_alleles.append(len(unique_alleles))
+            if words[0] == "chr15" and words[1] == "88855424":
+                print("For ACAN, num unique alleles: ", len(unique_alleles))
 
     if verbose:
         print("Filter done with sr_threshold {} ml_threshold {}.".format(
@@ -130,8 +137,10 @@ def plot_heatmap(data, filename):
 
 def filter_search(vcf, out_vcf):
     results_df = pd.DataFrame(columns=["sr_threshold", "ml_threshold", "percent removed"])
-    for sr_threshold in range(12):
-        for ml_threshold in [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1]:
+    #for sr_threshold in range(12):
+    #    for ml_threshold in [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1]:
+    for sr_threshold in [6]:
+        for ml_threshold in [0.95]:
             percent_removed, _ = filter_vcf(filename=vcf,
                    sr_threshold=sr_threshold,
                    ml_threshold=ml_threshold,
@@ -146,38 +155,54 @@ def filter_search(vcf, out_vcf):
     plot_heatmap(data=results_df,
          filename="filter_heatmap.png")
 
-def plot_hist(data, threshold, filename):
+def plot_hist(data, threshold, filename, is_cumulative, is_reverse):
     plt.clf()
     bins = list(range(threshold + 1))
-    bins_shifted = [pos for pos in bins[1:]]
-    bins_labels = [str(pos) for pos in bins[1:]]
-    ax = sns.histplot(data,
+    #print(bins)
+    bins_shifted = [pos + 0.5 for pos in bins]
+    bins_labels = [str(pos) for pos in bins]
+    if not is_cumulative:
+        ax = sns.histplot(data,
                       bins=bins,
                       stat="density",
-                      cumulative=True)
-    #ax = sns.ecdfplot(data,
-    #                  stat="proportion",
-    #                  complementary=True)
-    #ax = plt.gca()
-    ax.set_xticks(bins_shifted, bins_labels)
+                      )
+        ax.set_xticks(bins_shifted, bins_labels)
+    elif not is_reverse:
+        ax = sns.histplot(data,
+                      bins=bins,
+                      stat="density",
+                      cumulative=True,
+                      )
+        ax.set_xticks(bins_shifted, bins_labels)
+    else:
+        ax = sns.ecdfplot(data,
+                      stat="proportion",
+                      complementary=True)
     ax.set_title("Allele distribution capped at {}".format(threshold))
     ax.set(xlabel="Number of unique alleles", ylabel="Proportion of VNTRs")
     ax.get_figure().savefig(filename)
 
-def plot_distributions(vcf, out_vcf):
+def plot_allele_histogram(vcf, out_vcf):
     _, alleles_dist = filter_vcf(filename=vcf,
-                   sr_threshold=4,
-                   ml_threshold=0.9,
+                   sr_threshold=6,
+                   ml_threshold=0.95,
                    out_filename=out_vcf,
                    verbose=True)
     threshold = 20
     num_h_calls = sum([1 for item in alleles_dist if item == 1])
     print("num loci with only 1 allele: ", num_h_calls)
+    num_no_calls = sum([1 for item in alleles_dist if item == 0])
+    print("num loci with no call: ", num_no_calls)
     num_too_many_calls = sum([1 for item in alleles_dist if item >= threshold])
     print("num loci with >= {} alleles: {}".format(threshold, num_too_many_calls))
     #print("max uniq alleles: ", max(alleles_dist))
     alleles_dist_capped = [min(threshold, item) for item in alleles_dist]
-    plot_hist(alleles_dist_capped, threshold, "unique_allele_distribution.png")
+    plot_hist(alleles_dist_capped, threshold, "unique_allele_distribution.png",
+                is_cumulative=False, is_reverse=False)
+    plot_hist(alleles_dist_capped, threshold, "unique_allele_distribution_cumulative.png",
+                is_cumulative=True, is_reverse=False)
+    plot_hist(alleles_dist_capped, threshold, "unique_allele_distribution_reverse_cumulative.png",
+                is_cumulative=True, is_reverse=True)
 
 def validate_genotypes(vcf1, vcf2, verbose=False):
     alleles_dist1 = read_vcf(filename=vcf1,
@@ -207,17 +232,17 @@ def validate_genotypes(vcf1, vcf2, verbose=False):
             min(alleles_dist2),
             statistics.mean(alleles_dist2),
             max(alleles_dist2)))
-    diff = ks_2samp(alleles_dist1, alleles_dist2)
+    diff = ks_2samp(alleles_dist1, alleles_dist2, method="exact")
     print("ks_2samp between the two distributions is: {}".format(diff))
 
 
 if __name__ == "__main__":
-    #vcf = "data/merged_samples.sorted_batch_1.vcf"
-    vcf = "data/merged_samples_p_g_vntrs_all.sorted.vcf"
+    vcf = "data/merged_all_lrwgs_p_g_vntrs.sorted.vcf.gz"
     vcf_prev_ref = "data/ACAN_merged_samples.sorted.vcf"
     vcf_srwgs = "data/merged_samples_all_rh.sorted.vcf.gz"
-    #out_vcf = "data/filtered_merged_samples.sorted_batch_1.vcf"
-    out_vcf = "data/filtered_merged_samples_p_g_vntrs_all.sorted.vcf"
+    out_vcf = "data/filtered_sr_6_ml_95_merged_all_lrwgs_p_g_vntrs.sorted.vcf"
+    #out_vcf = "data/tmp_filtered_merged_all_p_g_vntrs.sorted.vcf"
+    #vcf="data/filtered_merged_all_p_g_vntrs.sorted.vcf"
     #filter_search(vcf, out_vcf)
-    #plot_distributions(vcf, out_vcf)
-    validate_genotypes(vcf1=vcf, vcf2=vcf_prev_ref, verbose=True)
+    plot_allele_histogram(vcf, out_vcf)
+    #validate_genotypes(vcf1=vcf, vcf2=vcf_prev_ref, verbose=True)

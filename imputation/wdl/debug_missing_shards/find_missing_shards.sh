@@ -1,6 +1,6 @@
 #!/bin/bash
 
-workflow="4429a2a9-09d6-4433-87ca-2b1c9efb8cb0"
+workflow="25599b82-617f-4b0c-bce4-7360bbf9873c"
 #gsutil ls $WORKSPACE_BUCKET/cromwell-execution/imputation_batch/${workflow}/call-imputation/shard-*/imputation/*/call-sort_index_beagle/cacheCopy/batch_set1_output.sorted_TR.vcf.gz > list_items.txt
 gsutil ls $WORKSPACE_BUCKET/cromwell-execution/imputation_batch/${workflow}/call-imputation/shard-*/imputation/*/call-sort_index_beagle/batch_set1_output.sorted_TR.vcf.gz > list_items.txt
 
