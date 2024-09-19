@@ -51,13 +51,16 @@ workflow create_reference {
     }
     call sort_index_beagle {
         input:
-          vcf=beagle_phase.outfile
+          vcf=beagle_phase.outfile,
+          mem=mem,
     }
     call bref {
         input:
           mem=mem,
           vcf=sort_index_beagle.outvcf,
-          vcf_index=sort_index_beagle.outvcf_index
+          vcf_index=sort_index_beagle.outvcf_index,
+          chrom=chrom,
+          GOOGLE_PROJECT=GOOGLE_PROJECT,
     }
     output {
         File phased_vntr_snp_vcf = sort_index_beagle.outvcf
@@ -65,7 +68,7 @@ workflow create_reference {
         File phased_vntr_snp_bref = bref.outfile
     }
     meta {
-      description: "Run Beagle on a single chromesome with default parameters"
+      description: "Create reference based on genotyped VNTRs and nearby SNPs"
     }
 }
 
@@ -215,10 +218,15 @@ task bref {
         File vcf
         File vcf_index
         Int mem
+        String GOOGLE_PROJECT
+        String chrom
     }
     String basename = basename(vcf, ".vcf.gz")
     command <<<
         zcat ~{vcf} | java -jar /bref3.jar > ~{basename}.bref3
+        gsutil -u ~{GOOGLE_PROJECT} cp ~{vcf} gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/vntr_reference_panel/p_g_vntrs/phased/~{chrom}/
+        gsutil -u ~{GOOGLE_PROJECT} cp ~{vcf_index} gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/vntr_reference_panel/p_g_vntrs/phased/~{chrom}/
+        gsutil -u ~{GOOGLE_PROJECT} cp ~{basename}.bref3 gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/vntr_reference_panel/p_g_vntrs/phased/~{chrom}/
     >>>
     runtime {
         docker:"sarajava/beagle:v4"
@@ -233,6 +241,7 @@ task bref {
 task sort_index_beagle {
     input {
       File vcf
+      Int mem
     }
 
     command <<<
@@ -244,6 +253,8 @@ task sort_index_beagle {
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
+	memory: mem + "GB"
+	disks: "local-disk " + mem + " SSD"
     }
 
     output {
