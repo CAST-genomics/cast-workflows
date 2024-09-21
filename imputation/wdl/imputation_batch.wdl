@@ -23,12 +23,15 @@ workflow imputation_batch {
         Array[File] samples_files
         File regions_file
        }
-       scatter (i in range(length(samples_files))) {
-               File samples_file = samples_files[i]
+       scatter (i in range(246)) {
+               #File samples_file = samples_files[i]
+               String vcf_file="~{vcf}/chr15_batch~{i+1}.vcf.gz"
+               String vcf_index_file="~{vcf_file}.tbi"
+               File samples_file=samples_files[0]
                call imputation_workflow.imputation as imputation {
                  input:
-                    vcf=vcf,
-                    vcf_index=vcf_index,
+                    vcf=vcf_file,
+                    vcf_index=vcf_index_file,
                     ref_panel=ref_panel,
                     ref_panel_bref=ref_panel_bref,
                     ref_panel_index=ref_panel_index,
@@ -116,6 +119,7 @@ task merge_outputs {
 
     command <<<
         #mergeSTR --vcfs ~{sep=',' individual_vcfs} --out ~{out_prefix}
+        touch ~{sep=' ' individual_vcfs}
         bcftools merge -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz
     >>>
         # TODO: Work with the -m flag
