@@ -5,7 +5,7 @@ ref="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/p_g_vntrs/phased/chr15/vntr_re
 
 
 # VCF file with all samples
-gt="gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/acaf_threshold_v7.1/vcf/acaf_threshold.${chr}.vcf.bgz"
+gt="$WORKSPACE_BUCKET/acaf_batches/chr15"
 samples="$WORKSPACE_BUCKET/saraj/vntr_samples/passing_sample_ids_v7.1.txt"
 regions="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/ACAN/ACAN_region_50m.bed"
 map="$WORKSPACE_BUCKET/saraj/genetic_map/plink.chr15_w_chr.GRCh38.map"

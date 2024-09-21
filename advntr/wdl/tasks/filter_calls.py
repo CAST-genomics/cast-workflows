@@ -62,6 +62,7 @@ def filter_vcf(filename, sr_threshold, ml_threshold, out_filename, verbose=False
     num_prev_no_call = 0
     num_all_no_calls = 0
     num_unique_alleles = []
+    polymorphic_vntrs = []
     if filename.endswith("gz"):
         input_file = gzip.open(filename, "rt")
         lines = input_file.readlines()
@@ -90,6 +91,7 @@ def filter_vcf(filename, sr_threshold, ml_threshold, out_filename, verbose=False
                     num_calls += 1
                     num_prev_no_call += 1
                     num_updated_calls += 1
+                    output_words.append(word)
                 elif max_likelihood >= ml_threshold and \
                    spanning_read >= sr_threshold:
                     # Passing filters
@@ -109,14 +111,22 @@ def filter_vcf(filename, sr_threshold, ml_threshold, out_filename, verbose=False
                     num_calls += 1
             if not has_at_least_one_call:
                 num_all_no_calls += 1
+
             # Fix the spacing
             output_line = "\t".join(output_words)
             output_file.write(output_line + '\n')
+
             # Update unique alleles
             num_unique_alleles.append(len(unique_alleles))
+            if len(unique_alleles) > 1:
+                polymorphic_vntrs.append(words[2])
             if words[0] == "chr15" and words[1] == "88855424":
                 print("For ACAN, num unique alleles: ", len(unique_alleles))
 
+    # Write polymorphic VNTR IDs
+    with open("polymorphic_vntrs.txt", "w+") as vntr_id_file:
+        for vntr in polymorphic_vntrs:
+            vntr_id_file.write(vntr + "\n")
     if verbose:
         print("Filter done with sr_threshold {} ml_threshold {}.".format(
                 sr_threshold, ml_threshold))
@@ -141,7 +151,7 @@ def filter_search(vcf, out_vcf):
     #    for ml_threshold in [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1]:
     for sr_threshold in [6]:
         for ml_threshold in [0.95]:
-            percent_removed, _ = filter_vcf(filename=vcf,
+            percent_removed, alleles_dist = filter_vcf(filename=vcf,
                    sr_threshold=sr_threshold,
                    ml_threshold=ml_threshold,
                    out_filename=out_vcf)
@@ -152,6 +162,14 @@ def filter_search(vcf, out_vcf):
          values="percent removed",
             )
     #print(results_df)
+    threshold=100
+    num_h_calls = sum([1 for item in alleles_dist if item == 1])
+    print("num loci with only 1 allele: ", num_h_calls)
+    num_no_calls = sum([1 for item in alleles_dist if item == 0])
+    print("num loci with no call: ", num_no_calls)
+    num_too_many_calls = sum([1 for item in alleles_dist if item >= threshold])
+    print("num loci with >= {} alleles: {}".format(threshold, num_too_many_calls))
+    print("max unique loci:" , max(alleles_dist))
     plot_heatmap(data=results_df,
          filename="filter_heatmap.png")
 
@@ -243,6 +261,6 @@ if __name__ == "__main__":
     out_vcf = "data/filtered_sr_6_ml_95_merged_all_lrwgs_p_g_vntrs.sorted.vcf"
     #out_vcf = "data/tmp_filtered_merged_all_p_g_vntrs.sorted.vcf"
     #vcf="data/filtered_merged_all_p_g_vntrs.sorted.vcf"
-    #filter_search(vcf, out_vcf)
-    plot_allele_histogram(vcf, out_vcf)
+    filter_search(vcf, out_vcf)
+    #plot_allele_histogram(vcf, out_vcf)
     #validate_genotypes(vcf1=vcf, vcf2=vcf_prev_ref, verbose=True)

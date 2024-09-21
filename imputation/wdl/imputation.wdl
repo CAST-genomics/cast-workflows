@@ -93,7 +93,8 @@ task subset_vcf {
         echo "Exclude reference samples from the query. Otherwise beagle will give an error."
         grep -v -x -f ref_sample_ids.txt ~{samples_file} > samples_file_clean.txt
         echo "Subsetting the target region and samples from the vcf file"
-        bcftools view -Oz -I -R ~{regions_file} -S samples_file_clean.txt ~{vcf} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
+        #bcftools view -Oz -I -R ~{regions_file} -S samples_file_clean.txt ~{vcf} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
+        bcftools view -Oz -I --force-samples -S ^ref_sample_ids.txt ~{vcf} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
     >>>
 
     runtime {
@@ -101,8 +102,8 @@ task subset_vcf {
 	memory: mem + "GB"
         #bootDiskSizeGb: mem
 	disks: "local-disk " + mem + " SSD"
-        maxRetries: 3
-        preemptible: 3
+        maxRetries: 2
+        preemptible: 2
     }
 
     output {
@@ -188,10 +189,14 @@ task sort_index_beagle {
         zcat ~{vcf} | vcf-sort | bgzip -c > ~{basename}.sorted.vcf.gz
         df -h /cromwell_root
         echo "Extracting TRs"
-        bcftools view -Oz -i 'ID="."' ~{basename}.sorted.vcf.gz > ~{basename}.sorted_TR.vcf.gz
+        #bcftools view -Oz -i 'ID="."' ~{basename}.sorted.vcf.gz > ~{basename}.sorted_TR.vcf.gz
+        bcftools view -h ~{basename}.sorted.vcf.gz > ~{basename}.sorted_TR.vcf
+        # Match ids of the VNTRs with only one underscore (as opposed to three underscores for TRs.
+        #echo "Number of TRs in the genotyped file"
+        #bcftools view -i 'ID="."' ~{basename}.sorted_TR.vcf.gz | grep -v "^#" | wc -l
+        bcftools view ~{basename}.sorted.vcf.gz | grep -v "^#" | grep 'chr[0-9]*_[0-9]*\s' > ~{basename}.sorted_TR.vcf
+        bcftools view -Oz ~{basename}.sorted_TR.vcf > ~{basename}.sorted_TR.vcf.gz && \
         tabix -p vcf ~{basename}.sorted_TR.vcf.gz
-        echo "Number of TRs in the genotyped file"
-        bcftools view -i 'ID="."' ~{basename}.sorted_TR.vcf.gz | grep -v "^#" | wc -l
     >>>
 
     runtime {
