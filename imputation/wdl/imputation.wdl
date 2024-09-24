@@ -187,22 +187,25 @@ task sort_index_beagle {
         df -h /cromwell_root
         echo "Sorting and compressing"
         zcat ~{vcf} | vcf-sort | bgzip -c > ~{basename}.sorted.vcf.gz
+        tabix -p vcf ~{basename}.sorted.vcf.gz
         df -h /cromwell_root
-        echo "Extracting TRs"
+        echo "Extracting TRs header"
         #bcftools view -Oz -i 'ID="."' ~{basename}.sorted.vcf.gz > ~{basename}.sorted_TR.vcf.gz
         bcftools view -h ~{basename}.sorted.vcf.gz > ~{basename}.sorted_TR.vcf
         # Match ids of the VNTRs with only one underscore (as opposed to three underscores for TRs.
         #echo "Number of TRs in the genotyped file"
         #bcftools view -i 'ID="."' ~{basename}.sorted_TR.vcf.gz | grep -v "^#" | wc -l
-        bcftools view ~{basename}.sorted.vcf.gz | grep -v "^#" | grep 'chr[0-9]*_[0-9]*\s' > ~{basename}.sorted_TR.vcf
-        bcftools view -Oz ~{basename}.sorted_TR.vcf > ~{basename}.sorted_TR.vcf.gz && \
+        echo "Extracting TRs"
+        #bcftools view ~{basename}.sorted.vcf.gz | grep -v "^#" | grep 'chr[0-9]*_[0-9]*\s' >> ~{basename}.sorted_TR.vcf
+        bcftools view ~{basename}.sorted.vcf.gz | grep -v "^#" | awk '$3 ~ /chr[0-9]*_[0-9]*$/{print}' >> ~{basename}.sorted_TR.vcf
+        bcftools view -Oz ~{basename}.sorted_TR.vcf > ~{basename}.sorted_TR.vcf.gz
         tabix -p vcf ~{basename}.sorted_TR.vcf.gz
     >>>
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
-	memory: mem + "GB"
-	disks: "local-disk " + mem + " SSD"
+	memory: mem*2 + "GB"
+	disks: "local-disk " + mem*2 + " SSD"
     }
 
     output {

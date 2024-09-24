@@ -158,6 +158,8 @@ task merge_vntr_snps {
       zcat vntr_snp.vcf.gz | grep -v "^#" | wc -l
       echo "number of variants in sorted file"
       zcat vntr_snp.sorted.vcf | grep -v "^#" | wc -l
+      echo "number of VNTRs in sorted file"
+      zcat vntr_snp.sorted.vcf | grep -v "^#" | grep 'chr[0-9]*_[0-9]*\s' | wc -l
       tabix -p vcf vntr_snp.sorted.vcf.gz
     >>>
     
