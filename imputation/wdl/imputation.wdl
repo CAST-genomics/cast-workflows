@@ -81,12 +81,7 @@ task subset_vcf {
         grep MemTotal /proc/meminfo
         echo "disk space on device"
         df -h
-        #echo "Check if the bam file is corrupted or not"
-
         # To get a list of sample ids
-        #bcftools query -l ~{vcf} > sample_ids.txt
-        # The "bcftools head" command was to check the header for the labeling if contigs e.g. chr21 vs 21.
-        # bcftools head ~{vcf} > header.txt
         # Subsetting region for each chromesome
         echo "Select reference samples from the actual samples (to exclude later)"
         bcftools query -l ~{ref_panel} > ref_sample_ids.txt
@@ -190,13 +185,9 @@ task sort_index_beagle {
         tabix -p vcf ~{basename}.sorted.vcf.gz
         df -h /cromwell_root
         echo "Extracting TRs header"
-        #bcftools view -Oz -i 'ID="."' ~{basename}.sorted.vcf.gz > ~{basename}.sorted_TR.vcf.gz
         bcftools view -h ~{basename}.sorted.vcf.gz > ~{basename}.sorted_TR.vcf
         # Match ids of the VNTRs with only one underscore (as opposed to three underscores for TRs.
-        #echo "Number of TRs in the genotyped file"
-        #bcftools view -i 'ID="."' ~{basename}.sorted_TR.vcf.gz | grep -v "^#" | wc -l
         echo "Extracting TRs"
-        #bcftools view ~{basename}.sorted.vcf.gz | grep -v "^#" | grep 'chr[0-9]*_[0-9]*\s' >> ~{basename}.sorted_TR.vcf
         bcftools view ~{basename}.sorted.vcf.gz | grep -v "^#" | awk '$3 ~ /chr[0-9]*_[0-9]*$/{print}' >> ~{basename}.sorted_TR.vcf
         bcftools view -Oz ~{basename}.sorted_TR.vcf > ~{basename}.sorted_TR.vcf.gz
         tabix -p vcf ~{basename}.sorted_TR.vcf.gz

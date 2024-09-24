@@ -118,7 +118,6 @@ task merge_outputs {
     String out_prefix = "merged_samples"
 
     command <<<
-        #mergeSTR --vcfs ~{sep=',' individual_vcfs} --out ~{out_prefix}
         touch ~{sep=' ' individual_vcfs}
         bcftools merge -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz
     >>>
