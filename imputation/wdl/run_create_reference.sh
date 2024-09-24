@@ -15,7 +15,7 @@
   #vntr_vcf="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/ACAN_merged_samples.sorted.vcf.gz"
   #vntr_vcf="$WORKSPACE_BUCKET/saraj/acan_data_test/merged_4_samples_batches.sorted.vcf.gz"
   #vntr_vcf="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/p_g_vntrs/merged_all_lrwgs_p_g_vntrs.sorted.vcf.gz"
-  vntr_vcf="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/p_g_vntrs/filtered_sr_6_ml_95_merged_all_lrwgs_p_g_vntrs.sorted.vcf.gz"
+  vntr_vcf="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/p_g_vntrs/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
   #sample_list="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/vntr_samples_650_train.txt"
   #sample_list="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/vntr_samples_20_small_test.txt"
   sample_list="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/p_g_vntrs/sample_ids_lrwgs.sorted.txt"
@@ -23,7 +23,7 @@
   
   date
   time python create_reference.py \
-  	--name vntr_ref_test \
+  	--name vntr_ref_filter \
   	--snp-vcf $snp_vcf \
   	--vntr-vcf $vntr_vcf \
   	--regions $regions \

@@ -169,6 +169,7 @@ def filter_search(vcf, out_vcf):
     print("num loci with no call: ", num_no_calls)
     num_too_many_calls = sum([1 for item in alleles_dist if item >= threshold])
     print("num loci with >= {} alleles: {}".format(threshold, num_too_many_calls))
+    print([item for item in alleles_dist if item >= threshold])
     print("max unique loci:" , max(alleles_dist))
     plot_heatmap(data=results_df,
          filename="filter_heatmap.png")
