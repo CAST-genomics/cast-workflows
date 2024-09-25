@@ -1,5 +1,5 @@
 #!/bin/bash
-  chr="chr15"
+  chr="chr11"
   mem=60
   #mem=4
   #window=20

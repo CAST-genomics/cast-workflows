@@ -27,7 +27,7 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, outpath
             return
     else: # To avoid warning on single element series
         if len(gwas.loc[(gwas["chrom"] == chrom) &\
-                        (int(gwas["pos"]) == int(pos)), 'beta']) == 0:
+                        (gwas["pos"] == str(pos)), 'beta']) == 0:
             print("No gwas data for chrom {} position {}".format(
                 chrom, pos))
             return
@@ -35,7 +35,7 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, outpath
         effect_size = gwas.iloc[0]["beta"]
     else: # To avoid warning on single element series
         effect_size = gwas.loc[(gwas["chrom"] == chrom) &\
-                        (int(gwas["pos"]) == int(pos)), 'beta'].item()
+                        (gwas["pos"] == str(pos)), 'beta'].item()
     plot = sns.jointplot(
             data=plotted_data,
             alpha=0.5,

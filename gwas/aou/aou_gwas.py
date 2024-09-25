@@ -181,16 +181,22 @@ def set_genotypes(data, args, annotations, cohort, samples):
     if args.tr_vcf.endswith("gz"):
         # It is a compressed vcf file
         with gzip.open(args.tr_vcf, "rt") as vcf_file:
-            lines = "\n".join(vcf_file.readlines())
+            lines = vcf_file.readlines()
     elif args.tr_vcf.endswith("vcf"):
         # It is an uncompressed vcf file
         with open(args.tr_vcf, "r") as vcf_file:
-            lines = "\n".join(vcf_file.readlines())
+            lines = vcf_file.readlines()
     else:
         print("Error: Cannot recognize tr-vcf file format. Should be either a vcf file or a vcf.gz file")
         exit(1)
-    vcf_df = pd.read_csv(StringIO(re.sub("#CHROM", "CHROM", lines)), sep="\t", comment='#')
-
+    #vcf_df = pd.read_csv(StringIO(re.sub("#CHROM", "CHROM", lines)), sep="\t", comment='#')
+    # Remove header lines for the dataframe
+    lines_clean = [line for line in lines if not line.startswith("##")]
+    columns = lines_clean[0].replace("\n", "").replace("#", "").split("\t")
+    df_lines = [line.split("\t") for line in lines_clean[1:]]
+    vcf_df = pd.DataFrame(df_lines, columns=columns)
+    # Fix CHROM column name
+    print("DF shape", vcf_df.shape)
     # Set up an output vcf file for normalized values
     #normalized_file = open("normalized.vcf", "w+")
     #for line in lines:
@@ -200,9 +206,9 @@ def set_genotypes(data, args, annotations, cohort, samples):
     for chrom, start, gene in annotations:
         all_alleles = []
         empty_calls, no_calls = 0, 0
-
+        print("Processing annottaion {} {}:{}".format(gene, chrom, start))
         locus_calls = vcf_df[(vcf_df["CHROM"] == chrom) & \
-                             (vcf_df["POS"] == int(start))
+                             (vcf_df["POS"] == str(start))
                              ]
         data.loc[:, [gene]] = np.nan
         samples_with_calls = set()
@@ -260,8 +266,10 @@ def set_genotypes(data, args, annotations, cohort, samples):
         
         # Plot individual alleles for ACAN
         print("Plotting alleles histogram")
-        if gene == "ACAN" and args.phenotype == "height":
-            plot_histogram(all_alleles, "outputs/ACAN_alleles_height_{}.png".format(cohort))
+        print("gene: ", gene)
+        print("phenotype: ", args.phenotype)
+        #if gene == "ACAN" and args.phenotype == "height":
+        plot_histogram(all_alleles, "outputs/ACAN_alleles_height_{}.png".format(cohort))
         if no_calls + empty_calls > 0:
             print("Skipping {} empty calls and {} no calls for {} on vcf".format(
                     empty_calls, no_calls, gene))
@@ -448,7 +456,7 @@ def main():
                       annotate=annotate,
                       p_value_threshold=p_value_threshold,
                       extra_points=[
-                          ("chr15", 88855424, 1, "ACAN_VNTR"),
+                          #("chr15", 88855424, 1, "ACAN_VNTR"),
                           #("chr15", 88857434, 1, "ACAN_v_e")
                           ])
         PlotQQ(runner.gwas, outpath+".qq.png")
