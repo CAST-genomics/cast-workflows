@@ -1,8 +1,11 @@
 #!/bin/bash
 
 echo "" > summary_gwas.txt
-aou_220k_imputed="data/merged_samples_all_rh.sorted.vcf.gz"
-ref="data/ACAN_ref_lrwgs.sorted.vcf.gz"
+#aou_220k_imputed="data/merged_samples_all_rh.sorted.vcf.gz"
+aou_220k_imputed="../../imputation/wdl/data/imputed_p_g_vntrs_srwgs_sr_ml_filter.sorted.vcf.gz"
+#aou_220k_imputed="data/vntr_ref.sorted.vcf.gz"
+#ref="data/ACAN_ref_lrwgs.sorted.vcf.gz"
+ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
 
 
 #samples="samples/passing_samples_v7.1.csv"
@@ -11,18 +14,6 @@ ref="data/ACAN_ref_lrwgs.sorted.vcf.gz"
 
 # Running associatr
 echo "running gwas for imputed calls"
-samples="samples/EUR_WHITE.csv"
-./aou_gwas.py --phenotype height \
-	      --num-pcs 10 \
-	      --method associaTR \
-	      --tr-vcf $aou_220k_imputed \
-	      --annotations annotations_acan.txt \
-	      --samples $samples \
-	      --is-imputed \
-	      --norm-by-sex \
-	      --norm quantile \
-	      --plot
-exit 0
 samples="samples/AFR_BLACK.csv"
 ./aou_gwas.py --phenotype height \
 	      --num-pcs 10 \
@@ -34,18 +25,29 @@ samples="samples/AFR_BLACK.csv"
 	      --norm quantile \
 	      --annotations annotations_acan.txt \
 	      --plot
-samples="samples/passing_samples_v7.1.csv"
+exit 0
+samples="samples/EUR_WHITE.csv"
 ./aou_gwas.py --phenotype height \
 	      --num-pcs 10 \
 	      --method associaTR \
 	      --tr-vcf $aou_220k_imputed \
+	      --annotations annotations_acan.txt \
 	      --samples $samples \
 	      --is-imputed \
 	      --norm-by-sex \
 	      --norm quantile \
 	      --plot
-	      #--annotations annotations_acan.txt \
-exit 0
+samples="samples/passing_samples_v7.1.csv"
+./aou_gwas.py --phenotype height \
+	      --num-pcs 10 \
+	      --method associaTR \
+	      --tr-vcf $aou_220k_imputed \
+	      --annotations annotations_acan.txt \
+	      --samples $samples \
+	      --is-imputed \
+	      --norm-by-sex \
+	      --norm quantile \
+	      --plot
 echo "running gwas for advntr calls"
 ./aou_gwas.py --phenotype height \
 	      --num-pcs 10 \
