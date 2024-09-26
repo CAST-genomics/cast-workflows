@@ -15,5 +15,6 @@ region = "chr"+chrom+":"+from_bp+"-"+to_bp
 mt_wgs_path = os.getenv("WGS_ACAF_THRESHOLD_MULTI_HAIL_PATH")
 mt = hl.read_matrix_table(mt_wgs_path)
 mt = hl.filter_intervals(mt, [hl.parse_locus_interval(region,)])
+mt = mt.filter_rows(hl.len(mt.alleles) == 2)
 
 hl.export_plink(mt, outfile, ind_id = mt.s)
