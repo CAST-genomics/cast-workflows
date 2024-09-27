@@ -94,7 +94,6 @@ workflow batch_imputation {
                 merge_mem=merge_mem,
                 disk=disk
 
-
         }
 
         output {
@@ -106,7 +105,7 @@ workflow batch_imputation {
 
         meta {
             description: "This workflow run imputation on batches of sample, extract TRs, merge  across a single chromosome and run annotaTR with default parameters "
-    }
+        }
                    
 }
 
@@ -124,13 +123,14 @@ task annotaTR {
     
     command <<<
         annotaTR --vcf ~{vcf} \
-                --ref-panel ~{ref_vcf} \
-                --out ~{out_prefix}_annotated \
-                --vcftype hipstr \
-                --outtype pgen \
-                --dosages beagleap_norm \
-                --ignore-duplicates \
-                --match-refpanel-on locid 
+                 --ref-panel ~{ref_vcf} \
+                 --out ~{out_prefix}_annotated \
+                 --vcftype hipstr \
+                 --outtype pgen \
+                 --dosages bestguess_norm \
+                 --ignore-duplicates \
+                 --match-refpanel-on locid \
+                 --fix-bcftools-offset
         
 
     >>>

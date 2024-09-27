@@ -69,7 +69,6 @@ task beagle {
             gt=~{vcf} \
             ref=~{ref_panel} \
             window=~{window_size} \
-            ap=true \
             overlap=~{overlap} \
             out=~{out_prefix}_output \
             map=~{map} 
@@ -79,7 +78,6 @@ task beagle {
             ref=~{ref_panel} \
             window=~{window_size} \
             chrom=~{region} \
-            ap=true \
             overlap=~{overlap} \
             out=~{out_prefix}_output \
             map=~{map} 
