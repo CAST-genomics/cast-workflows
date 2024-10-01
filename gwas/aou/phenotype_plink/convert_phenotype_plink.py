@@ -19,7 +19,6 @@ import subprocess
 import sys
 import csv
 import argparse
-import os
 
 
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
@@ -28,6 +27,19 @@ ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
         "phenotypes", "%s_phenocovar.csv"%phenotype)
+
+def DownloadPT(filename):
+	"""
+	Download a phenotype path locally
+
+	Arguments
+	---------
+	filename : str
+	   GCP path
+	"""
+	cmd = "gsutil cp {filename} .".format(filename=filename)
+	output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
+	print(output.decode("utf-8"))	
 
 def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
@@ -88,9 +100,8 @@ def main():
     covars = pcols + pt_covars + shared_covars
 
     # Set up data frame with phenotype and covars
-    data = pd.read_csv(ptcovar_path)
     ancestry = LoadAncestry(ANCESTRY_PRED_PATH)
-    pheno_file = convert_csv_to_plink (data,f"{args.phenotype}_plink")
+    pheno_file = convert_csv_to_plink (DownloadPT(ptcovar_path),f"{args.phenotype}_plink")
     plink_pheno = pd.read_csv(pheno_file,sep='\t')
     data = pd.merge(plink_pheno, ancestry[["IID"]+covars], on=["IID"],how="inner")
 
