@@ -29,18 +29,10 @@ def GetPTCovarPath(phenotype):
         "phenotypes", "%s_phenocovar.csv"%phenotype)
 
 def DownloadPT(filename):
-	"""
-	Download a phenotype path locally
-
-	Arguments
-	---------
-	filename : str
-	   GCP path
-    """
-    cmd = "gsutil cp {src} {dest}".format(src=local_path, dest=gcp_path)
-	output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
-	print(output.decode("utf-8"))	
-    return filename.split("/")[-1]
+    cmd = f"gsutil cp {filename} ."
+    output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
+    print(output.decode("utf-8"))
+    return filename.split("/")[-1]  # Return local filename
 
 
 def GetFloatFromPC(x):
