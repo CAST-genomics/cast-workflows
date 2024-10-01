@@ -63,10 +63,8 @@ def convert_csv_to_plink (ptfile,outfile):
         
         for i, row in enumerate(reader):
             if i == 0:
-                # Print header with "FID", "IID", and the second column
-                writer.writerow(["FID", "IID"], row[1:])
+                writer.writerow(["FID", "IID", row[1], row[2], row[3]])
             else:
-                # Print "0", first column, and second column
                 writer.writerow(["0", row[0], row[1], row[2], row[3]])
     
     return outfile
