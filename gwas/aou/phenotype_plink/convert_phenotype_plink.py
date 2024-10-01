@@ -97,7 +97,7 @@ def main():
     plink_pheno.to_csv(f"{args.phenotype}_pheno_plink.txt", sep="\t", index=False)
     data.to_csv(f"{args.phenotype}_covar_combined.txt", sep="\t", index=False)
     
-    print("Done converting {args.phenotype} to plink format")
+    print(f"Done converting {args.phenotype} to plink format")
 
 
 if __name__ == "__main__":
