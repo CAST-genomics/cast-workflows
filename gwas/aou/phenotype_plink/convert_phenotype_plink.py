@@ -56,18 +56,11 @@ def LoadAncestry(ancestry_pred_path):
 
     return ancestry
 
-def convert_csv_to_plink (ptfile,outfile):
-    with open(ptfile, 'r') as csv_file, open(outfile, 'w', newline='') as plink_file:
-        reader = csv.reader(csv_file)
-        writer = csv.writer(plink_file, delimiter='\t')
-        
-        for i, row in enumerate(reader):
-            if i == 0:
-                writer.writerow(["FID", "IID", row[1], row[2], row[3]])
-            else:
-                writer.writerow(["0", row[0], row[1], row[2], row[3]])
-    
-    return outfile
+def convert_csv_to_plink (ptfile):
+    df = pd.read_csv(ptfile)
+    df.insert(0, 'FID', 0)
+    df.rename(columns={"person_id": "IID"}, inplace=True)
+    return df
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
@@ -89,18 +82,20 @@ def main():
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
     shared_covars = [item for item in args.sharedcovars.split(",") if item != ""]
     pt_covars = [item for item in args.ptcovars.split(",") if item != ""]
-    covars = pcols + pt_covars + shared_covars
+    covars = pt_covars + shared_covars
 
     # Set up data frame with phenotype and covars
     ancestry = LoadAncestry(ANCESTRY_PRED_PATH)
     local_pt = DownloadPT(ptcovar_path)
-    pheno_file = convert_csv_to_plink(local_pt,f"{args.phenotype}_plink")
 
-    plink_pheno = pd.read_csv(pheno_file,sep='\t')
-    data = pd.merge(plink_pheno, ancestry[["IID"]+covars], on=["IID"],how="inner")
+    plink = convert_csv_to_plink(local_pt)
 
+    plink['IID'] = plink['IID'].astype(str)
+
+    data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols], on=["IID"],how="inner")
+    plink_pheno = plink[["FID","IID","phenotype"]]
+    plink_pheno.to_csv(f"{args.phenotype}_pheno_plink.txt", sep="\t", index=False)
     data.to_csv(f"{args.phenotype}_covar_combined.txt", sep="\t", index=False)
-
 
 
 if __name__ == "__main__":
