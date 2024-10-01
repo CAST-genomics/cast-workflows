@@ -36,10 +36,12 @@ def DownloadPT(filename):
 	---------
 	filename : str
 	   GCP path
-	"""
-	cmd = "gsutil cp {filename} .".format(filename=filename)
+    """
+    cmd = "gsutil cp {src} {dest}".format(src=local_path, dest=gcp_path)
 	output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
 	print(output.decode("utf-8"))	
+    return filename.split("/")[-1]
+
 
 def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
@@ -101,7 +103,9 @@ def main():
 
     # Set up data frame with phenotype and covars
     ancestry = LoadAncestry(ANCESTRY_PRED_PATH)
-    pheno_file = convert_csv_to_plink (DownloadPT(ptcovar_path),f"{args.phenotype}_plink")
+    local_pt = DownloadPT(ptcovar_path)
+    pheno_file = convert_csv_to_plink(local_pt,f"{args.phenotype}_plink")
+
     plink_pheno = pd.read_csv(pheno_file,sep='\t')
     data = pd.merge(plink_pheno, ancestry[["IID"]+covars], on=["IID"],how="inner")
 
