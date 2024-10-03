@@ -42,14 +42,14 @@ def GetCohort(samplefile):
         cohort = os.path.basename(samplefile[:-4]) #chop off .csv at the end
     return cohort
 
-def GetOutPath(phenotype, method, region, samplefile):
+def GetOutPath(phenotype, method, region, samplefile, outdir):
     cohort = GetCohort(samplefile)
     outprefix = "%s_%s_%s"%(phenotype, method, cohort)
     if region is not None:
         outprefix += "_%s"%(region.replace(":", "_").replace("-","_"))
-    if not os.path.exists("outputs"):
-        os.mkdir("outputs")
-    return "outputs/" + outprefix + ".gwas"
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+    return os.path.join(outdir, outprefix + ".gwas")
 
 def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
@@ -174,7 +174,8 @@ def set_genotypes(data, args, annotations, cohort, samples):
     #print("is imputed: ", args.is_imputed)
     imputed = args.is_imputed
     # Plot phenotype histogram
-    plot_histogram(data["phenotype"], "outputs/{}_histogram_after_norm.png".format(args.phenotype))
+    plot_histogram(data["phenotype"], os.path.join(args.outdir,
+                        "{}_histogram_after_norm.png".format(args.phenotype)))
     # Read input VCF file into a dataframe
     lines = None
 
@@ -269,7 +270,7 @@ def set_genotypes(data, args, annotations, cohort, samples):
         print("gene: ", gene)
         print("phenotype: ", args.phenotype)
         if gene == "ACAN" and args.phenotype == "height":
-            plot_histogram(all_alleles, "outputs/ACAN_alleles_height_{}.png".format(cohort))
+            plot_histogram(all_alleles, os.path.join(args.outdir, "ACAN_alleles_height_{}.png".format(cohort)))
         if no_calls + empty_calls > 0:
             print("Skipping {} empty calls and {} no calls for {} on vcf".format(
                     empty_calls, no_calls, gene))
@@ -315,6 +316,7 @@ def main():
     parser.add_argument("--norm-by-sex",
                         help="Apply the normalization for each sex separately. Default: False",
                         action="store_true")
+    parser.add_argument("--outdir", help="Path to the output directory", type=str, required=True)
     parser.add_argument("--sample-call-rate", help="Apply minimum sample call rate QC", type=float, default=0.90)
     parser.add_argument("--variant-call-rate", help="Apply minimum variant call rate QC", type=float, default=0.90)
     parser.add_argument("--MAF", help="Apply minor allele frequency QC", type=float, default=0.01)
@@ -414,7 +416,7 @@ def main():
         ERROR("GWAS method %s not implemented" % args.method)
 
     # Run GWAS
-    outpath = GetOutPath(args.phenotype, args.method, args.region, sampfile)
+    outpath = GetOutPath(args.phenotype, args.method, args.region, sampfile, args.outdir)
     runner.RunGWAS()
     WriteGWAS(runner.gwas, outpath+".tab", covars)
     #runner.gwas = pd.read_csv(outpath+".tab", sep="\t")
@@ -436,7 +438,9 @@ def main():
                         chrom=chrom,
                         pos=pos,
                         phenotype="phenotype",
-                        outpath="outputs/{}_genotype_{}_{}.png".format(gene, args.phenotype, cohort))
+                        outpath=os.path.join(args.outdir,
+                                "{}_genotype_{}_{}.png".format(
+                                    gene, args.phenotype, cohort)))
         else:
             # no text annotation on manhattan plot for hail runner
             annotate = False
