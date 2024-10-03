@@ -123,6 +123,8 @@ def plot_figures(data, pop, phenoname, annotate_filename, region_chrom):
                    pop=pop,
                    annotate_filename=annotate_filename,
                    title=title,)
+    output_filename = "outputs/allxall_dataframe_{}_pop_{}.csv".format(phenoname, pop)
+    data.to_csv(output_filename)
 
 def main():
     args = parse_args()

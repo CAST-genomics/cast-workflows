@@ -268,8 +268,8 @@ def set_genotypes(data, args, annotations, cohort, samples):
         print("Plotting alleles histogram")
         print("gene: ", gene)
         print("phenotype: ", args.phenotype)
-        #if gene == "ACAN" and args.phenotype == "height":
-        plot_histogram(all_alleles, "outputs/ACAN_alleles_height_{}.png".format(cohort))
+        if gene == "ACAN" and args.phenotype == "height":
+            plot_histogram(all_alleles, "outputs/ACAN_alleles_height_{}.png".format(cohort))
         if no_calls + empty_calls > 0:
             print("Skipping {} empty calls and {} no calls for {} on vcf".format(
                     empty_calls, no_calls, gene))
@@ -454,11 +454,7 @@ def main():
 
         PlotManhattan(runner.gwas, outpath+".manhattan.png",
                       annotate=annotate,
-                      p_value_threshold=p_value_threshold,
-                      extra_points=[
-                          #("chr15", 88855424, 1, "ACAN_VNTR"),
-                          #("chr15", 88857434, 1, "ACAN_v_e")
-                          ])
+                      p_value_threshold=p_value_threshold)
         PlotQQ(runner.gwas, outpath+".qq.png")
 
 if __name__ == "__main__":

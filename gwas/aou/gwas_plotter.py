@@ -98,9 +98,6 @@ def PlotManhattan(gwas, outpath, annotate=False,
             index = len(chrom_gwas[chrom_gwas["pos"] < pos])
             plot.axes[0][0].scatter(x=index, y=p_value, color="red", marker="^")
             plot.axes[0][0].text(x=index, y=p_value, s=label, fontsize="medium")
-            #print("gwas['-log10pvalue']: ", gwas['-log10pvalue'])
-            #print("max(gwas['-log10pvalue']): ", max(gwas['-log10pvalue'].dropna()))
-            #print("num_points: ", num_points)
             plot.set(ylim=(0, max(gwas['-log10pvalue'].dropna()) + 1), xlim=(0, num_points))
 
 

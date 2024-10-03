@@ -8,9 +8,9 @@ def read_region_phenotypes(filename):
 
 def main():
     data = read_region_phenotypes("region_phenotypes.csv")
-    
+   
     # Select a specific region and phenotype pair based on VNTR gene name
-    data = data[data["gene"] == "INS"]
+    data = data[data["gene"] == "ACAN"]
 
     for phenotype in data["phenotypes"][0].split():
         command = "python query_allxall_associations.py " + \
