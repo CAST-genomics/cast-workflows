@@ -1,11 +1,9 @@
 #!/bin/bash
 
-#aou_220k_imputed="data/merged_samples_all_rh.sorted.vcf.gz"
 #aou_220k_imputed="../../imputation/wdl/data/imputed_p_g_vntrs_srwgs_sr_ml_filter.sorted.annotated.vcf.gz"
-aou_220k_imputed="../../imputation/wdl/data/chr_11_imputed.sorted.annotate.vcf.gz"
+aou_220k_imputed="../../imputation/wdl/data/chr_11_imputed_rh.sorted.annotate.vcf.gz"
+chr="chr11"
 
-#aou_220k_imputed="data/vntr_ref.sorted.vcf.gz"
-#ref="data/ACAN_ref_lrwgs.sorted.vcf.gz"
 ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
 
 
@@ -26,13 +24,14 @@ for phenotype in $(tail -n +2 phenotypes_manifest.csv  | cut -d, -f1); do
            --samples $samples \
            --norm quantile \
            --is-imputed \
+	   --outdir outputs/${chr} \
            --plot
-     most_significant_hit=$(tail -n +4 outputs/${phenotype}_associaTR_${samples_prefix}.gwas.tab | cut -f6 | sort -g  | awk NF | head -n 1)
+     most_significant_hit=$(tail -n +4 outputs/${chr}/${phenotype}_associaTR_${samples_prefix}.gwas.tab | cut -f6 | sort -g  | awk NF | head -n 1)
      echo "most_significant_hit for phenotype $phenotype is $most_significant_hit" >> summary_gwas.txt
      echo "----------- most_significant_hit for phenotype $phenotype is $most_significant_hit"
+exit 0
 done
 
-exit 0
 
 # Running associatr
 echo "running gwas for imputed calls"

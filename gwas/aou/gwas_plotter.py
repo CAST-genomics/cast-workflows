@@ -76,9 +76,10 @@ def annotate_points(ax, gwas):
         chrom, position, label = point
         locus = gwas[(gwas["chrom"] == chrom) & \
                  (gwas["pos"] == int(position))]
-        x = locus["ind"].values[0]
-        y = locus["-log10pvalue"].values[0]
-        ax.text(x=x, y=y, s=label, fontsize="medium")
+        if len(locus) > 0:
+            x = locus["ind"].values[0]
+            y = locus["-log10pvalue"].values[0]
+            ax.text(x=x, y=y, s=label, fontsize="medium")
 
 def PlotManhattan(gwas, outpath, annotate=False,
                 p_value_threshold=-np.log10(5*10**-8),
