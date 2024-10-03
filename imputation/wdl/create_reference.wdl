@@ -51,20 +51,29 @@ workflow create_reference {
     }
     call sort_index_beagle {
         input:
+          chrom=chrom,
           vcf=beagle_phase.outfile,
+          mem=mem,
+    }
+    call add_tags {
+        input:
+          vcf=sort_index_beagle.outvcf,
+          vcf_index=sort_index_beagle.outvcf_index,
+          annotation_vcf=vntr_vcf,
+          annotation_vcf_index=vntr_vcf_index,
           mem=mem,
     }
     call bref {
         input:
           mem=mem,
-          vcf=sort_index_beagle.outvcf,
-          vcf_index=sort_index_beagle.outvcf_index,
+          vcf=add_tags.outvcf,
+          vcf_index=add_tags.outvcf_index,
           chrom=chrom,
           GOOGLE_PROJECT=GOOGLE_PROJECT,
     }
     output {
-        File phased_vntr_snp_vcf = sort_index_beagle.outvcf
-        File phased_vntr_snp_index = sort_index_beagle.outvcf_index
+        File phased_vntr_snp_vcf = add_tags.outvcf
+        File phased_vntr_snp_index = add_tags.outvcf_index
         File phased_vntr_snp_bref = bref.outfile
     }
     meta {
@@ -113,6 +122,7 @@ task subset_snps {
 	memory: mem + "GB"
 	disks: "local-disk " + mem + " SSD"
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
+        preemptible: 1
     }
 
     output {
@@ -159,7 +169,7 @@ task merge_vntr_snps {
       echo "number of variants in sorted file"
       zcat vntr_snp.sorted.vcf | grep -v "^#" | wc -l
       echo "number of VNTRs in sorted file"
-      zcat vntr_snp.sorted.vcf | grep -v "^#" | grep 'chr[0-9]*_[0-9]*\s' | wc -l
+      zcat vntr_snp.sorted.vcf | grep -v "^#" | awk '$3 ~ /chr[0-9]*_[0-9]*$/{print}' | wc -l
       tabix -p vcf vntr_snp.sorted.vcf.gz
     >>>
     
@@ -208,6 +218,7 @@ task beagle_phase {
         docker:"gcr.io/ucsd-medicine-cast/beagle:latest"
 	memory: mem + "GB"
 	disks: "local-disk " + mem + " SSD"
+        preemptible: 1
     }
 
     output {
@@ -234,6 +245,7 @@ task bref {
         docker:"sarajava/beagle:v4"
 	memory: mem + "GB"
 	disks: "local-disk " + mem + " SSD"
+        preemptible: 1
     }
     output {
         File outfile="~{basename}.bref3"
@@ -243,24 +255,58 @@ task bref {
 task sort_index_beagle {
     input {
       File vcf
+      String chrom
       Int mem
     }
 
+    String outfile="vntr_ref_~{chrom}.sorted.vcf.gz"
+
     command <<<
         tabix -p vcf ~{vcf}
-        bcftools sort -Oz ~{vcf} > vntr_ref.sorted.vcf.gz && tabix -p vcf vntr_ref.sorted.vcf.gz
+        bcftools sort -Oz ~{vcf} > ~{outfile} && tabix -p vcf ~{outfile}
         echo "Number of TRs in the vcf file"
-        bcftools view -i 'ID="."' vntr_ref.sorted.vcf.gz | grep -v "^#" | wc -l
+        bcftools view  ~{outfile} | grep -v "^#" | awk '$3 ~ /chr[0-9]*_[0-9]*$/{print}' | wc -l
     >>>
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
 	memory: mem + "GB"
-	disks: "local-disk " + mem + " SSD"
+	disks: "local-disk " + mem*2 + " SSD"
+        preemptible: 1
     }
 
     output {
-    File outvcf = "vntr_ref.sorted.vcf.gz"
-    File outvcf_index = "vntr_ref.sorted.vcf.gz.tbi"
+    File outvcf = "~{outfile}"
+    File outvcf_index = "~{outfile}.tbi"
+  }
+}
+
+task add_tags {
+    input {
+      File vcf
+      File vcf_index
+      String annotation_vcf
+      String annotation_vcf_index
+      Int mem
+    }
+
+   String basename = basename(vcf, ".vcf.gz")
+   String outfile="~{basename}.annotate.vcf.gz"
+
+   command <<<
+       bcftools annotate -Oz -a ~{annotation_vcf} -c CHROM,POS,VID,RU ~{vcf} > ~{outfile}
+       tabix -p vcf ~{outfile}
+   >>>
+
+    runtime {
+        docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
+	memory: mem + "GB"
+	disks: "local-disk " + mem + " SSD"
+        preemptible: 1
+    }
+
+    output {
+    File outvcf = "~{outfile}"
+    File outvcf_index = "~{outfile}.tbi"
   }
 }

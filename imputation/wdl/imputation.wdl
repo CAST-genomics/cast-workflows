@@ -11,14 +11,12 @@ workflow imputation {
         String out_prefix
         String GOOGLE_PROJECT = ""
         String chrom
-        Boolean skip_subset_vcf
         Int? mem
         Int? window_size
         Int? overlap
         File samples_file
 	File regions_file
     }
-    # skip_subset_vcf is deprecated and should be removed
 
     call subset_vcf {
         input:
@@ -46,15 +44,18 @@ workflow imputation {
           window_size=window_size,
           overlap=overlap
     }
+
     call sort_index_beagle {
         input :
             vcf=beagle.outfile,
             mem=mem
     }
+
     output {
         File outfile = sort_index_beagle.outvcf
         File outfile_index = sort_index_beagle.outvcf_index
     }
+
     meta {
       description: "Run Beagle on a subset of samples on a single chromesome with default parameters"
     }
@@ -97,8 +98,7 @@ task subset_vcf {
 	memory: mem + "GB"
         #bootDiskSizeGb: mem
 	disks: "local-disk " + mem + " SSD"
-        maxRetries: 2
-        preemptible: 2
+        preemptible: 1
     }
 
     output {
@@ -122,6 +122,7 @@ task index_vcf {
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
+        preemptible: 1
     }
 
     output {
@@ -179,6 +180,8 @@ task sort_index_beagle {
     String basename = basename(vcf, ".vcf.gz")
 
     command <<<
+        set -e
+
         df -h /cromwell_root
         echo "Sorting and compressing"
         zcat ~{vcf} | vcf-sort | bgzip -c > ~{basename}.sorted.vcf.gz
@@ -196,7 +199,8 @@ task sort_index_beagle {
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
 	memory: mem*2 + "GB"
-	disks: "local-disk " + mem*2 + " SSD"
+	disks: "local-disk " + mem*4 + " SSD"
+        preemptible: 1
     }
 
     output {
@@ -204,3 +208,4 @@ task sort_index_beagle {
     File outvcf_index = "${basename}.sorted_TR.vcf.gz.tbi"
   }
 }
+
