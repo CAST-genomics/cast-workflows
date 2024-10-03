@@ -144,20 +144,11 @@ def run_single_batch(args, samples_files):
 	json_dict[wdl_workflow + ".out_prefix"] = args.name
 	json_dict[wdl_workflow + ".GOOGLE_PROJECT"] = project
 	json_dict[wdl_workflow + ".mem"] = args.mem
-	json_dict[wdl_workflow + ".vid"] = args.vid
-	json_dict[wdl_workflow + ".motif"] = args.motif
 	json_dict[wdl_workflow + ".chrom"] = args.chrom
 	json_dict[wdl_workflow + ".window_size"] = args.window
 	json_dict[wdl_workflow + ".overlap"] = args.overlap
 	json_dict[wdl_workflow + ".samples_files"] = samples_files
 	json_dict[wdl_workflow + ".regions_file"] = args.regions_file
-	#json_dict[wdl_workflow + ".GCS_OAUTH_TOKEN"] = token
-	if args.subset_vcf_path is not None:
-		#json_dict[wdl_workflow + ".subset_vcf_path"] = args.subset_vcf_path
-		json_dict[wdl_workflow + ".skip_subset_vcf"] = "true"
-	else:
-		#json_dict[wdl_workflow + ".subset_vcf_path"] = ""
-		json_dict[wdl_workflow + ".skip_subset_vcf"] = "False"
 
 
 	# Convert to json and save as a file
@@ -168,8 +159,8 @@ def run_single_batch(args, samples_files):
 
 	# Set up json options
 	json_options_dict = {"jes_gcs_root": output_path}
-	json_options_dict = {"call-caching.enabled": "false"}
-	json_options_dict = {"callCaching.allowResultReuse": "false"}
+	#json_options_dict = {"call-caching.enabled": "false"}
+	#json_options_dict = {"callCaching.allowResultReuse": "false"}
 	json_options_file = args.name+".options.aou.json"
 	with open(json_options_file, "w") as f:
 		json.dump(json_options_dict, f, indent=4)
@@ -224,12 +215,8 @@ def get_samples_file(samples_df, batch_idx, id_column_name="person_id"):
 def main():
 	parser = argparse.ArgumentParser(__doc__)
 	parser.add_argument("--name", help="Name of the TR job", required=True, type=str)
-	parser.add_argument("--vid", help="VID for the VNTR we work with", required=True, type=int)
-	parser.add_argument("--motif", help="Motif for the VNTR we work with", required=True, type=str)
 	parser.add_argument("--vcf", help="Name of the genotype vcf file", required=True, type=str)
 	parser.add_argument("--ref-panel", help="File id of ref genome", type=str)
-	parser.add_argument("--subset-vcf-path", help="Path to the pre-computed subset_vcf file." + \
-                            "Providing the path will skip the subset_vcf step.", type=str)
 	parser.add_argument("--mem", help="Specify run memory ", type=int, required=False, default=32)
 	parser.add_argument("--map", help="Path to the genetic map file", required=True, type=str)
 	parser.add_argument("--chrom", help="Specify target chromosome ", type=str, required=True)

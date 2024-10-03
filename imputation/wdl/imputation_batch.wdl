@@ -13,10 +13,6 @@ workflow imputation_batch {
         String out_prefix
         String GOOGLE_PROJECT
         String chrom
-        #String subset_vcf_path
-        Boolean skip_subset_vcf
-        Int vid
-        String motif
         Int? mem
         Int? window_size
         Int? overlap
@@ -25,9 +21,11 @@ workflow imputation_batch {
        }
        scatter (i in range(246)) {
                #File samples_file = samples_files[i]
-               String vcf_file="~{vcf}/chr15_batch~{i+1}.vcf.gz"
-               String vcf_index_file="~{vcf_file}.tbi"
+               # Samples file is no longer used because we are taking all the samples
+               # in each downloaded batch.
                File samples_file=samples_files[0]
+               String vcf_file="~{vcf}/~{chrom}_batch~{i+1}.vcf.gz"
+               String vcf_index_file="~{vcf_file}.tbi"
                call imputation_workflow.imputation as imputation {
                  input:
                     vcf=vcf_file,
@@ -39,8 +37,6 @@ workflow imputation_batch {
                     out_prefix=out_prefix,
                     GOOGLE_PROJECT=GOOGLE_PROJECT,
                     chrom=chrom,
-                    #subset_vcf_path=subset_vcf_path,
-                    skip_subset_vcf=skip_subset_vcf,
                     mem=mem,
                     window_size=window_size,
                     overlap=overlap,
@@ -58,14 +54,32 @@ workflow imputation_batch {
         call sort_index {
             input:
                 vcf=merge_outputs.merged_vcfs,
-                vid=vid,
-                motif=motif,
                 mem=mem*2
         }
 
+        call add_tags {
+            input:
+                vcf=sort_index.sorted_vcf,
+                vcf_index=sort_index.sorted_vcf_index,
+                annotation_vcf=ref_panel,
+                annotation_vcf_index=ref_panel_index,
+                mem=mem,
+        }
+    
+        call annotaTR {
+            input:
+	        vcf=add_tags.outvcf,
+	        vcf_index=add_tags.outvcf_index,
+	        ref_vcf=ref_panel,
+	        ref_index=ref_panel_index,
+	        out_prefix=out_prefix,
+                mem=mem,
+        }
+
         output {
-            File merged_vcf = sort_index.sorted_vcf
-            File merged_vcf_index = sort_index.sorted_vcf_index
+            File outfile_pgen = annotaTR.pgen
+            File outfile_psam = annotaTR.psam
+            File outfile_pvar = annotaTR.pvar
         }
 
         meta {
@@ -76,26 +90,13 @@ workflow imputation_batch {
 task sort_index {
     input {
         File vcf
-        Int vid
-        String motif
         Int? mem
     }
     String out_prefix = "merged_samples.sorted"
-    String sorted_prefix = "merged_samples_pre_reheader"
     command <<<
+        set -e
         echo "Sorting vcf file"
-        bcftools sort -Oz ~{vcf} > ~{sorted_prefix}.vcf.gz && tabix -p vcf ~{sorted_prefix}.vcf.gz
-        echo "Updating the header"
-        bcftools view -h ~{sorted_prefix}.vcf.gz | grep "^##" > header.txt
-        echo "##source=adVNTR ver. 1.5.0" >> header.txt
-        echo '##INFO=<ID=VID,Number=1,Type=Integer,Description="VNTR id in the VNTR database">' >> header.txt
-        echo '##INFO=<ID=RU,Number=1,Type=String,Description="Repeat unit or consensus motif of the VNTR">' >> header.txt
-        bcftools view -h ~{sorted_prefix}.vcf.gz | grep -v "^##" >> header.txt
-        bcftools reheader -h header.txt ~{sorted_prefix}.vcf.gz > ~{sorted_prefix}_rh.vcf.gz
-        echo "Adding VID info field"
-        zcat ~{sorted_prefix}_rh.vcf.gz | sed 's/END=/VID=~{vid};RU=~{motif};END=/g' > ~{sorted_prefix}_w_vid.vcf
-        bcftools view -Oz ~{sorted_prefix}_w_vid.vcf > ~{out_prefix}.vcf.gz
-        tabix -p vcf ~{out_prefix}.vcf.gz
+        bcftools sort -Oz ~{vcf} > ~{out_prefix}.vcf.gz && tabix -p vcf ~{out_prefix}.vcf.gz
     >>>
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
@@ -118,17 +119,81 @@ task merge_outputs {
     String out_prefix = "merged_samples"
 
     command <<<
-        touch ~{sep=' ' individual_vcfs}
-        bcftools merge -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz
+        set -e
+        touch ~{sep=' ' individual_vcf_indexes}
+        bcftools merge --merge id -Oz ~{sep=' ' individual_vcfs} > ~{out_prefix}.vcf.gz
     >>>
-        # TODO: Work with the -m flag
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-	memory: mem + "GB"
-	disks: "local-disk " + mem + " SSD"
-        maxRetries: 2
+	memory: mem*4 + "GB"
+	disks: "local-disk " + mem*4 + " SSD"
     }
     output {
         File merged_vcfs = "~{out_prefix}.vcf.gz"
+    }
+}
+
+task add_tags {
+    input {
+      File vcf
+      File vcf_index
+      File annotation_vcf
+      File annotation_vcf_index
+      Int? mem
+    }
+
+   String basename = basename(vcf, ".vcf.gz")
+   String outfile="~{basename}.annotate.vcf.gz"
+
+   command <<<
+       set -e
+       touch ~{vcf_index} ~{annotation_vcf_index}
+       bcftools annotate -Oz -a ~{annotation_vcf} -c CHROM,POS,VID,RU ~{vcf} > ~{outfile}
+       tabix -p vcf ~{outfile}
+   >>>
+
+    runtime {
+        docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
+	memory: mem + "GB"
+        #preemptible: 1
+    }
+
+    output {
+    File outvcf = "~{outfile}"
+    File outvcf_index = "~{outfile}.tbi"
+  }
+}
+
+task annotaTR {
+    input {
+        File vcf 
+        File vcf_index
+        File ref_vcf
+        File ref_index
+        String out_prefix
+        Int? mem
+    }
+    
+    command <<<
+        set -e
+        annotaTR --vcf ~{vcf} \
+                 --ref-panel ~{ref_vcf} \
+                 --out ~{out_prefix}_annotated \
+                 --vcftype advntr \
+                 --outtype pgen \
+                 --dosages bestguess_norm \
+    >>>
+
+    runtime {
+        docker:"gcr.io/ucsd-medicine-cast/trtools-6.0.2:latest"
+        disks: "local-disk ~{mem} SSD"
+        memory: mem + "GB"
+        preemptible: 1
+    }
+
+    output {
+        File pgen = "${out_prefix}_annotated.pgen"
+        File psam = "${out_prefix}_annotated.psam"
+        File pvar = "${out_prefix}_annotated.pvar"
     }
 }
