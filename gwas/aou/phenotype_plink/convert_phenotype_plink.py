@@ -65,7 +65,7 @@ def convert_csv_to_plink (ptfile):
 def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--phenotype", help="Phenotypes file path, or phenotype name", type=str, required=True)
-    parser.add_argument("--num-pcs", help="Number of PCs to use as covariates", type=int, default=10)
+    parser.add_argument("--num-pcs", help="Number of PCs to use as covariates", type=int, default=15)
     parser.add_argument("--ptcovars", help="Comma-separated list of phenotype-specific covariates. Default: age", type=str, default="age")
     parser.add_argument("--sharedcovars", help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male", type=str, default="sex_at_birth_Male")
 
