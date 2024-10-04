@@ -149,6 +149,8 @@ def main():
                                       "as opposed to LOINC. Only physical measurements (e.g. height) " + \
                                       "are in PPI.",
                                       action="store_true", default=False)
+    parser.add_argument("--snomed", help="Whether or not thhe phenotype is from the SNOMED vocab, including diseases.",
+                                      action="store_true", default=False)
     parser.add_argument("--outlier-sd", help="filter samples with phenotype values exceeding this number of SDs",
                                         type=int, required=False)
 
@@ -157,9 +159,12 @@ def main():
 
     # Set up dataframes
     demog = SQLToDF(aou_queries.demographics_sql)
-    ptdata = SQLToDF(aou_queries.ConstructTraitSQL(args.concept_id, args.ppi))
-    print("units:", ptdata["unit_concept_name"].unique())
-    print("values: ", ptdata["value_as_number"].unique())
+    if args.snomed:
+        ptdata = SQLToDF(aou_queries.ConstructSnomedSQL(args.concept_id))
+        ptdata.to_csv(args.phenotype + "_phenocovar.csv", index=False)
+        return
+    else:
+        ptdata = SQLToDF(aou_queries.ConstructTraitSQL(args.concept_id, args.ppi))
     data = pd.merge(ptdata, demog, on="person_id", how="inner")
     MSG("After merge, have %s data points"%data.shape[0])
 
@@ -176,6 +181,8 @@ def main():
     # Filtering
     data.dropna(axis=0, subset=['value_as_number'],inplace=True)
     MSG("After filter NA, have %s data points"%data.shape[0])
+    print("units:", ptdata["unit_concept_name"].unique())
+    print("values: ", ptdata["value_as_number"].unique())
     MSG("  Allowable units: %s"%str(aou_queries.GetUnits(args.units)))
     MSG("  Unique units observed: %s"%(str(set(data["unit_concept_name"]))))
     data = data[data["unit_concept_name"].isin(aou_queries.GetUnits(args.units))]

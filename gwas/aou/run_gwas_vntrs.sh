@@ -6,16 +6,14 @@ chr="chr11"
 
 ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
 
+for samples in "samples/passing_samples_v7.1.csv" "samples/AFR_BLACK.csv"; do
 
-samples="samples/passing_samples_v7.1.csv"
-#samples="samples/EUR_WHITE.csv"
-#samples="samples/AFR_BLACK.csv"
+  samples_prefix=$(basename $samples | sed 's/.csv//g')
+  echo "Samples $samples Samples_prefix: $samples_prefix"
+  summary="summary_gwas_${samples_prefix}_${chr}.txt"
 
-samples_prefix=$(basename $samples | sed 's/.csv//g')
-echo "Samples $samples Samples_prefix: $samples_prefix"
-
-echo "" > summary_gwas.txt
-for phenotype in $(tail -n +2 phenotypes_manifest.csv  | cut -d, -f1); do
+  echo "" > $summary
+  for phenotype in $(tail -n +2 phenotypes_manifest.csv  | cut -d, -f1); do
      echo "Running gwas for $phenotype"
      ./aou_gwas.py --phenotype $phenotype \
            --num-pcs 10 \
@@ -24,13 +22,14 @@ for phenotype in $(tail -n +2 phenotypes_manifest.csv  | cut -d, -f1); do
            --samples $samples \
            --norm quantile \
            --is-imputed \
-	   --outdir outputs/${chr} \
+           --outdir outputs/${chr} \
            --plot
      most_significant_hit=$(tail -n +4 outputs/${chr}/${phenotype}_associaTR_${samples_prefix}.gwas.tab | cut -f6 | sort -g  | awk NF | head -n 1)
-     echo "most_significant_hit for phenotype $phenotype is $most_significant_hit" >> summary_gwas.txt
+     echo "most_significant_hit for phenotype $phenotype is $most_significant_hit" >> $summary
      echo "----------- most_significant_hit for phenotype $phenotype is $most_significant_hit"
-exit 0
+  done
 done
+exit 0
 
 
 # Running associatr

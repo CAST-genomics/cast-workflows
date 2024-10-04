@@ -273,3 +273,66 @@ def ConstructTraitSQL(concept_id, ppi):
             `""" + os.environ["WORKSPACE_CDR"] + """.concept` m_source_concept 
                 ON measurement.measurement_source_concept_id = m_source_concept.concept_id"""
 
+def ConstructSnomedSQL(concept_id):
+
+    return  """
+    SELECT
+        person.person_id,
+        person.gender_concept_id,
+        p_gender_concept.concept_name as gender,
+        person.birth_datetime as date_of_birth,
+        person.race_concept_id,
+        p_race_concept.concept_name as race,
+        person.ethnicity_concept_id,
+        p_ethnicity_concept.concept_name as ethnicity,
+        person.sex_at_birth_concept_id,
+        p_sex_at_birth_concept.concept_name as sex_at_birth
+    FROM
+        `""" + os.environ["WORKSPACE_CDR"] + """.person` person
+    LEFT JOIN
+        `""" + os.environ["WORKSPACE_CDR"] + """.concept` p_gender_concept
+            ON person.gender_concept_id = p_gender_concept.concept_id
+    LEFT JOIN
+        `""" + os.environ["WORKSPACE_CDR"] + """.concept` p_race_concept
+            ON person.race_concept_id = p_race_concept.concept_id
+    LEFT JOIN
+        `""" + os.environ["WORKSPACE_CDR"] + """.concept` p_ethnicity_concept
+            ON person.ethnicity_concept_id = p_ethnicity_concept.concept_id
+    LEFT JOIN
+        `""" + os.environ["WORKSPACE_CDR"] + """.concept` p_sex_at_birth_concept
+            ON person.sex_at_birth_concept_id = p_sex_at_birth_concept.concept_id
+    WHERE
+        person.PERSON_ID IN (SELECT
+            distinct person_id
+        FROM
+            `""" + os.environ["WORKSPACE_CDR"] + """.cb_search_person` cb_search_person
+        WHERE
+            cb_search_person.person_id IN (SELECT
+                criteria.person_id
+            FROM
+                (SELECT
+                    DISTINCT person_id, entry_date, concept_id
+                FROM
+                    `""" + os.environ["WORKSPACE_CDR"] + """.cb_search_all_events`
+                WHERE
+                    (concept_id IN(SELECT
+                        DISTINCT c.concept_id
+                    FROM
+                        `""" + os.environ["WORKSPACE_CDR"] + """.cb_criteria` c
+                    JOIN
+                        (SELECT
+                            CAST(cr.id as string) AS id
+                        FROM
+                            `""" + os.environ["WORKSPACE_CDR"] + """.cb_criteria` cr
+                        WHERE
+                            concept_id IN (""" + concept_id + """)
+                            AND full_text LIKE '%_rank1]%'      ) a
+                            ON (c.path LIKE CONCAT('%.', a.id, '.%')
+                            OR c.path LIKE CONCAT('%.', a.id)
+                            OR c.path LIKE CONCAT(a.id, '.%')
+                            OR c.path = a.id)
+                    WHERE
+                        is_standard = 1
+                        AND is_selectable = 1)
+                    AND is_standard = 1 )) criteria ) )"""
+

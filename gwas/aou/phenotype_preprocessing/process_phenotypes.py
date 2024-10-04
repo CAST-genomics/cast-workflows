@@ -67,7 +67,7 @@ for index, row in ptdata.iterrows():
     outfile = row["phenotype"]+"_phenocovar.csv"
     gcsfile = os.path.join(os.environ["WORKSPACE_BUCKET"], "phenotypes", outfile)
     RunCmd(cmd)
-    UploadGCS(outfile, gcsfile)
+    #UploadGCS(outfile, gcsfile)
     numsamples = len(open(outfile, "r").readlines())-1
     outitems = [row["phenotype"], row["concept_id"], \
     	row["units"], row["outlier_sd"], row["min"], row["max"], row["drugcovars"], \
