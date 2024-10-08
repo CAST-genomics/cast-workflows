@@ -150,7 +150,6 @@ task beagle {
         java -Xmx~{mem}g -jar /beagle.jar \
             gt=~{vcf} \
             ap=true \
-            gp=true \
             ref=~{ref_panel} \
             window=~{window_size} \
             overlap=~{overlap} \
