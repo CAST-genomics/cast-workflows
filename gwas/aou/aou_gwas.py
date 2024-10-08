@@ -295,6 +295,15 @@ def print_stats(data, locus):
     print("median genotype at samples_w_min_height: ", samples_w_min_height[locus].median())
     print("median genotype at samples_w_max_height: ", samples_w_max_height[locus].median())
 
+def load_snp_gwas_df(filename):
+    snp_data = pd.read_csv(filename)
+    print("Num snp variants loaded: ", len(snp_data))
+    snp_data["POS"] = snp_data["POS"].astype(int)
+    snp_data = snp_data.rename(columns={"POS": "pos",
+                     "Pvalue_log10": "-log10pvalue",
+                     "CHR": "chrom"})
+    return snp_data
+
 def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--phenotype", help="Phenotypes file path, or phenotype name", type=str, required=True)
@@ -311,6 +320,8 @@ def main():
                                               "each line should include the " + \
                                               "chromosome, start coordinate and label(gene).",
                                               type=str)
+    parser.add_argument("--snp-gwas-file", help="File where SNP gwas dataframe was stored from the "+ \
+                                                "all by all dataset")
     parser.add_argument("--plot", help="Make a Manhattan plot", action="store_true")
     parser.add_argument("--norm", help="Normalize phenotype either quantile or zscore", type=str)
     parser.add_argument("--norm-by-sex",
@@ -343,6 +354,10 @@ def main():
         ERROR("Must specify --tr-vcf for associaTR")
     if args.norm_by_sex and args.norm is None:
         ERROR("Must specify --norm if using --norm-by-sex")
+
+    # Load SNP gwas
+    if args.snp_gwas_file is not None:
+        snp_gwas = load_snp_gwas_df(args.snp_gwas_file)
 
     # Get covarlist
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
@@ -383,6 +398,7 @@ def main():
             os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
     samples = pd.read_csv(sampfile)
     samples["person_id"] = samples["person_id"].apply(str)
+
     # Set cohort name which is later used to name output files
     cohort = GetCohort(sampfile)
     
@@ -456,7 +472,7 @@ def main():
             #runner.gwas = runner.gwas.sort(['chrom', 'pos']).reset_index(drop=True)
 
 
-        PlotManhattan(runner.gwas, outpath+".manhattan.png",
+        PlotManhattan(runner.gwas, snp_gwas, outpath+".manhattan.png",
                       annotate=annotate,
                       p_value_threshold=p_value_threshold)
         PlotQQ(runner.gwas, outpath+".qq.png")
