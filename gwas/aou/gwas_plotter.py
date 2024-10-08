@@ -77,19 +77,34 @@ def annotate_points(ax, gwas):
         locus = gwas[(gwas["chrom"] == chrom) & \
                  (gwas["pos"] == int(position))]
         if len(locus) > 0:
-            x = locus["ind"].values[0]
+            x = locus["pos"].values[0]
             y = locus["-log10pvalue"].values[0]
             ax.text(x=x, y=y, s=label, fontsize="medium")
 
-def PlotManhattan(gwas, outpath, annotate=False,
+def PlotManhattan(gwas, snp_gwas, outpath, annotate=False,
                 p_value_threshold=-np.log10(5*10**-8),
                 extra_points=None
                 ):
-    gwas["ind"] = range(gwas.shape[0])
     num_points = gwas.shape[0]
-    plot = sns.relplot(data=gwas, x="ind", y="-log10pvalue", \
-        s=30, aspect=4, linewidth=0, hue="chrom", palette="tab10", legend=None)
-    chrom_df = gwas.groupby("chrom")["ind"].median()
+    hue = "chrom"
+    if snp_gwas is not None:
+        # Combine two dataframes into one, with source indicated in a new column.
+        columns = ["pos", "-log10pvalue", "chrom"]
+        gwas = gwas[columns]
+        gwas["variant"] = "VNTR"
+        gwas["plot_size"] = 60
+        snp_gwas = snp_gwas[columns]
+        snp_gwas["variant"] = "SNP"
+        snp_gwas["plot_size"] = 30
+        print("gwas shape", gwas.shape)
+        print("snp_gwas shape", snp_gwas.shape)
+        gwas = pd.concat([gwas, snp_gwas])
+        print("combined gwas shape", gwas.shape)
+        hue = "variant"
+    plot = sns.relplot(data=gwas, x="pos", y="-log10pvalue",
+                size="plot_size", aspect=4, linewidth=0, hue=hue, palette="tab10",
+                )
+    chrom_df = gwas.groupby("chrom")["pos"].median()
 
     if extra_points and num_points > 0 and max(gwas['-log10pvalue'].dropna()):
         for chrom, pos, p_value, label in extra_points:
