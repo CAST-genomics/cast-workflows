@@ -1,13 +1,13 @@
 #!/bin/bash
 
 aou_220k_imputed="../../imputation/wdl/data/imputed_p_g_vntrs_srwgs_sr_ml_filter.sorted.annotated.vcf.gz"
-#aou_220k_imputed="../../imputation/wdl/data/chr_15_imputed_rh.sorted.annotate.vcf.gz"
+#aou_220k_imputed="../../imputation/wdl/data/chr_11_imputed_rh.sorted.annotate.vcf.gz"
 chr="chr15"
 
 ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
 
-for samples in "samples/passing_samples_v7.1.csv" "samples/AFR_BLACK.csv"; do
-
+#for samples in "samples/passing_samples_v7.1.csv" "samples/AFR_BLACK.csv"; do
+  samples="samples/passing_samples_v7.1.csv"
   samples_prefix=$(basename $samples | sed 's/.csv//g')
   echo "Samples $samples Samples_prefix: $samples_prefix"
   summary="summary_gwas_${samples_prefix}_${chr}_v2.txt"
@@ -15,9 +15,21 @@ for samples in "samples/passing_samples_v7.1.csv" "samples/AFR_BLACK.csv"; do
 
   echo "" > $summary
   for phenotype in $(tail -n +2 phenotypes_manifest.csv  | cut -d, -f1); do
-     phenotype="red_blood_cell_distribution_width"
-     # snp gwas for red blood cell distribution width
-     snp_gwas_file="data/all_by_all/df_dump_${chr}_3019897.csv"
+     #phenotype="red_blood_cell_distribution_width"
+     #snp_gwas_file="data/all_by_all/df_dump_${chr}_3019897.csv"
+     
+     #phenotype="haematocrit"
+     #snp_gwas_file="data/all_by_all/df_dump_${chr}_3023314.csv"
+
+     #phenotype="mean_platelet_volume"
+     #snp_gwas_file="data/all_by_all/df_dump_${chr}_3043111.csv"
+     
+     #phenotype="alkaline_phosphatase"
+     #snp_gwas_file="data/all_by_all/df_dump_${chr}_3035995.csv"
+     
+     phenotype="urea"
+     snp_gwas_file="data/all_by_all/df_dump_${chr}_3013682.csv"
+
      echo "Running gwas for $phenotype"
      ./aou_gwas.py --phenotype $phenotype \
            --num-pcs 10 \
@@ -32,9 +44,9 @@ for samples in "samples/passing_samples_v7.1.csv" "samples/AFR_BLACK.csv"; do
      most_significant_hit=$(tail -n +4 outputs/${chr}/${phenotype}_associaTR_${samples_prefix}.gwas.tab | cut -f6 | sort -g  | awk NF | head -n 1)
      echo "most_significant_hit for phenotype $phenotype is $most_significant_hit" >> $summary
      echo "----------- most_significant_hit for phenotype $phenotype is $most_significant_hit"
-     exit 0
+    exit 0
   done
-done
+#done
 exit 0
 
 

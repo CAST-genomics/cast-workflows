@@ -356,6 +356,7 @@ def main():
         ERROR("Must specify --norm if using --norm-by-sex")
 
     # Load SNP gwas
+    snp_gwas = None
     if args.snp_gwas_file is not None:
         snp_gwas = load_snp_gwas_df(args.snp_gwas_file)
 
