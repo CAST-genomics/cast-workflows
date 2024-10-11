@@ -110,7 +110,6 @@ def main():
     parser.add_argument("--MAF", help="Apply minor allele frequency QC", type=float, default=0.01)
     parser.add_argument("--HWE", help="Apply HWE p-value cutoff QC", type=float, default=1e-100)
     parser.add_argument("--GQ", help="Apply minimun genotype score QC", type=int, default=20)
-    parser.add_argument("--beagle-dosages",help="Apply --bealge-dosages to associator, default : false",action="store_true")
     args = parser.parse_args()
  
     # Set up paths
@@ -186,7 +185,7 @@ def main():
         runner = HailRunner(data, region=args.region, covars=covars, sample_call_rate=args.sample_call_rate, variant_call_rate=args.variant_call_rate, MAF=args.MAF, HWE=args.HWE, GQ=args.GQ)
     elif args.method == "associaTR":
         from associatr_runner import AssociaTRRunner
-        runner = AssociaTRRunner(data, args.tr_vcf, region=args.region, covars=covars,beagle_dosages=args.beagle_dosages)
+        runner = AssociaTRRunner(data, args.tr_vcf, region=args.region, covars=covars)
     else:
         ERROR("GWAS method %s not implemented" % args.method)
 
