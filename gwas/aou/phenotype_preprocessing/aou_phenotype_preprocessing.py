@@ -169,26 +169,30 @@ def main():
 
     if args.snomed:
         ptdata = SQLToDF(aou_queries.ConstructSnomedSQL(args.concept_id))
-        print("ptdata columns: ", ptdata.columns)
         #ptdata.rename({:"phenotype"}, inplace=True, axis=1)
         data = pd.merge(ptdata, demog, on="person_id", how="inner")
         data = pd.merge(data, samples)
         MSG("After filter samples, have %s data points"%data.shape[0])
-        print("data columns:", data.columns)
         data["age"] = data["condition_start_datetime"].dt.year - data["date_of_birth"].dt.year
         data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
-        data[["person_id",
-       'person_id', 'condition_concept_id', 'standard_concept_name',
-       'standard_concept_code', 'standard_vocabulary',
-       'condition_start_datetime', 'condition_end_datetime',
-       'condition_type_concept_id', 'condition_type_concept_name',
-       'stop_reason', 'visit_occurrence_id', 'visit_occurrence_concept_name',
-       'condition_source_value', 'condition_source_concept_id',
-       'source_concept_name', 'source_concept_code', 'source_vocabulary',
-       'condition_status_source_value', 'condition_status_concept_id',
-       'condition_status_concept_name',
-              "age", "sex_at_birth_Male"]].to_csv(args.phenotype+"_phenocovar.csv",
-                index=False, sep="\t")
+        pheno_df = data[["person_id", "condition_concept_id", "age", "sex_at_birth_Male"]].copy()
+        pheno_df["id"] = pheno_df["person_id"]
+        pheno_df["has_t2d"] = data["condition_concept_id"].apply(lambda x: 1 if int(x) in [4193704, 201826] else 0)
+        # To double check the sex_at_birth_Male is the same for all entries in the same group ID
+        #print(pheno_df.groupby(["id"]).sex_at_birth_Male.nunique().eq(1).sum())
+        pheno_df = pheno_df.groupby(["id"]).agg({"person_id": max,
+                                                 "has_t2d": max,
+                                                 "age": min,
+                                                 "sex_at_birth_Male": max})
+        pheno_df = pheno_df.rename(columns={"has_t2d": "phenotype"})
+        #data = pd.merge(data, pheno_df, on="person_id", how="inner")
+        data = pheno_df
+        print("Number of rows with snomed phenotype true: ", len(data[data["phenotype"] == 1]))
+        print("Unique ids with snomed phenotype true: ", len(data[data["phenotype"] == 1]["person_id"].unique()))
+        data[['person_id', 'phenotype',
+              "age", "sex_at_birth_Male"]].to_csv(
+                    args.phenotype+"_phenocovar.csv",
+                    index=False, sep=",")
         return
     else:
         ptdata = SQLToDF(aou_queries.ConstructTraitSQL(args.concept_id, args.ppi))
