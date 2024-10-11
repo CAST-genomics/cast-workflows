@@ -301,7 +301,7 @@ task add_tags {
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
 	memory: mem + "GB"
-	disks: "local-disk " + mem + " SSD"
+	disks: "local-disk " + mem*2 + " SSD"
         preemptible: 1
     }
 

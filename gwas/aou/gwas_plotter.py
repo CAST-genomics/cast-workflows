@@ -81,28 +81,14 @@ def annotate_points(ax, gwas):
             y = locus["-log10pvalue"].values[0]
             ax.text(x=x, y=y, s=label, fontsize="medium")
 
-def PlotManhattan(gwas, snp_gwas, outpath, annotate=False,
+def PlotManhattan(gwas, outpath,
+                hue,
+                annotate=False,
                 p_value_threshold=-np.log10(5*10**-8),
                 extra_points=None
                 ):
     num_points = gwas.shape[0]
-    hue = "chrom"
     size = 30
-    if snp_gwas is not None:
-        # Combine two dataframes into one, with source indicated in a new column.
-        columns = ["pos", "-log10pvalue", "chrom"]
-        gwas = gwas[columns]
-        gwas["variant"] = "VNTR"
-        #gwas["plot_size"] = 60
-        snp_gwas = snp_gwas[columns]
-        snp_gwas["variant"] = "SNP"
-        #snp_gwas["plot_size"] = 30
-        print("gwas shape", gwas.shape)
-        print("snp_gwas shape", snp_gwas.shape)
-        gwas = pd.concat([snp_gwas, gwas])
-        print("combined gwas shape", gwas.shape)
-        hue = "variant"
-        #size = "plot_size"
     plot = sns.relplot(data=gwas, x="pos", y="-log10pvalue",
                 s=30, aspect=4, linewidth=0, hue=hue, palette="tab10",
                 )
