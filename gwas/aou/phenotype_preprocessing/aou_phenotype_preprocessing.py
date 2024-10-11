@@ -156,17 +156,8 @@ def main():
 
     args = parser.parse_args()
     MSG("Processing %s"%args.phenotype)
-
     # Set up dataframes
     demog = SQLToDF(aou_queries.demographics_sql)
-    if args.snomed:
-        ptdata = SQLToDF(aou_queries.ConstructSnomedSQL(args.concept_id))
-        ptdata.to_csv(args.phenotype + "_phenocovar.csv", index=False)
-        return
-    else:
-        ptdata = SQLToDF(aou_queries.ConstructTraitSQL(args.concept_id, args.ppi))
-    data = pd.merge(ptdata, demog, on="person_id", how="inner")
-    MSG("After merge, have %s data points"%data.shape[0])
 
     # Restrict to samples we want to keep
     sampfile = args.samples
@@ -175,14 +166,41 @@ def main():
         if not os.path.isfile(sampfile):
             os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
     samples = pd.read_csv(sampfile)
-    data = pd.merge(data, samples)
-    MSG("After filter samples, have %s data points"%data.shape[0])
+
+    if args.snomed:
+        ptdata = SQLToDF(aou_queries.ConstructSnomedSQL(args.concept_id))
+        print("ptdata columns: ", ptdata.columns)
+        #ptdata.rename({:"phenotype"}, inplace=True, axis=1)
+        data = pd.merge(ptdata, demog, on="person_id", how="inner")
+        data = pd.merge(data, samples)
+        MSG("After filter samples, have %s data points"%data.shape[0])
+        print("data columns:", data.columns)
+        data["age"] = data["condition_start_datetime"].dt.year - data["date_of_birth"].dt.year
+        data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
+        data[["person_id",
+       'person_id', 'condition_concept_id', 'standard_concept_name',
+       'standard_concept_code', 'standard_vocabulary',
+       'condition_start_datetime', 'condition_end_datetime',
+       'condition_type_concept_id', 'condition_type_concept_name',
+       'stop_reason', 'visit_occurrence_id', 'visit_occurrence_concept_name',
+       'condition_source_value', 'condition_source_concept_id',
+       'source_concept_name', 'source_concept_code', 'source_vocabulary',
+       'condition_status_source_value', 'condition_status_concept_id',
+       'condition_status_concept_name',
+              "age", "sex_at_birth_Male"]].to_csv(args.phenotype+"_phenocovar.csv",
+                index=False, sep="\t")
+        return
+    else:
+        ptdata = SQLToDF(aou_queries.ConstructTraitSQL(args.concept_id, args.ppi))
+    data = pd.merge(ptdata, demog, on="person_id", how="inner")
+    data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
+    MSG("After merge, have %s data points"%data.shape[0])
+
 
     # Filtering
     data.dropna(axis=0, subset=['value_as_number'],inplace=True)
     MSG("After filter NA, have %s data points"%data.shape[0])
     print("units:", ptdata["unit_concept_name"].unique())
-    print("values: ", ptdata["value_as_number"].unique())
     MSG("  Allowable units: %s"%str(aou_queries.GetUnits(args.units)))
     MSG("  Unique units observed: %s"%(str(set(data["unit_concept_name"]))))
     data = data[data["unit_concept_name"].isin(aou_queries.GetUnits(args.units))]

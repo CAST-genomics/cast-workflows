@@ -462,18 +462,34 @@ def main():
             # no text annotation on manhattan plot for hail runner
             annotate = False
             p_value_threshold = -np.log10(5*10**-8)
-            #print("GWAS index and column")
-            #print(runner.gwas.index)
-            #print(runner.gwas.columns)
-            #added_points = {"chrom": ["chr15", "chr15"],
-            #                "pos": [88855424,88857434],
-            #                "p_value": [0.1, 0.01],
-            #                }
-            #runner.gwas = runner.gwas.append(added_points, ignore_index=True)
-            #runner.gwas = runner.gwas.sort(['chrom', 'pos']).reset_index(drop=True)
+
+        gwas = runner.gwas
+        # Combine two dataframes into one, with source indicated in a new column.
+        columns = ["chrom", "pos", "-log10pvalue"]
+        if snp_gwas is not None:
+            columns = ["chrom", "pos", "-log10pvalue"]
+            gwas = gwas[columns]
+            gwas["variant"] = "VNTR"
+            snp_gwas = snp_gwas[columns]
+            snp_gwas["variant"] = "SNP"
+            print("gwas shape", gwas.shape)
+            print("snp_gwas shape", snp_gwas.shape)
+            gwas = pd.concat([snp_gwas, gwas])
+            print("combined gwas shape", gwas.shape)
+            columns = ["variant"] + columns
+            hue = "variant"
+        else:
+            hue = "chrom"
 
 
-        PlotManhattan(runner.gwas, snp_gwas, outpath+".manhattan.png",
+        # Store significant hits
+        significant_hits = gwas[gwas["-log10pvalue"] > p_value_threshold]
+        significant_hits.sort_values(by="pos", ignore_index=True, inplace=True)
+        significant_hits = significant_hits[columns]
+        significant_hits.to_csv(outpath + ".csv", index=False)
+
+        PlotManhattan(gwas, outpath+".manhattan.png",
+                      hue=hue,
                       annotate=annotate,
                       p_value_threshold=p_value_threshold)
         PlotQQ(runner.gwas, outpath+".qq.png")

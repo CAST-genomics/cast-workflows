@@ -5,10 +5,22 @@
 # I'll have to change the query.
 
 python aou_phenotype_preprocessing.py \
+	--phenotype glucose \
+   	--concept-id 40795740 \
+   	--units "milligram per deciliter" \
+   	--range 0,300
+exit 0
+python aou_phenotype_preprocessing.py \
+	--phenotype hemoglobin_a1c \
+   	--concept-id 3004410 \
+   	--units "percent" \
+   	--range 0,100
+exit 0
+python aou_phenotype_preprocessing.py \
 	--phenotype diabetes \
    	--concept-id 201820 \
    	--units "tmp" \
-        --snomed \
+    --snomed \
    	--range 0,1
 #SNOMEDCode: 73211009
 #OMOP Concept Id: 201820
