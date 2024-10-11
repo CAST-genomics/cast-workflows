@@ -9,13 +9,14 @@ import tempfile
 import trtools.associaTR
 
 class AssociaTRRunner:
-    def __init__(self, ptcovar, trvcf, region=None, covars=[]):
+    def __init__(self, ptcovar, trvcf, region=None, covars=[],beagle_dosages):
         self.ptcovar = ptcovar
         self.pt_npy = None
         self.covar_npy = None
         self.trvcf = trvcf
         self.region = region
         self.covars = covars
+        self.beagle_dosages = beagle_dosages
         self.gwas = None
         self.method = "associaTR"
         self.setup()
@@ -42,7 +43,7 @@ class AssociaTRRunner:
         same_samples = False
         sample_list = None
         non_major_cutoff = 20
-        beagle_dosages = False
+        #beagle_dosages = False
         plotting_phenotype = None
         paired_genotype_plot = False
         plot_genotype_residuals = False
@@ -59,7 +60,7 @@ class AssociaTRRunner:
             sample_list,
             self.region,
             non_major_cutoff,
-            beagle_dosages,
+            #beagle_dosages,
             plotting_phenotype,
             paired_genotype_plot,
             plot_genotype_residuals,
