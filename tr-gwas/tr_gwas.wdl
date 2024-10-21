@@ -9,33 +9,34 @@ workflow tr_gwas {
     }
 
     ### Looping through each phenotype in the list and convert into PLINK-friendly format###
-    scatter (phenotype in phenotypes) {
-        File pheno_file = phenotype.rstrip('_phenocovar.csv')
-        call convert_phenotype {
-            input:
-                pheno= pheno_file
-        }
-        
-        ### Looping through each chromosome for each phenotype ###
-        scatter (s in range(1,23)) {
-            File pgen = "chr"+s+"_annotated.pgen"
-            File pvar = "chr"+s+"_annotated.pvar"
-            File psam = "chr"+s+"_annotated.psam"
-
-            ###Looping through ALL, EUR and AFR cohort###
-            scatter (sample in samples){
-                call run_tr_gwas{
-                    input:
-                        pgen=pgen,
-                        pvar=pvar,
-                        psam=psam,
-                        chrom = "chr"+s+"_annotated",
-                        pheno=convert_phenotype.outfile_pheno,
-                        covar=convert_phenotype.outfile_covar,
-                        sample=sample,
-                        out_prefix=pheno_file+"_chr"+s+sample+"_gwas"
-                }
+        scatter (phenotype in phenotypes) {
+            File pheno_file = phenotype.rstrip('_phenocovar.csv')
+            call convert_phenotype {
+                input:
+                    pheno= pheno_file
             }
+            
+            ### Looping through each chromosome for each phenotype ###
+            scatter (s in range(1,23)) {
+                File pgen = "chr"+s+"_annotated.pgen"
+                File pvar = "chr"+s+"_annotated.pvar"
+                File psam = "chr"+s+"_annotated.psam"
+
+                ###Looping through ALL, EUR and AFR cohort###
+                scatter (sample in samples){
+                    call run_tr_gwas{
+                        input:
+                            pgen=pgen,
+                            pvar=pvar,
+                            psam=psam,
+                            chrom = "chr"+s+"_annotated",
+                            pheno=convert_phenotype.outfile_pheno,
+                            covar=convert_phenotype.outfile_covar,
+                            sample=sample,
+                            out_prefix=pheno_file+"_chr"+s+sample+"_gwas"
+                    }
+                }
+            }    
             ###concatenating all chromosomes together 
             call concat_gwas_result{
                 input:
@@ -43,7 +44,7 @@ workflow tr_gwas {
                     out_prefix=pheno_file+"_genome_wide_"+sample+"_gwas"
             }
         }
-    }
+    
 
     output {
         File outfile =  concat_gwas_result.outfile
