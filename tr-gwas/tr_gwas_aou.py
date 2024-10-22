@@ -15,6 +15,7 @@ import os
 import subprocess
 import sys
 import glob
+from google.cloud import storage
 
 sys.path.append("../utils")
 import aou_utils
@@ -30,15 +31,15 @@ def main():
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	args = parser.parse_args()
 
-
-	bucket = os.environ.get("WORKSPACE_BUCKET")
+	storage_client = storage.Client()
+	bucket = storage_client.bucket(os.environ.get("WORKSPACE_BUCKET"))
 	# Set up workflow JSON
 	json_dict = {}
-	json_dict["tr_gwas.pgens"] = glob.glob(os.path.join(bucket,"tr_imputation/enstr-v3/results-250K/" + "*.pgen"))
-	json_dict["tr_gwas.psams"] = glob.glob(os.path.join(bucket,"tr_imputation/enstr-v3/results-250K/" + "*.psam"))
-	json_dict["tr_gwas.pvars"] = glob.glob(os.path.join(bucket,"tr_imputation/enstr-v3/results-250K/" + "*.pvar"))
-	json_dict["tr_gwas.phenotypes"] = glob.glob(os.path.join(bucket,"phenotypes/" + "*.csv"))
-	json_dict["tr_gwas.cohorts"] = glob.glob(os.path.join(bucket,"samples/" + "*.csv"))
+	json_dict["tr_gwas.pgens"] = [blob.name for blob in bucket.list_blobs(prefix="tr_imputation/enstr-v3/results-250K/", delimiter="/") if blob.name.endswith('.pgen')]
+	json_dict["tr_gwas.psams"] = [blob.name for blob in bucket.list_blobs(prefix="tr_imputation/enstr-v3/results-250K/", delimiter="/") if blob.name.endswith('.psam')]
+	json_dict["tr_gwas.pvars"] = [blob.name for blob in bucket.list_blobs(prefix="tr_imputation/enstr-v3/results-250K/", delimiter="/") if blob.name.endswith('.pvar')]
+	json_dict["tr_gwas.phenotypes"] = [blob.name for blob in bucket.list_blobs(prefix="phenotypes/", delimiter="/") if blob.name.endswith('.csv')]
+	json_dict["tr_gwas.cohorts"] = [blob.name for blob in bucket.list_blobs(prefix="samples/", delimiter="/") if blob.name.endswith('.csv')]
 	
 	
 
