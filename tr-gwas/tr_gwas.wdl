@@ -7,6 +7,7 @@ workflow tr_gwas {
         Array[File] pvars = [] 
         Array[File] phenotypes = []
         Array[File] cohorts = []
+        String GOOGLE_PROJECT = ""
       
     }
 
@@ -15,7 +16,8 @@ workflow tr_gwas {
     scatter (pheno_file in phenotypes) {      
         call convert_phenotype {
             input:
-                pheno=pheno_file
+                pheno=pheno_file,
+                GOOGLE_PROJECT=GOOGLE_PROJECT
         }
 
             scatter (cohort in cohorts) {
@@ -28,6 +30,7 @@ workflow tr_gwas {
                         covar=convert_phenotype.outfile_covar,
                         samples=cohort,
                         out_prefix="${pheno_file.basename}_${cohort}_gwas"
+                       
                 }
             }
     }   
@@ -46,9 +49,12 @@ workflow tr_gwas {
 task convert_phenotype {
     input {
         File pheno
+        String GOOGLE_PROJECT = ""
     }
 
     command <<<
+        export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         bash /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno}
     >>>
 
