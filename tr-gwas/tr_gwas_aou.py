@@ -35,9 +35,9 @@ def main():
 	bucket = storage_client.bucket(os.environ.get("WORKSPACE_BUCKET"))
 	# Set up workflow JSON
 	json_dict = {}
-	json_dict["tr_gwas.pgens"] = [blob.name for blob in bucket.list_blobs(prefix="tr_imputation/enstr-v3/results-250K/", delimiter="/") if blob.name.endswith('.pgen')]
-	json_dict["tr_gwas.psams"] = [blob.name for blob in bucket.list_blobs(prefix="tr_imputation/enstr-v3/results-250K/", delimiter="/") if blob.name.endswith('.psam')]
-	json_dict["tr_gwas.pvars"] = [blob.name for blob in bucket.list_blobs(prefix="tr_imputation/enstr-v3/results-250K/", delimiter="/") if blob.name.endswith('.pvar')]
+	json_dict["tr_gwas.pgens"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/pgen_list.txt"
+	json_dict["tr_gwas.psams"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/psam_list.txt"
+	json_dict["tr_gwas.pvars"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/pvar_list.txt"
 	json_dict["tr_gwas.phenotypes"] = [blob.name for blob in bucket.list_blobs(prefix="phenotypes/", delimiter="/") if blob.name.endswith('.csv')]
 	json_dict["tr_gwas.cohorts"] = [blob.name for blob in bucket.list_blobs(prefix="samples/", delimiter="/") if blob.name.endswith('.csv')]
 	
