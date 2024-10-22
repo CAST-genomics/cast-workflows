@@ -13,25 +13,28 @@ import json
 import os
 import subprocess
 import sys
+import glob
 
 sys.path.append("../utils")
 import aou_utils
 
 def main():
 	parser = argparse.ArgumentParser(__doc__)
-	parser.add_argument("--pgens", help="Name of the TR job", required=True, type=str)
-	parser.add_argument("--psams", help="GCP bucket with batch VCF files", type=str, required=True)
-	parser.add_argument("--pvars", help="Which chromosome to process", type=str, required=True)
-	parser.add_argument("--phenotypes", help="Number of batches. Default: -1 (all)",type=int, required=False, default=-1)
-	parser.add_argument("--cohorts", help="Number of batches. Default: -1 (all)",type=int, required=False, default=-1)
+	parser.add_argument("--pgens", help="Path to pgen files", required=True, type=str)
+	parser.add_argument("--psams", help="Path to psam files", required=True, type=str)
+	parser.add_argument("--pvars", help="Path to pvar files", required=True, type=str)
+	parser.add_argument("--phenotypes", help="Path to phenotype files",trequired=True, type=str)
+	parser.add_argument("--cohorts", help="Path to cohort files",required=True, type=str)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	args = parser.parse_args()
 
+
+	bucket = os.environ.get("WORKSPACE_BUCKET")
 	# Set up workflow JSON
 	json_dict = {}
-	json_dict["tr_gwas.pgens"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/results-250K/"
-	json_dict["tr_gwas.psams"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/results-250K/"
-	json_dict["tr_gwas.pvars"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/results-250K/"
+	json_dict["tr_gwas.pgens"] = glob.glob(os.path.join(bucket,"tr_imputation/enstr-v3/results-250K/" + "*.pgen"))
+	json_dict["tr_gwas.psams"] = glob.glob(os.path.join(bucket,"tr_imputation/enstr-v3/results-250K/" + "*.psam"))
+	json_dict["tr_gwas.pvars"] = glob.glob(os.path.join(bucket,"tr_imputation/enstr-v3/results-250K/" + "*.pvar"))
 	json_dict["tr_gwas.phenotypes"] = os.environ.get("WORKSPACE_BUCKET") + "/phenotypes/"
 	json_dict["tr_gwas.cohorts"] = os.environ.get("WORKSPACE_BUCKET") + "/samples/"
 	
