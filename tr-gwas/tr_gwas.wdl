@@ -7,29 +7,30 @@ workflow tr_gwas {
         Array[File] pvars = [] 
         Array[File] phenotypes = []
         Array[File] cohorts = []
-        String out_prefix    
+      
     }
 
-     ### Separate workflow for each phenotype ###
-    scatter (pheno_file in phenotypes) {
+    ### Separate workflow for each phenotype ###
+
+    scatter (pheno_file in phenotypes) {      
         call convert_phenotype {
             input:
                 pheno=pheno_file
         }
-        scatter (cohort in cohorts) {
-            call run_tr_gwas {
-                input:
-                    pgens=pgens,
-                    psams=psams,
-                    pvars=pvars,
-                    pheno=convert_phenotype.outfile_pheno,
-                    covar=convert_phenotype.outfile_covar,
-                    samples=cohort,
-                    out_prefix="${pheno_file.basename}_${cohort}_gwas" # set based on cohort/phenotype. parse from filenames
-            }
-        }
-    }
 
+            scatter (cohort in cohorts) {
+                call run_tr_gwas {
+                    input:
+                        pgens=pgens,
+                        psams=psams,
+                        pvars=pvars,
+                        pheno=convert_phenotype.outfile_pheno,
+                        covar=convert_phenotype.outfile_covar,
+                        samples=cohort,
+                        out_prefix="${pheno_file.basename}_${cohort}_gwas"
+                }
+            }
+    }   
     
 
     output {
