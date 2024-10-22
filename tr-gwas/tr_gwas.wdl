@@ -55,7 +55,7 @@ task convert_phenotype {
     command <<<
         export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        bash /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno}
+        python /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno}
     >>>
 
     runtime {
@@ -63,7 +63,7 @@ task convert_phenotype {
         preemptible: 1
     }
 
-    output {
+    output {ß
        File outfile_pheno = "${pheno}_pheno_plink.txt"
        File outfile_covar = "${pheno}_covar_combined.txt"
     }
