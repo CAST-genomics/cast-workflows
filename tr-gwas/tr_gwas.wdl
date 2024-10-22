@@ -63,7 +63,7 @@ task convert_phenotype {
         preemptible: 1
     }
 
-    output {ß
+    output {
        File outfile_pheno = "${pheno}_pheno_plink.txt"
        File outfile_covar = "${pheno}_covar_combined.txt"
     }
