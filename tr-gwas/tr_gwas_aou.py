@@ -35,8 +35,9 @@ def main():
 	json_dict["tr_gwas.pgens"] = glob.glob(os.path.join(bucket,"tr_imputation/enstr-v3/results-250K/" + "*.pgen"))
 	json_dict["tr_gwas.psams"] = glob.glob(os.path.join(bucket,"tr_imputation/enstr-v3/results-250K/" + "*.psam"))
 	json_dict["tr_gwas.pvars"] = glob.glob(os.path.join(bucket,"tr_imputation/enstr-v3/results-250K/" + "*.pvar"))
-	json_dict["tr_gwas.phenotypes"] = os.environ.get("WORKSPACE_BUCKET") + "/phenotypes/"
-	json_dict["tr_gwas.cohorts"] = os.environ.get("WORKSPACE_BUCKET") + "/samples/"
+	json_dict["tr_gwas.phenotypes"] = glob.glob(os.path.join(bucket,"phenotypes/" + "*.csv"))
+	json_dict["tr_gwas.cohorts"] = glob.glob(os.path.join(bucket,"samples/" + "*.csv"))
+	
 	
 
 	# Convert to json and save as a file
