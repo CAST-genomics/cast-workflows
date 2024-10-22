@@ -8,12 +8,12 @@ Script to launch AOU TR imputation
 
 """
 
-# need to change GetFileBatches
 import argparse
 import json
 import os
 import subprocess
 import sys
+from google.cloud import storage
 
 sys.path.append("../utils")
 import aou_utils
@@ -21,22 +21,23 @@ import aou_utils
 def main():
 	parser = argparse.ArgumentParser(__doc__)
 	parser.add_argument("--name", help="name of the run", required=True, type=str)
-	#parser.add_argument("--pgens", help="Path to pgen files", required=True, type=str)
-	#parser.add_argument("--psams", help="Path to psam files", required=True, type=str)
-	#parser.add_argument("--pvars", help="Path to pvar files", required=True, type=str)
-	#parser.add_argument("--phenotypes", help="Path to phenotype files",required=True, type=str)
-	#parser.add_argument("--cohorts", help="Path to cohort files",required=True, type=str)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	args = parser.parse_args()
 
-	
+	#set up bucket
+	bucket_name = os.environ.get("WORKSPACE_BUCKET").replace("gs://", "")
+	client = storage.Client()
+	bucket = client.bucket(bucket_name)
+    # Define the gs prefix
+	gs_prefix = f"gs://{bucket_name}/"
+	pfile = "tr_imputation/enstr-v3/results-250K/"
 	# Set up workflow JSON
 	json_dict = {}
-	json_dict["tr_gwas.pgens"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/pgen_list.txt"
-	json_dict["tr_gwas.psams"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/psam_list.txt"
-	json_dict["tr_gwas.pvars"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/pvar_list.txt"
-	json_dict["tr_gwas.phenotypes"] = os.environ.get("WORKSPACE_BUCKET") + "/phenotypes/phenotype_list.txt"
-	json_dict["tr_gwas.cohorts"] = os.environ.get("WORKSPACE_BUCKET") + "/samples/sample_list.txt"
+	json_dict["tr_gwas.pgens"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.pgen')]
+	json_dict["tr_gwas.psams"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.psam')]
+	json_dict["tr_gwas.pvars"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.pvar')]
+	json_dict["tr_gwas.phenotypes"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/") if blob.name.endswith('.csv')]
+	json_dict["tr_gwas.cohorts"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="samples/") if blob.name.endswith('.csv')]
 	
 	
 
