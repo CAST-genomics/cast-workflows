@@ -4,6 +4,7 @@ Script to launch AOU TR imputation
  
 
 ./tr_gwas_aou.py 
+--name 
 
 """
 
@@ -20,11 +21,12 @@ import aou_utils
 
 def main():
 	parser = argparse.ArgumentParser(__doc__)
-	parser.add_argument("--pgens", help="Path to pgen files", required=True, type=str)
-	parser.add_argument("--psams", help="Path to psam files", required=True, type=str)
-	parser.add_argument("--pvars", help="Path to pvar files", required=True, type=str)
-	parser.add_argument("--phenotypes", help="Path to phenotype files",trequired=True, type=str)
-	parser.add_argument("--cohorts", help="Path to cohort files",required=True, type=str)
+	parser.add_argument("--name", help="name of the run", required=True, type=str)
+	#parser.add_argument("--pgens", help="Path to pgen files", required=True, type=str)
+	#parser.add_argument("--psams", help="Path to psam files", required=True, type=str)
+	#parser.add_argument("--pvars", help="Path to pvar files", required=True, type=str)
+	#parser.add_argument("--phenotypes", help="Path to phenotype files",required=True, type=str)
+	#parser.add_argument("--cohorts", help="Path to cohort files",required=True, type=str)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	args = parser.parse_args()
 
@@ -52,7 +54,7 @@ def main():
 		json.dump(json_options_dict, f, indent=4)
 
 	# Run workflow on AoU using cromwell
-	aou_utils.RunWorkflow("wdl/tr_gwas.wdl", json_file, \
+	aou_utils.RunWorkflow("tr_gwas.wdl", json_file, \
 		json_options_file, dryrun=args.dryrun)
 
 
