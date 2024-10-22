@@ -24,6 +24,12 @@ import argparse
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
 
 
+# Get token
+token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
+		capture_output=True, check=True, encoding='utf-8')
+token = str.strip(token_fetch_command.stdout)
+project = os.getenv("GOOGLE_PROJECT")
+
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
         "phenotypes", "%s_phenocovar.csv"%phenotype)
