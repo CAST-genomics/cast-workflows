@@ -24,8 +24,6 @@ import argparse
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
 project = os.getenv("GOOGLE_PROJECT")
 
-#get project
-
 
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
@@ -44,11 +42,10 @@ def GetFloatFromPC(x):
 
 
 def LoadAncestry(ancestry_pred_path):
-    #if ancestry_pred_path.startswith("gs://"):
-        #if not os.path.isfile("ancestry_preds.tsv"):
-    cmd = f"gsutil -u ${project} cp {ancestry_pred_path} ."
-    output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
-    print(output.decode("utf-8"))
+    if ancestry_pred_path.startswith("gs://"):
+        if not os.path.isfile("ancestry_preds.tsv"):
+            os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(ancestry_pred_path))
+        ancestry_pred_path = "ancestry_preds.tsv"
     #os.system("gsutil -u ${project} cp %s ."%(ancestry_pred_path))
     ancestry_pred_path = "ancestry_preds.tsv"
     ancestry = pd.read_csv(ancestry_pred_path, sep="\t")
