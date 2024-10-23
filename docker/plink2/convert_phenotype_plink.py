@@ -43,10 +43,10 @@ def GetFloatFromPC(x):
     return float(x)
 
 def LoadAncestry(ancestry_pred_path):
-    if ancestry_pred_path.startswith("gs://"):
-        if not os.path.isfile("ancestry_preds.tsv"):
-            os.system("gsutil -u ${project} cp %s ."%(ancestry_pred_path))
-        ancestry_pred_path = "ancestry_preds.tsv"
+    #if ancestry_pred_path.startswith("gs://"):
+        #if not os.path.isfile("ancestry_preds.tsv"):
+    os.system("gsutil -u ${project} cp %s ."%(ancestry_pred_path))
+    ancestry_pred_path = "ancestry_preds.tsv"
     ancestry = pd.read_csv(ancestry_pred_path, sep="\t")
     ancestry.rename({"research_id": "IID"}, axis=1, inplace=True)
     ancestry['IID'] = ancestry['IID'].astype(str)
