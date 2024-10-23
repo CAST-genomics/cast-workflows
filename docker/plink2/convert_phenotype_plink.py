@@ -24,11 +24,8 @@ import argparse
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
 
 
-# Get token
-token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
-		capture_output=True, check=True, encoding='utf-8')
-token = str.strip(token_fetch_command.stdout)
-project = os.getenv("GOOGLE_PROJECT")
+#get project
+
 
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
@@ -48,7 +45,7 @@ def GetFloatFromPC(x):
 def LoadAncestry(ancestry_pred_path):
     if ancestry_pred_path.startswith("gs://"):
         if not os.path.isfile("ancestry_preds.tsv"):
-            os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(ancestry_pred_path))
+            os.system("gsutil -u ${project} cp %s ."%(ancestry_pred_path))
         ancestry_pred_path = "ancestry_preds.tsv"
     ancestry = pd.read_csv(ancestry_pred_path, sep="\t")
     ancestry.rename({"research_id": "IID"}, axis=1, inplace=True)
@@ -77,6 +74,7 @@ def main():
 
     args = parser.parse_args()
 
+    project = os.getenv("GOOGLE_PROJECT")
     # Set up paths
     if args.phenotype.endswith(".csv"):
         ptcovar_path = args.phenotype
