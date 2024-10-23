@@ -26,8 +26,8 @@ RUN wget https://s3.amazonaws.com/plink2-assets/plink2_linux_x86_64_20241020.zip
     && rm plink2_linux_x86_64_20241020.zip
 
 # Download and install gcloud
-RUN curl -sSL https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz -o /tmp/google-cloud-sdk.tar.gz && \
-    mkdir -p /usr/local/gcloud && \
-    tar -C /usr/local/gcloud -xvf /tmp/google-cloud-sdk.tar.gz && \
-    /usr/local/gcloud/google-cloud-sdk/install.sh --quiet && \
-    rm -rf /tmp/google-cloud-sdk.tar.gz
+RUN curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz
+RUN mkdir -p /usr/local/gcloud \
+  && tar -C /usr/local/gcloud -xvf /tmp/google-cloud-sdk.tar.gz \
+  && /usr/local/gcloud/google-cloud-sdk/install.sh
+ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
