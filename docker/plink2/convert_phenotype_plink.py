@@ -22,7 +22,7 @@ import argparse
 
 
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
-
+project = os.getenv("GOOGLE_PROJECT")
 
 #get project
 
@@ -42,10 +42,14 @@ def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
     return float(x)
 
+
 def LoadAncestry(ancestry_pred_path):
     #if ancestry_pred_path.startswith("gs://"):
         #if not os.path.isfile("ancestry_preds.tsv"):
-    os.system("gsutil -u ${project} cp %s ."%(ancestry_pred_path))
+    cmd = f"gsutil -u ${project} cp {ancestry_pred_path} ."
+    output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
+    print(output.decode("utf-8"))
+    #os.system("gsutil -u ${project} cp %s ."%(ancestry_pred_path))
     ancestry_pred_path = "ancestry_preds.tsv"
     ancestry = pd.read_csv(ancestry_pred_path, sep="\t")
     ancestry.rename({"research_id": "IID"}, axis=1, inplace=True)
@@ -90,9 +94,9 @@ def main():
 
     # Set up data frame with phenotype and covars
     ancestry = LoadAncestry(ANCESTRY_PRED_PATH)
-    local_pt = DownloadPT(ptcovar_path)
+    #local_pt = DownloadPT(ptcovar_path)
 
-    plink = convert_csv_to_plink(local_pt)
+    plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
 
     plink['IID'] = plink['IID'].astype(str)
 
