@@ -46,6 +46,7 @@ def main():
 	json_dict["tr_gwas.pvars"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.pvar')]
 	json_dict["tr_gwas.phenotypes"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/") if blob.name.endswith('.csv')]
 	json_dict["tr_gwas.cohorts"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="samples/") if blob.name.endswith('.csv')]
+	json_dict["tr_gwas.GOOGLE_PROJECT"] = project
 	
 	
 
