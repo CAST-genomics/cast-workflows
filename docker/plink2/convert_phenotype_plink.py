@@ -33,8 +33,8 @@ project = os.getenv("GCS_REQUESTER_PAYS_PROJECT")
 print(f"GOOGLE_PROJECT: {project}")
 
 
-project_fetch_command = subprocess.run(['echo', '${GOOGLE_PROJECT}'], \
-    capture_output=True, check=True, encoding='utf-8')
+project_fetch_command = subprocess.run('echo $GOOGLE_PROJECT', shell=True, 
+                                       capture_output=True, check=True, encoding='utf-8')
 project_fetch = str.strip(project_fetch_command.stdout)
 print(f"GOOGLE_PROJECT_fetch: {project_fetch}")
 
@@ -117,8 +117,8 @@ def main():
     covars = pt_covars + shared_covars
 
     # Set up data frame with phenotype and covars
-    #ancestry = LoadAncestry(args.ancestry_pred_path,token,project)
-    ancestry = LoadAncestry(args.ancestry_pred_path)
+    ancestry = LoadAncestry(args.ancestry_pred_path,token,project)
+    
     print(ancestry)
     plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
     print(plink)
