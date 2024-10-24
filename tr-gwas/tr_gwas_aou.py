@@ -66,11 +66,6 @@ def main():
 	json_dict["tr_gwas.GCS_OAUTH_TOKEN"] = token
 	
 
-	# Download Ancestry Pred file
-	DownloadAncestry(args.ancestry_pred_path)
-	ancestry = os.path.basename(args.ancestry_pred_path)
-
-
 	# Convert to json and save as a file
 	json_file = args.name+".aou.json"
 	with open(json_file, "w") as f:

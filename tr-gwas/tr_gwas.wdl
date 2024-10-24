@@ -63,7 +63,7 @@ task convert_phenotype {
     >>>
 
     runtime {
-        docker:"gcr.io/ucsd-medicine-cast/plink2:latest"
+        docker:"gcr.io/ucsd-medicine-cast/plink2:latest:1"
         preemptible: 1
     }
 
