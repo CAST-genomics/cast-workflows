@@ -18,10 +18,26 @@ from google.cloud import storage
 sys.path.append("../utils")
 import aou_utils
 
+def DownloadAncestry(filename):
+	"""
+	Download a GCP path locally
+
+	Arguments
+	---------
+	filename : str
+	   GCP path
+	"""
+	cmd = "gsutil -u $GOOGLE_PROJECT cp {filename} .".format(filename=filename)
+	output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
+	print(output.decode("utf-8"))
+
+
 def main():
 	parser = argparse.ArgumentParser(__doc__)
 	parser.add_argument("--name", help="name of the run", required=True, type=str)
+	parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions",type=str, default="gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv")
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
+
 	args = parser.parse_args()
 
 
@@ -49,6 +65,11 @@ def main():
 	json_dict["tr_gwas.GOOGLE_PROJECT"] = project
 	json_dict["tr_gwas.GCS_OAUTH_TOKEN"] = token
 	
+
+	# Set up file list
+	DownloadAncestry(args.ancestry_pred_path)
+	file_list = os.path.basename(args.ancestry_pred_path)
+
 
 	# Convert to json and save as a file
 	json_file = args.name+".aou.json"
