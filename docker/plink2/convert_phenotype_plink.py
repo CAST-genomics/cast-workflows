@@ -53,8 +53,8 @@ def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
     return float(x)
 
-def LoadAncestry(ancestry_pred_path,token,project,requester_pays=True):
-    fs = gcsfs.GCSFileSystem(token=token,project=project)
+def LoadAncestry(ancestry_pred_path,token,project):
+    fs = gcsfs.GCSFileSystem(token=token,project=project,requester_pays=True)
     with fs.open(ancestry_pred_path, 'r') as file:
         ancestry =  pd.read_csv(file, sep="\t")
     #if ancestry_pred_path.startswith("gs://"):
