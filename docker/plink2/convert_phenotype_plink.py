@@ -33,10 +33,10 @@ project = os.getenv("GCS_REQUESTER_PAYS_PROJECT")
 print(f"GOOGLE_PROJECT: {project}")
 
 
-project_fetch_command = subprocess.run('echo $GOOGLE_PROJECT', shell=True, 
-                                       capture_output=True, check=True, encoding='utf-8')
-project_fetch = str.strip(project_fetch_command.stdout)
-print(f"GOOGLE_PROJECT_fetch: {project_fetch}")
+#project_fetch_command = subprocess.run('echo $GOOGLE_PROJECT', shell=True, 
+#                                       capture_output=True, check=True, encoding='utf-8')
+#project_fetch = str.strip(project_fetch_command.stdout)
+##print(f"GOOGLE_PROJECT_fetch: {project_fetch}")
 
 print("Current Environment Variables:")
 print(os.environ)  # Print all environment variables
@@ -66,8 +66,8 @@ def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
     return float(x)
 
-def LoadAncestry(ancestry_pred_path,token,project):
-    fs = gcsfs.GCSFileSystem(token=token,project=project,requester_pays=True)
+def LoadAncestry(ancestry_pred_path,token_id,project_id):
+    fs = gcsfs.GCSFileSystem(token=token_id,project=project_id,requester_pays=True)
     with fs.open(ancestry_pred_path, 'r') as file:
         ancestry =  pd.read_csv(ancestry_pred_path, sep="\t")
     #if ancestry_pred_path.startswith("gs://"):
@@ -117,11 +117,8 @@ def main():
     covars = pt_covars + shared_covars
 
     # Set up data frame with phenotype and covars
-    ancestry = LoadAncestry(args.ancestry_pred_path,token,project)
-    
-    print(ancestry)
+    ancestry = LoadAncestry(args.ancestry_pred_path,token_id=token,project_id=project)
     plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
-    print(plink)
 
     plink['IID'] = plink['IID'].astype(str)
 
