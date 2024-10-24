@@ -19,7 +19,6 @@ import subprocess
 import sys
 import csv
 import argparse
-import gcsfs
 
 
     # Get token and set up project
@@ -67,9 +66,6 @@ def GetFloatFromPC(x):
     return float(x)
 
 def LoadAncestry(ancestry_pred_path):
-    #fs = gcsfs.GCSFileSystem(token=token_id,project=project_id,requester_pays=True)
-    #with fs.open(ancestry_pred_path, 'r') as file:
-    #    ancestry =  pd.read_csv(ancestry_pred_path, sep="\t")
     if ancestry_pred_path.startswith("gs://"):
         if not os.path.isfile("ancestry_preds.tsv"):
             os.system("gsutil -u %s cp %s ."%(project,ancestry_pred_path))
