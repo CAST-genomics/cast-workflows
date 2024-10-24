@@ -21,7 +21,7 @@ import csv
 import argparse
 
 
-ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
+#ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
 
 
 
@@ -89,7 +89,7 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--phenotype", help="Phenotypes file path, or phenotype name", type=str, required=True)
     parser.add_argument("--num-pcs", help="Number of PCs to use as covariates", type=int, default=10)
-    parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions", default=ANCESTRY_PRED_PATH)
+    parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions", default="gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv")
     parser.add_argument("--ptcovars", help="Comma-separated list of phenotype-specific covariates. Default: age", type=str, default="age")
     parser.add_argument("--sharedcovars", help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male", type=str, default="sex_at_birth_Male")
     parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
@@ -111,18 +111,17 @@ def main():
 
     # Set up data frame with phenotype and covars
 
-    print (DownloadAncestry(ANCESTRY_PRED_PATH))
+    print (DownloadAncestry(args.ancestry_pred_path))
     print(DownloadPT(ptcovar_path))
-    #ancestry = LoadAncestry(DownloadAncestry(ANCESTRY_PRED_PATH))
-    #plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
+    ancestry = LoadAncestry(DownloadAncestry(args.ancestry_pred_path))
+    plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
 
-    #plink['IID'] = plink['IID'].astype(str)
+    plink['IID'] = plink['IID'].astype(str)
 
-    #data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols], 
-    # n=["IID"],how="inner")
-    #plink_pheno = plink[["FID","IID","phenotype"]]
-    #plink_pheno.to_csv(f"{args.phenotype}_pheno_plink.txt", sep="\t", index=False)
-    #data.to_csv(f"{args.phenotype}_covar_combined.txt", sep="\t", index=False)
+    data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols],n=["IID"],how="inner")
+    plink_pheno = plink[["FID","IID","phenotype"]]
+    plink_pheno.to_csv(f"{args.phenotype}_pheno_plink.txt", sep="\t", index=False)
+    data.to_csv(f"{args.phenotype}_covar_combined.txt", sep="\t", index=False)
     
     sys.exit(0)
     print(f"Done converting {args.phenotype} to plink format")
