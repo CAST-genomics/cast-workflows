@@ -22,6 +22,13 @@ import argparse
 import gcsfs
 
 
+    # Get token and set up project
+token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
+    capture_output=True, check=True, encoding='utf-8')
+token = str.strip(token_fetch_command.stdout)
+project = os.getenv("GOOGLE_PROJECT")
+print(token)
+print(project)
 
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
@@ -46,7 +53,7 @@ def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
     return float(x)
 
-def LoadAncestry(ancestry_pred_path,token,project):
+def LoadAncestry(ancestry_pred_path,token,project,requester_pays=True):
     fs = gcsfs.GCSFileSystem(token=token,project=project)
     with fs.open(ancestry_pred_path, 'r') as file:
         ancestry =  pd.read_csv(file, sep="\t")
@@ -82,13 +89,6 @@ def main():
     parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
     args = parser.parse_args()
 
-
-
-    # Get token and set up project
-    token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
-        capture_output=True, check=True, encoding='utf-8')
-    token = str.strip(token_fetch_command.stdout)
-    project = os.getenv("GOOGLE_PROJECT")
 
     # Set up paths
     if args.phenotype.endswith(".csv"):

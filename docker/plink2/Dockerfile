@@ -30,11 +30,13 @@ RUN mkdir -p /usr/local/gcloud \
   && /usr/local/gcloud/google-cloud-sdk/install.sh
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
 
-# Copy python script 
-COPY convert_phenotype_plink.py /usr/bin/
-RUN chmod +x /usr/bin/convert_phenotype_plink.py
+
 
 # Install GCSFS library
 RUN pip install gcsfs
+
+# Copy python script 
+COPY convert_phenotype_plink.py /usr/bin/
+RUN chmod +x /usr/bin/convert_phenotype_plink.py
 
 
