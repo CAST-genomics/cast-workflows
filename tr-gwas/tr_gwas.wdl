@@ -8,6 +8,7 @@ workflow tr_gwas {
         Array[File] phenotypes = []
         Array[File] cohorts = []
         String GOOGLE_PROJECT = ""
+        String GCS_OAUTH_TOKEN = ""
       
     }
 
@@ -17,7 +18,8 @@ workflow tr_gwas {
         call convert_phenotype {
             input:
                 pheno=pheno_file,
-                GOOGLE_PROJECT=GOOGLE_PROJECT
+                GOOGLE_PROJECT=GOOGLE_PROJECT,
+                GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN
         }
 
             scatter (cohort in cohorts) {
@@ -50,7 +52,9 @@ task convert_phenotype {
     input {
         File pheno
         String GOOGLE_PROJECT = ""
+        String GCS_OAUTH_TOKEN = ""
     }
+    
 
     command <<<
         export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
