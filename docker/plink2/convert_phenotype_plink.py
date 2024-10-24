@@ -23,12 +23,6 @@ import gcsfs
 
 
 
-# Get token and set up project
-token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
-	capture_output=True, check=True, encoding='utf-8')
-token = str.strip(token_fetch_command.stdout)
-project = os.getenv("GOOGLE_PROJECT")
-
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
         "phenotypes", "%s_phenocovar.csv"%phenotype)
@@ -52,7 +46,7 @@ def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
     return float(x)
 
-def LoadAncestry(ancestry_pred_path):
+def LoadAncestry(ancestry_pred_path,token,project):
     fs = gcsfs.GCSFileSystem(token=token,project=project)
     with fs.open(ancestry_pred_path, 'r') as file:
         ancestry =  pd.read_csv(file, sep="\t")
@@ -90,6 +84,13 @@ def main():
     args = parser.parse_args()
 
 
+
+    # Get token and set up project
+    token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
+        capture_output=True, check=True, encoding='utf-8')
+    token = str.strip(token_fetch_command.stdout)
+    project = os.getenv("GOOGLE_PROJECT")
+
     # Set up paths
     if args.phenotype.endswith(".csv"):
         ptcovar_path = args.phenotype
@@ -104,10 +105,7 @@ def main():
     covars = pt_covars + shared_covars
 
     # Set up data frame with phenotype and covars
-
-
-    
-    ancestry = LoadAncestry(args.ancestry_pred_path)
+    ancestry = LoadAncestry(args.ancestry_pred_path,token,project)
     print(ancestry)
     plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
     print(plink)
