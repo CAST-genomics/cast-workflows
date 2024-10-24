@@ -13,6 +13,7 @@ RUN apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get install -qqy \
 # Install Python dependencies
 RUN pip3 install pandas
 
+
 # Download and install PLINK2
 RUN wget https://s3.amazonaws.com/plink2-assets/plink2_linux_x86_64_20241020.zip \
     && unzip plink2_linux_x86_64_20241020.zip\
@@ -31,6 +32,7 @@ RUN mkdir -p /usr/local/gcloud \
   && /usr/local/gcloud/google-cloud-sdk/install.sh
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
 
-
+# Install GCSFS library
+RUN pip install gcsfs
 
 

@@ -19,6 +19,7 @@ import subprocess
 import sys
 import csv
 import argparse
+import gcsfs
 
 
 def GetPTCovarPath(phenotype):
@@ -39,25 +40,15 @@ def DownloadPT(filename):
     print(output.decode("utf-8"))
     return filename.split("/")[-1]  # Return local filename
 
-def DownloadAncestry(filename):
-    """
-	Download a GCP path locally
-
-	Arguments
-	---------
-	filename : str
-	   GCP path
-	"""
-    cmd = "gsutil -u $GOOGLE_PROJECT cp {filename} .".format(filename=filename)
-    output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
-    print(output.decode("utf-8"))	
 
 def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
     return float(x)
 
-
 def LoadAncestry(ancestry_pred_path):
+    fs = gcsfs.GCSFileSystem()
+    with fs.open(ancestry_pred_path, 'r') as file:
+        ancestry =  pd.read_csv(file, sep="\t")
     #if ancestry_pred_path.startswith("gs://"):
     #    if not os.path.isfile("ancestry_preds.tsv"):
     #        os.system("gsutil -u %s cp %s ."%(project,ancestry_pred_path))
@@ -99,13 +90,6 @@ def main():
         ptcovar_path = GetPTCovarPath(args.phenotype)
 
 
-	# Set up file list
-    if args.ancestry_pred_path.startswith("gs://"):
-        DownloadAncestry(args.ancestry_pred_path)
-        ancestry_pred_path = os.path.basename(args.ancestry_pred_path)
-    else: ancestry_pred_path = args.ancestry_pred_path
-
-    print(ancestry_pred_path)
     # Get covarlist
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
     shared_covars = [item for item in args.sharedcovars.split(",") if item != ""]
@@ -115,10 +99,12 @@ def main():
     # Set up data frame with phenotype and covars
 
 
-    print(DownloadPT(ptcovar_path))
-    ancestry = LoadAncestry(ancestry_pred_path)
+    
+    ancestry = LoadAncestry(args.ancestry_pred_path)
+    print(ancestry)
     plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
-
+    print(plink)
+    
     plink['IID'] = plink['IID'].astype(str)
 
     data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols],n=["IID"],how="inner")
