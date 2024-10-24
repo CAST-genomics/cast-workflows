@@ -22,7 +22,7 @@ import argparse
 
 
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
-project = os.getenv("GOOGLE_PROJECT")
+
 
 
 def GetPTCovarPath(phenotype):
@@ -30,11 +30,31 @@ def GetPTCovarPath(phenotype):
         "phenotypes", "%s_phenocovar.csv"%phenotype)
 
 def DownloadPT(filename):
-    cmd = f"gsutil cp {filename} ."
+    """
+	Download phenotype_covar.csvlocally
+
+	Arguments
+	---------
+	filename : str
+	   GCP path
+	"""
+    cmd = "gsutil cp {filename} .".format(filename=filename)
     output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
     print(output.decode("utf-8"))
     return filename.split("/")[-1]  # Return local filename
 
+def DownloadAncestry(filename):
+    """
+	Download a GCP path locally
+
+	Arguments
+	---------
+	filename : str
+	   GCP path
+	"""
+    cmd = "gsutil -u $GOOGLE_PROJECT cp {filename} .".format(filename=filename)
+    output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
+    print(output.decode("utf-8"))	
 
 def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
@@ -42,10 +62,10 @@ def GetFloatFromPC(x):
 
 
 def LoadAncestry(ancestry_pred_path):
-    if ancestry_pred_path.startswith("gs://"):
-        if not os.path.isfile("ancestry_preds.tsv"):
-            os.system("gsutil -u %s cp %s ."%(project,ancestry_pred_path))
-        ancestry_pred_path = "ancestry_preds.tsv"
+    #if ancestry_pred_path.startswith("gs://"):
+    #    if not os.path.isfile("ancestry_preds.tsv"):
+    #        os.system("gsutil -u %s cp %s ."%(project,ancestry_pred_path))
+    #    ancestry_pred_path = "ancestry_preds.tsv"
     ancestry_pred_path = "ancestry_preds.tsv"
     ancestry = pd.read_csv(ancestry_pred_path, sep="\t")
     ancestry.rename({"research_id": "IID"}, axis=1, inplace=True)
@@ -69,6 +89,7 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--phenotype", help="Phenotypes file path, or phenotype name", type=str, required=True)
     parser.add_argument("--num-pcs", help="Number of PCs to use as covariates", type=int, default=10)
+    parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions", default=ANCESTRY_PRED_PATH)
     parser.add_argument("--ptcovars", help="Comma-separated list of phenotype-specific covariates. Default: age", type=str, default="age")
     parser.add_argument("--sharedcovars", help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male", type=str, default="sex_at_birth_Male")
 
@@ -89,9 +110,7 @@ def main():
     covars = pt_covars + shared_covars
 
     # Set up data frame with phenotype and covars
-    ancestry = LoadAncestry(ANCESTRY_PRED_PATH)
-    #local_pt = DownloadPT(ptcovar_path)
-
+    ancestry = LoadAncestry(DownloadAncestry(ANCESTRY_PRED_PATH))
     plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
 
     plink['IID'] = plink['IID'].astype(str)
