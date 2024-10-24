@@ -55,7 +55,6 @@ def LoadAncestry(ancestry_pred_path,token,project):
     #        os.system("gsutil -u %s cp %s ."%(project,ancestry_pred_path))
     #    ancestry_pred_path = "ancestry_preds.tsv"
     #ancestry_pred_path = "ancestry_preds.tsv"
-    ancestry = pd.read_csv(ancestry_pred_path, sep="\t")
     ancestry.rename({"research_id": "IID"}, axis=1, inplace=True)
     ancestry['IID'] = ancestry['IID'].astype(str)
     num_pcs = len(ancestry["pca_features"].values[0].split(","))
@@ -112,7 +111,7 @@ def main():
 
     plink['IID'] = plink['IID'].astype(str)
 
-    data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols],n=["IID"],how="inner")
+    data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols],on=["IID"],how="inner")
     plink_pheno = plink[["FID","IID","phenotype"]]
     plink_pheno.to_csv(f"{args.phenotype}_pheno_plink.txt", sep="\t", index=False)
     data.to_csv(f"{args.phenotype}_covar_combined.txt", sep="\t", index=False)
