@@ -10,9 +10,9 @@ tag = ${version}--${git_commit}
 build:
 	# do the docker build
 	docker build --no-cache -t ${name}:${tag} .
-	docker tag ${name}:${tag} ${name}:latest:1
+	docker tag ${name}:${tag} ${name}:latest
 
 push:
 	# Requires ~/.dockercfg
 	docker push ${name}:${tag}
-	docker push ${name}:latest:1
+	docker push ${name}:latest
