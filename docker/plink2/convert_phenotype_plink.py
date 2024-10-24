@@ -26,13 +26,18 @@ import gcsfs
 token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
     capture_output=True, check=True, encoding='utf-8')
 token = str.strip(token_fetch_command.stdout)
-#project = os.getenv("GCS_REQUESTER_PAYS_PROJECT")
 
 #debug project"
-project = os.getenv("GCS_REQUESTER_PAYS_PROJECT", "default_project_id")
+project = os.getenv("GCS_REQUESTER_PAYS_PROJECT")
+
 print(f"GOOGLE_PROJECT: {project}")
-if project == "default_project_id":
-    print("Warning: Using default project ID.")
+
+
+project_fetch_command = subprocess.run(['echo', '${GOOGLE_PROJECT}'], \
+    capture_output=True, check=True, encoding='utf-8')
+project_fetch = str.strip(project_fetch_command.stdout)
+print(f"GOOGLE_PROJECT_fetch: {project_fetch}")
+
 print("Current Environment Variables:")
 print(os.environ)  # Print all environment variables
 

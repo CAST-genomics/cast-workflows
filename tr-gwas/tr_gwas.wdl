@@ -59,7 +59,7 @@ task convert_phenotype {
     command <<<
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         export GCS_REQUESTER_PAYS_PROJECT=${GOOGLE_PROJECT}
-        echo ${GOOGLE_PROJECT}
+        echo ${GCS_REQUESTER_PAYS_PROJECT}
         python3 /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno}
     >>>
 
