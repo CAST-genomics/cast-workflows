@@ -27,9 +27,15 @@ token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', '
     capture_output=True, check=True, encoding='utf-8')
 token = str.strip(token_fetch_command.stdout)
 project = os.getenv("GOOGLE_PROJECT")
-print(os.getenv("GOOGLE_PROJECT"))
-print(token)
-print(project)
+
+#debug project"
+project = os.getenv("GOOGLE_PROJECT", "default_project_id")
+if project == "default_project_id":
+    print("Warning: Using default project ID.")
+print("Current Environment Variables:")
+print(os.environ)  # Print all environment variables
+project = os.getenv("GOOGLE_PROJECT")
+print(f"GOOGLE_PROJECT: {project}")
 
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
@@ -54,10 +60,10 @@ def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
     return float(x)
 
-def LoadAncestry(ancestry_pred_path,token,project):
+def LoadAncestry(ancestry_pred_path):#,token,project):
     fs = gcsfs.GCSFileSystem(token=token,project=project,requester_pays=True)
     with fs.open(ancestry_pred_path, 'r') as file:
-        ancestry =  pd.read_csv(file, sep="\t")
+        ancestry =  pd.read_csv(ancestry_pred_path, sep="\t")
     #if ancestry_pred_path.startswith("gs://"):
     #    if not os.path.isfile("ancestry_preds.tsv"):
     #        os.system("gsutil -u %s cp %s ."%(project,ancestry_pred_path))
@@ -105,7 +111,8 @@ def main():
     covars = pt_covars + shared_covars
 
     # Set up data frame with phenotype and covars
-    ancestry = LoadAncestry(args.ancestry_pred_path,token,project)
+    #ancestry = LoadAncestry(args.ancestry_pred_path,token,project)
+    ancestry = LoadAncestry(args.ancestry_pred_path)
     print(ancestry)
     plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
     print(plink)
