@@ -92,10 +92,10 @@ def main():
     parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions", default=ANCESTRY_PRED_PATH)
     parser.add_argument("--ptcovars", help="Comma-separated list of phenotype-specific covariates. Default: age", type=str, default="age")
     parser.add_argument("--sharedcovars", help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male", type=str, default="sex_at_birth_Male")
-
+    parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
     args = parser.parse_args()
 
-    project = os.getenv("GOOGLE_PROJECT")
+    #project = os.getenv("GOOGLE_PROJECT")
     # Set up paths
     if args.phenotype.endswith(".csv"):
         ptcovar_path = args.phenotype
@@ -110,15 +110,19 @@ def main():
     covars = pt_covars + shared_covars
 
     # Set up data frame with phenotype and covars
-    ancestry = LoadAncestry(DownloadAncestry(ANCESTRY_PRED_PATH))
-    plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
 
-    plink['IID'] = plink['IID'].astype(str)
+    print (DownloadAncestry(ANCESTRY_PRED_PATH))
+    print(DownloadPT(ptcovar_path))
+    #ancestry = LoadAncestry(DownloadAncestry(ANCESTRY_PRED_PATH))
+    #plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
 
-    data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols], on=["IID"],how="inner")
-    plink_pheno = plink[["FID","IID","phenotype"]]
-    plink_pheno.to_csv(f"{args.phenotype}_pheno_plink.txt", sep="\t", index=False)
-    data.to_csv(f"{args.phenotype}_covar_combined.txt", sep="\t", index=False)
+    #plink['IID'] = plink['IID'].astype(str)
+
+    #data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols], 
+    # n=["IID"],how="inner")
+    #plink_pheno = plink[["FID","IID","phenotype"]]
+    #plink_pheno.to_csv(f"{args.phenotype}_pheno_plink.txt", sep="\t", index=False)
+    #data.to_csv(f"{args.phenotype}_covar_combined.txt", sep="\t", index=False)
     
     sys.exit(0)
     print(f"Done converting {args.phenotype} to plink format")
