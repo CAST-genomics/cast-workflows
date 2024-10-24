@@ -66,15 +66,15 @@ def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
     return float(x)
 
-def LoadAncestry(ancestry_pred_path,token_id,project_id):
-    fs = gcsfs.GCSFileSystem(token=token_id,project=project_id,requester_pays=True)
-    with fs.open(ancestry_pred_path, 'r') as file:
-        ancestry =  pd.read_csv(ancestry_pred_path, sep="\t")
-    #if ancestry_pred_path.startswith("gs://"):
-    #    if not os.path.isfile("ancestry_preds.tsv"):
-    #        os.system("gsutil -u %s cp %s ."%(project,ancestry_pred_path))
-    #    ancestry_pred_path = "ancestry_preds.tsv"
-    #ancestry_pred_path = "ancestry_preds.tsv"
+def LoadAncestry(ancestry_pred_path):
+    #fs = gcsfs.GCSFileSystem(token=token_id,project=project_id,requester_pays=True)
+    #with fs.open(ancestry_pred_path, 'r') as file:
+    #    ancestry =  pd.read_csv(ancestry_pred_path, sep="\t")
+    if ancestry_pred_path.startswith("gs://"):
+        if not os.path.isfile("ancestry_preds.tsv"):
+            os.system("gsutil -u %s cp %s ."%(project,ancestry_pred_path))
+    ancestry_pred_path = "ancestry_preds.tsv"
+    ancestry =  pd.read_csv(ancestry_pred_path, sep="\t")
     ancestry.rename({"research_id": "IID"}, axis=1, inplace=True)
     ancestry['IID'] = ancestry['IID'].astype(str)
     num_pcs = len(ancestry["pca_features"].values[0].split(","))
@@ -117,7 +117,7 @@ def main():
     covars = pt_covars + shared_covars
 
     # Set up data frame with phenotype and covars
-    ancestry = LoadAncestry(args.ancestry_pred_path,token_id=token,project_id=project)
+    ancestry = LoadAncestry(args.ancestry_pred_path)
     plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
 
     plink['IID'] = plink['IID'].astype(str)
