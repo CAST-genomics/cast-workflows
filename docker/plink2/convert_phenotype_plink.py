@@ -26,16 +26,17 @@ import gcsfs
 token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
     capture_output=True, check=True, encoding='utf-8')
 token = str.strip(token_fetch_command.stdout)
-project = os.getenv("GOOGLE_PROJECT")
+#project = os.getenv("GCS_REQUESTER_PAYS_PROJECT")
 
 #debug project"
-project = os.getenv("GOOGLE_PROJECT", "default_project_id")
+project = os.getenv("GCS_REQUESTER_PAYS_PROJECT", "default_project_id")
+print(f"GOOGLE_PROJECT: {project}")
 if project == "default_project_id":
     print("Warning: Using default project ID.")
 print("Current Environment Variables:")
 print(os.environ)  # Print all environment variables
-project = os.getenv("GOOGLE_PROJECT")
-print(f"GOOGLE_PROJECT: {project}")
+
+
 
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
@@ -60,7 +61,7 @@ def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
     return float(x)
 
-def LoadAncestry(ancestry_pred_path):#,token,project):
+def LoadAncestry(ancestry_pred_path,token,project):
     fs = gcsfs.GCSFileSystem(token=token,project=project,requester_pays=True)
     with fs.open(ancestry_pred_path, 'r') as file:
         ancestry =  pd.read_csv(ancestry_pred_path, sep="\t")
