@@ -22,6 +22,13 @@ import argparse
 import gcsfs
 
 
+
+# Get token and set up project
+token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
+	capture_output=True, check=True, encoding='utf-8')
+token = str.strip(token_fetch_command.stdout)
+project = os.getenv("GOOGLE_PROJECT")
+
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
         "phenotypes", "%s_phenocovar.csv"%phenotype)
@@ -46,7 +53,7 @@ def GetFloatFromPC(x):
     return float(x)
 
 def LoadAncestry(ancestry_pred_path):
-    fs = gcsfs.GCSFileSystem()
+    fs = gcsfs.GCSFileSystem(token=token,project=project)
     with fs.open(ancestry_pred_path, 'r') as file:
         ancestry =  pd.read_csv(file, sep="\t")
     #if ancestry_pred_path.startswith("gs://"):
@@ -82,7 +89,7 @@ def main():
     parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
     args = parser.parse_args()
 
-    #project = os.getenv("GOOGLE_PROJECT")
+
     # Set up paths
     if args.phenotype.endswith(".csv"):
         ptcovar_path = args.phenotype
@@ -104,7 +111,7 @@ def main():
     print(ancestry)
     plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
     print(plink)
-    
+
     plink['IID'] = plink['IID'].astype(str)
 
     data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols],n=["IID"],how="inner")
