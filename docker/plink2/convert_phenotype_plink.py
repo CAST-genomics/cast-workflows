@@ -116,15 +116,19 @@ def main():
     # Extract phenotype and covars only
     data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols],on=["IID"],how="inner")
     plink_pheno = plink[["FID","IID","phenotype"]]
-    plink_pheno.to_csv(f"{args.phenotype}_pheno_plink.txt", sep="\t", index=False)
-    data.to_csv(f"{args.phenotype}_covar_combined.txt", sep="\t", index=False)
+
+    # Output files
+    pheno_file_path = f"{args.phenotype}_pheno_plink.txt"
+    covar_file_path = f"{args.phenotype}_covar_combined.txt"
+
+    plink_pheno.to_csv(pheno_file_path, sep="\t", index=False)
+    data.to_csv(covar_file_path, sep="\t", index=False)
     
     print(f"Done converting {args.phenotype} to plink format")
-    return data,plink_pheno
+    return pheno_file_path,covar_file_path
 
 
 if __name__ == "__main__":
-    pheno_file, covar_file = main()
-    print(f"Generated files: {pheno_file}, {covar_file}")
+
 
 
