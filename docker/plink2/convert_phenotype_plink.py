@@ -129,6 +129,4 @@ def main():
 
 
 if __name__ == "__main__":
-
-
-
+    pheno_file_path,covar_file_path = main()
