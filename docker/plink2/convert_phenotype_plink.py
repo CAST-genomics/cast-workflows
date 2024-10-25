@@ -29,6 +29,7 @@ project = os.getenv("GCS_REQUESTER_PAYS_PROJECT")
 bucket = os.getenv("WORKSPACE_BUCKET")
 print(f"Workspace Bucket: {bucket}")
 #print all the environmental variables 
+print(dict(os.environ))
 
 def GetPTCovarPath(phenotype):
     return os.path.join(bucket, \

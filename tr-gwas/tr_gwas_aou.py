@@ -64,6 +64,7 @@ def main():
 	json_dict["tr_gwas.cohorts"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="samples/") if blob.name.endswith('.txt')]
 	json_dict["tr_gwas.GOOGLE_PROJECT"] = project
 	json_dict["tr_gwas.GCS_OAUTH_TOKEN"] = token
+	json_dict["tr_gwas.WORKSPACE_BUCKET"] = gs_prefix
 	
 
 	# Convert to json and save as a file
