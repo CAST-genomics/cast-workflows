@@ -96,9 +96,12 @@ task run_tr_gwas {
 
     command <<<
         # Run GWAS on each chrom
+        echo "Current directory: $(pwd)"
+        echo "Expected files: $(ls -1 *.psam)"
+        echo "pgen:~{pgens},psam:~{psams}
         PFILEARRAY=(~{sep=" " pgens})
         gwas_outfiles=""
-        gwas_logs=""
+        #gwas_logs=""
         for (( c = 0; c < ~{total}; c++ )); # bash array are 0-indexed 
         do
             pfile=${PFILEARRAY[$c]}
@@ -111,13 +114,14 @@ task run_tr_gwas {
                --covar-variance-standardize \
                --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
             gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear"
-            gwas_logs=+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.log"
+            #gwas_logs=+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.log"
 
         done
 
         # Concatenate all results
-        cat ${gwas_outfiles} | head -n 1 > "~{out_prefix}_~{sample_name}".tab
-        cat ${gwas_outfiles} | grep -v POS >> "~{out_prefix}_~{sample_name}".tab
+        echo -e "$(head -n 1 ${gwas_outfiles})" > "~{out_prefix}_~{sample_name}.tab"
+        for file in ${gwas_outfiles}; do
+            grep -v POS "$file" >> "~{out_prefix}_~{sample_name}.tab"
     >>>
 
     runtime {
