@@ -99,15 +99,15 @@ task run_tr_gwas {
         for (( c = 0; c < ~{total}; c++ )); # bash array are 0-indexed 
         do
             pfile=${PFILEARRAY[$c]}
-            chrom_outprefix=$(basename $pfile .pgen)
+            chrom_outprefix=$(basename $pfile _annotated.pgen)
             plink2 --pfile ${chrom_outprefix} \
                --pheno ~{pheno} \
                --linear \
                --covar ~{covar} \
                --keep ~{samples} \
                --covar-variance-standardize \
-               --out ${chrom_outprefix}
-            gwas_outfiles="${gwas_outfiles} ${chrom_outprefix}.glm.linear"
+               --out ~{out_prefix}
+            gwas_outfiles="~{out_prefix}.glm.linear"
         done
 
         # Concatenate all results
