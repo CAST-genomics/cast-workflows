@@ -78,8 +78,8 @@ task run_tr_gwas {
         Array[File] pgens
         Array[File] psams
         Array[File] pvars
-        Array[File] pheno
-        Array[File] covar 
+        File pheno
+        File covar 
         File samples
         String out_prefix
         Int total = length(pgens)
