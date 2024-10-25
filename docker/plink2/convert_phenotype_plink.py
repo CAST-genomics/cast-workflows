@@ -121,7 +121,6 @@ def main():
     
     print(f"Done converting {args.phenotype} to plink format")
     return data,plink_pheno
-    sys.exit(0)
 
 
 if __name__ == "__main__":

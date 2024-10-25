@@ -13,14 +13,12 @@ RUN apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get install -qqy \
 # Install Python dependencies
 RUN pip3 install pandas
 
-
 # Download and install PLINK2
 RUN wget https://s3.amazonaws.com/plink2-assets/plink2_linux_x86_64_20241020.zip \
     && unzip plink2_linux_x86_64_20241020.zip\
     && mv plink2 /usr/bin/ \
     && chmod +x /usr/bin/plink2 \
     && rm plink2_linux_x86_64_20241020.zip
-
 
 
 # Download and install gcloud
