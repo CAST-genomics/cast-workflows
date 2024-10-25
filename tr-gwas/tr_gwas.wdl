@@ -33,7 +33,7 @@ workflow tr_gwas {
                         pheno=convert_phenotype.outfile_pheno,
                         covar=convert_phenotype.outfile_covar,
                         samples=cohort,
-                        out_prefix="${convert_phenotype.outpheno_name}_${cohort}_gwas"
+                        out_prefix="${convert_phenotype.outpheno_name}"
                        
                 }
             }
@@ -92,10 +92,13 @@ task run_tr_gwas {
         Int total = length(pgens)
     }
 
+    String sample_name = basename(samples,"_plink.txt")
+
     command <<<
         # Run GWAS on each chrom
         PFILEARRAY=(~{sep=" " pgens})
         gwas_outfiles=""
+        gwas_logs=""
         for (( c = 0; c < ~{total}; c++ )); # bash array are 0-indexed 
         do
             pfile=${PFILEARRAY[$c]}
@@ -106,13 +109,15 @@ task run_tr_gwas {
                --covar ~{covar} \
                --keep ~{samples} \
                --covar-variance-standardize \
-               --out ~{out_prefix}
-            gwas_outfiles="~{out_prefix}.glm.linear"
+               --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
+            gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear"
+            gwas_logs=+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.log"
+
         done
 
         # Concatenate all results
-        cat ${gwas_outfiles} | head -n 1 > ~{out_prefix}.tab
-        cat ${gwas_outfiles} | grep -v POS >> ~{out_prefix}.tab
+        cat ${gwas_outfiles} | head -n 1 > "~{out_prefix}_~{sample_name}".tab
+        cat ${gwas_outfiles} | grep -v POS >> "~{out_prefix}_~{sample_name}".tab
     >>>
 
     runtime {
