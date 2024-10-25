@@ -21,14 +21,12 @@ import csv
 import argparse
 
 
-    # Get token and set up project
+# Get token and set up project
 token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
     capture_output=True, check=True, encoding='utf-8')
 token = str.strip(token_fetch_command.stdout)
-
-
 project = os.getenv("GCS_REQUESTER_PAYS_PROJECT")
-print(f"GOOGLE_PROJECT: {project}")
+
 
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
@@ -36,7 +34,7 @@ def GetPTCovarPath(phenotype):
 
 def DownloadPT(filename):
     """
-	Download phenotype_covar.csvlocally
+	Download phenotype_covar.csv locally
 
 	Arguments
 	---------
@@ -54,6 +52,16 @@ def GetFloatFromPC(x):
     return float(x)
 
 def LoadAncestry(ancestry_pred_path,project):
+    """
+	Download ancestry_pred.tsv locally
+
+	Arguments
+	---------
+	ancestry_pred_path : str
+	   GCP path
+    project : str
+    google project for downloading
+	"""
     if ancestry_pred_path.startswith("gs://"):
         os.system(f"gsutil -u {project} cp {ancestry_pred_path} .")
         ancestry_pred_path = "ancestry_preds.tsv"
@@ -105,6 +113,7 @@ def main():
 
     plink['IID'] = plink['IID'].astype(str)
 
+    # Extract phenotype and covars only
     data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols],on=["IID"],how="inner")
     plink_pheno = plink[["FID","IID","phenotype"]]
     plink_pheno.to_csv(f"{args.phenotype}_pheno_plink.txt", sep="\t", index=False)
@@ -112,7 +121,7 @@ def main():
     
     sys.exit(0)
     print(f"Done converting {args.phenotype} to plink format")
-    return data
+    
 
 
 if __name__ == "__main__":

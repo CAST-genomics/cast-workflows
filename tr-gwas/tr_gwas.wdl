@@ -68,8 +68,8 @@ task convert_phenotype {
     }
 
     output {
-       File outfile_pheno = "${pheno}_pheno_plink.txt"
-       File outfile_covar = "${pheno}_covar_combined.txt"
+       Array [File] outfile_pheno = "${pheno}_pheno_plink.txt"
+       Array [File] outfile_covar = "${pheno}_covar_combined.txt"
     }
 }
 
