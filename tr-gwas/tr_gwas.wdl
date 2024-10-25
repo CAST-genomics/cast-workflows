@@ -75,7 +75,7 @@ task convert_phenotype {
 
     output {
         File outfile_pheno = "${pheno_name}_pheno_plink.txt"
-        File outfile_covar = "${pheno_name}_combined.txt"
+        File outfile_covar = "${pheno_name}_covar_combined.txt"
         String outpheno_name = "${pheno_name}"
     }
 }
