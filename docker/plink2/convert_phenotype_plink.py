@@ -126,6 +126,6 @@ def main():
 
 if __name__ == "__main__":
     pheno_file, covar_file = main()
-    print(f"Generated files: {pheno_file}, {covar_file}")main()
+    print(f"Generated files: {pheno_file}, {covar_file}")
 
 
