@@ -120,14 +120,12 @@ def main():
     data.to_csv(f"{args.phenotype}_covar_combined.txt", sep="\t", index=False)
     
     print(f"Done converting {args.phenotype} to plink format")
+    return data,plink_pheno
     sys.exit(0)
-    
-    #return data,plink_pheno
-   
-    
 
 
 if __name__ == "__main__":
-    main()
+    pheno_file, covar_file = main()
+    print(f"Generated files: {pheno_file}, {covar_file}")main()
 
 

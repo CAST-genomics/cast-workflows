@@ -68,8 +68,8 @@ task convert_phenotype {
     }
 
     output {
-       Array[File] outfile_pheno = "$(basename $pheno _phenocovar.csv)_pheno_plink.txt"
-       Array[File] outfile_covar = "$(basename $pheno _phenocovar.csv)_combined.txt"
+        File outfile_pheno = "$(basename $pheno _phenocovar.csv)_pheno_plink.txt"
+        File outfile_covar = "$(basename $pheno _phenocovar.csv)_combined.txt"
     }
 }
 
