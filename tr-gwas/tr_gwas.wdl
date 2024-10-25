@@ -118,6 +118,8 @@ task run_tr_gwas {
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/plink2:latest"
         preemptible: 1
+        memory: "4G"
+        disks: "local-disk 330 SSD"
     }
 
     output {
