@@ -31,7 +31,7 @@ workflow tr_gwas {
                         pheno=convert_phenotype.outfile_pheno,
                         covar=convert_phenotype.outfile_covar,
                         samples=cohort,
-                        out_prefix="$(basename $pheno phenocovar.csv)_${cohort}_gwas"
+                        out_prefix="$(basename $pheno _phenocovar.csv)_${cohort}_gwas"
                        
                 }
             }
@@ -68,8 +68,8 @@ task convert_phenotype {
     }
 
     output {
-       Array[File] outfile_pheno = "$(basename $pheno phenocovar.csv)_pheno_plink.txt"
-       Array[File] outfile_covar = "$(basename $pheno phenocovar.csv)_combined.txt"
+       Array[File] outfile_pheno = "$(basename $pheno _phenocovar.csv)_pheno_plink.txt"
+       Array[File] outfile_covar = "$(basename $pheno _phenocovar.csv)_combined.txt"
     }
 }
 
@@ -80,7 +80,7 @@ task run_tr_gwas {
         Array[File] pvars
         Array[File] pheno
         Array[File] covar 
-        File samples
+        Array[File] samples
         String out_prefix
         Int total = length(pgens)
     }
