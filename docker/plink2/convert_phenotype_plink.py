@@ -119,10 +119,10 @@ def main():
     plink_pheno.to_csv(f"{args.phenotype}_pheno_plink.txt", sep="\t", index=False)
     data.to_csv(f"{args.phenotype}_covar_combined.txt", sep="\t", index=False)
     
-    
-    sys.exit(0)
     print(f"Done converting {args.phenotype} to plink format")
-    return data,plink_pheno
+    sys.exit(0)
+    
+    #return data,plink_pheno
    
     
 
