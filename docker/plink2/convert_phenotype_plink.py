@@ -28,7 +28,6 @@ token = str.strip(token_fetch_command.stdout)
 
 
 project = os.getenv("GCS_REQUESTER_PAYS_PROJECT")
-print(f"GOOGLE_PROJECT: {project}")
 
 def GetPTCovarPath(phenotype):
     return os.path.join(os.getenv('WORKSPACE_BUCKET'), \

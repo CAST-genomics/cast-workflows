@@ -31,7 +31,7 @@ workflow tr_gwas {
                         pheno=convert_phenotype.outfile_pheno,
                         covar=convert_phenotype.outfile_covar,
                         samples=cohort,
-                        out_prefix="${pheno_file.basename}_${cohort}_gwas"
+                        out_prefix="$(basename $pheno _phenocovar.csv)_${cohort}_gwas"
                        
                 }
             }
@@ -68,8 +68,8 @@ task convert_phenotype {
     }
 
     output {
-       File outfile_pheno = "${pheno}_pheno_plink.txt"
-       File outfile_covar = "${pheno}_covar_combined.txt"
+       File outfile_pheno = "$(basename $pheno _phenocovar.csv)pheno_plink.txt"
+       File outfile_covar = "$(basename $pheno _phenocovar.csv)_covar_combined.txt"
     }
 }
 
