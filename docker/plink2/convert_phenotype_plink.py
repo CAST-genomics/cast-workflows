@@ -125,8 +125,8 @@ def main():
     data.to_csv(covar_file_path, sep="\t", index=False)
     
     print(f"Done converting {args.phenotype} to plink format")
-    return pheno_file_path,covar_file_path
+    return pheno_file_path,covar_file_path,plink_pheno,data
 
 
 if __name__ == "__main__":
-    pheno_file_path,covar_file_path = main()
+    plink_pheno,data = main()
