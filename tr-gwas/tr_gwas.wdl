@@ -17,7 +17,7 @@ workflow tr_gwas {
     scatter (pheno_file in phenotypes) {      
         call convert_phenotype {
             input:
-                pheno=pheno_file,
+                pheno="$(basename $pheno_file _phenocovar.csv)",
                 GOOGLE_PROJECT=GOOGLE_PROJECT,
                 GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN
         }
