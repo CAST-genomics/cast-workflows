@@ -31,7 +31,7 @@ workflow tr_gwas {
                         pheno=convert_phenotype.outfile_pheno,
                         covar=convert_phenotype.outfile_covar,
                         samples=cohort,
-                        out_prefix="${convert_phenotype.out_pheno_name}_${cohort}_gwas"
+                        out_prefix="${convert_phenotype.outpheno_name}_${cohort}_gwas"
                        
                 }
             }
@@ -55,11 +55,11 @@ task convert_phenotype {
         String GCS_OAUTH_TOKEN = ""
     }
     
+    String pheno_name = basename(pheno,"_phenocovar.csv")
 
     command <<<
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         export GCS_REQUESTER_PAYS_PROJECT="~{GOOGLE_PROJECT}"
-        pheno_name="$(basename ~{pheno} _phenocovar.csv)"
         echo ~{pheno_name}
         python3 /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno_name} 
     >>>
@@ -72,7 +72,7 @@ task convert_phenotype {
     output {
         File outfile_pheno = "${pheno_name}_pheno_plink.txt"
         File outfile_covar = "${pheno_name}_combined.txt"
-        String out_pheno_name = "${pheno_name}"
+        String outpheno_name = "${pheno_name}"
     }
 }
 
