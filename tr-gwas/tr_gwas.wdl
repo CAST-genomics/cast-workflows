@@ -68,8 +68,8 @@ task convert_phenotype {
     }
 
     output {
-       Array [File] outfile_pheno = "${pheno}_pheno_plink.txt"
-       Array [File] outfile_covar = "${pheno}_covar_combined.txt"
+       Array[File] outfile_pheno = "${pheno}_pheno_plink.txt"
+       Array[File] outfile_covar = "${pheno}_covar_combined.txt"
     }
 }
 
@@ -78,8 +78,8 @@ task run_tr_gwas {
         Array[File] pgens
         Array[File] psams
         Array[File] pvars
-        File pheno
-        File covar
+        Array[File] pheno
+        Array[File] covar 
         File samples
         String out_prefix
         Int total = length(pgens)
