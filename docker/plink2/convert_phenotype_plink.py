@@ -26,10 +26,12 @@ token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', '
     capture_output=True, check=True, encoding='utf-8')
 token = str.strip(token_fetch_command.stdout)
 project = os.getenv("GCS_REQUESTER_PAYS_PROJECT")
-
+bucket = os.getenv("WORKSPACE_BUCKET")
+print(f"Workspace Bucket: {bucket}")
+#print all the environmental variables 
 
 def GetPTCovarPath(phenotype):
-    return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
+    return os.path.join(bucket, \
         "phenotypes", "%s_phenocovar.csv"%phenotype)
 
 def DownloadPT(filename):
