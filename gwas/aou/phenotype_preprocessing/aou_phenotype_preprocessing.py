@@ -176,17 +176,25 @@ def main():
         data["age"] = data["condition_start_datetime"].dt.year - data["date_of_birth"].dt.year
         data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
         pheno_df = data[["person_id", "condition_concept_id", "age", "sex_at_birth_Male"]].copy()
-        pheno_df["id"] = pheno_df["person_id"]
         pheno_df["has_t2d"] = data["condition_concept_id"].apply(lambda x: 1 if int(x) in [4193704, 201826] else 0)
+        cases_ids = pheno_df[pheno_df["has_t2d"] == True]["person_id"]
+        cases_ids = list(set(list(cases_ids)))
+        data["phenotype"] = None
+        for idx, row in data.iterrows():
+            if row["person_id"] in cases_ids:
+                row["phenotype"] = 1
+            else:
+                row["phenotype"] = 0
         # To double check the sex_at_birth_Male is the same for all entries in the same group ID
         #print(pheno_df.groupby(["id"]).sex_at_birth_Male.nunique().eq(1).sum())
-        pheno_df = pheno_df.groupby(["id"]).agg({"person_id": max,
-                                                 "has_t2d": max,
-                                                 "age": min,
-                                                 "sex_at_birth_Male": max})
-        pheno_df = pheno_df.rename(columns={"has_t2d": "phenotype"})
+        #pheno_df["id"] = pheno_df["person_id"]
+        #pheno_df = pheno_df.groupby(["id"]).agg({"person_id": max,
+        #                                         "has_t2d": max,
+        #                                         "age": min,
+        #                                         "sex_at_birth_Male": max})
+        #pheno_df = pheno_df.rename(columns={"has_t2d": "phenotype"})
         #data = pd.merge(data, pheno_df, on="person_id", how="inner")
-        data = pheno_df
+        #data = pheno_df
         print("Number of rows with snomed phenotype true: ", len(data[data["phenotype"] == 1]))
         print("Unique ids with snomed phenotype true: ", len(data[data["phenotype"] == 1]["person_id"].unique()))
         data[['person_id', 'phenotype',
