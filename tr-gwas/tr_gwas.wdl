@@ -64,7 +64,6 @@ task convert_phenotype {
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         export GCS_REQUESTER_PAYS_PROJECT="~{GOOGLE_PROJECT}"
         export WORKSPACE_BUCKET="~{WORKSPACE_BUCKET}"
-        echo ~{pheno_name}
         python3 /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno_name} 
     >>>
 
@@ -118,7 +117,7 @@ task run_tr_gwas {
         done
 
         # Concatenate all results
-        echo -e "$(head -n 1 ${gwas_outfiles})" > "~{out_prefix}_~{sample_name}.tab"
+        head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}.tab"
         for file in ${gwas_outfiles}; do
             grep -v POS "$file" >> "~{out_prefix}_~{sample_name}.tab"
     >>>
