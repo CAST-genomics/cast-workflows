@@ -1,8 +1,9 @@
 #!/bin/bash
 
-aou_220k_imputed="../../imputation/wdl/data/imputed_p_g_vntrs_srwgs_sr_ml_filter.sorted.annotated.vcf.gz"
+#aou_220k_imputed="../../imputation/wdl/data/imputed_p_g_vntrs_srwgs_sr_ml_filter.sorted.annotated.vcf.gz"
 #aou_220k_imputed="../../imputation/wdl/data/chr_11_imputed_rh.sorted.annotate.vcf.gz"
-chr="chr15"
+aou_220k_imputed="../../imputation/wdl/data/imputed_samples_chr13.sorted.annotate.rh.vcf.gz"
+chr="chr13"
 
 ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
 
@@ -10,13 +11,14 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
   samples="samples/passing_samples_v7.1.csv"
   samples_prefix=$(basename $samples | sed 's/.csv//g')
   echo "Samples $samples Samples_prefix: $samples_prefix"
-  summary="summary_gwas_${samples_prefix}_${chr}_v2.txt"
+  summary="summary_gwas_${samples_prefix}_${chr}.txt"
 
 
   echo "" > $summary
   for phenotype in $(tail -n +2 phenotypes_manifest.csv  | cut -d, -f1); do
      #phenotype="red_blood_cell_distribution_width"
-     phenotype="hemoglobin_a1c"
+     #phenotype="hemoglobin_a1c"
+     #phenotype="diabetes"
      #phenotype="glucose"
      #snp_gwas_file="data/all_by_all/df_dump_${chr}_3019897.csv"
      
@@ -46,7 +48,6 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
      most_significant_hit=$(tail -n +4 outputs/${chr}/${phenotype}_associaTR_${samples_prefix}.gwas.tab | cut -f6 | sort -g  | awk NF | head -n 1)
      echo "most_significant_hit for phenotype $phenotype is $most_significant_hit" >> $summary
      echo "----------- most_significant_hit for phenotype $phenotype is $most_significant_hit"
-    exit 0
   done
 #done
 exit 0

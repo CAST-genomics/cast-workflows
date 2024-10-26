@@ -1,6 +1,6 @@
 #!/bin/bash
 
-chr="chr11"
+chr="chr13"
 
 # PVNTR ref
 ref="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/p_g_vntrs/phased/${chr}/vntr_ref_${chr}.sorted.annotated.vcf.gz"
@@ -19,7 +19,7 @@ map="$WORKSPACE_BUCKET/saraj/genetic_map/plink.${chr}_w_chr.GRCh38.map"
 time python imputation_aou.py \
         --vcf $gt \
         --ref-panel $ref \
-        --name sr_ml_filtered_ref_chr11 \
+        --name sr_ml_filtered_ref_${chr} \
         --window 20 \
 	--overlap 2 \
 	--chrom $chr \
