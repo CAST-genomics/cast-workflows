@@ -9,7 +9,7 @@ def read_region_phenotypes(filename):
 def main():
     data = read_region_phenotypes("region_phenotypes.csv")
    
-    chroms = ["chr15:1-102000000", "chr11:1-136000000"]
+    chroms = ["chr13:1-115000000"] #["chr15:1-102000000", "chr11:1-136000000"]
     for idx, row in data.iterrows():
         print("-------- Running for phenotype ", row["phenotype_name"])
         for chrom in chroms:
