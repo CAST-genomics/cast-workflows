@@ -207,7 +207,7 @@ def set_genotypes(data, args, annotations, cohort, samples):
     for chrom, start, gene in annotations:
         all_alleles = []
         empty_calls, no_calls = 0, 0
-        print("Processing annottaion {} {}:{}".format(gene, chrom, start))
+        print("Processing annotation {} {}:{}".format(gene, chrom, start))
         locus_calls = vcf_df[(vcf_df["CHROM"] == chrom) & \
                              (vcf_df["POS"] == str(start))
                              ]
@@ -486,7 +486,7 @@ def main():
         significant_hits = gwas[gwas["-log10pvalue"] > p_value_threshold]
         significant_hits.sort_values(by="pos", ignore_index=True, inplace=True)
         significant_hits = significant_hits[columns]
-        significant_hits.to_csv(outpath + ".csv", index=False)
+        significant_hits.to_csv(outpath + "_significant_hits.csv", index=False)
 
         PlotManhattan(gwas, outpath+".manhattan.png",
                       hue=hue,
