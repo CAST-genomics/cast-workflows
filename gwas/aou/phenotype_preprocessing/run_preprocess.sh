@@ -5,11 +5,9 @@
 # I'll have to change the query.
 
 python aou_phenotype_preprocessing.py \
-	--phenotype diabetes \
-   	--concept-id 201820 \
-   	--units "tmp" \
-    --snomed \
-   	--range 0,1
+	--phenotype t2diabetes \
+   	--concept-id 201826 \
+    --snomed
 #SNOMEDCode: 73211009
 #OMOP Concept Id: 201820
 exit 0

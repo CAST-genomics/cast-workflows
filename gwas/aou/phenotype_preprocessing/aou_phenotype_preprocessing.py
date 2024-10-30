@@ -143,13 +143,15 @@ def main():
     parser.add_argument("--samples", help="List of sample IDs,sex to keep", type=str, default=SAMPLEFILE)
     parser.add_argument("--concept-id", help="Concept ID for phenotype", type=str, required=True)
     parser.add_argument("--drugexposure-covariate-concept-ids", help="Comma-separated list of conceptid:conceptname to use as drug exposure covariates", type=str)
-    parser.add_argument("--units", help="Comma-separated list of acceptable units. Accepted shorthands: blood", type=str, required=True)
+    parser.add_argument("--units", help="Comma-separated list of acceptable units. Accepted shorthands: blood", type=str)
     parser.add_argument("--range", help="min, max acceptable phenotype values", type=str)
     parser.add_argument("--ppi", help="Whether or not the phenotype is from the PPI measurements " + \
                                       "as opposed to LOINC. Only physical measurements (e.g. height) " + \
                                       "are in PPI.",
                                       action="store_true", default=False)
     parser.add_argument("--snomed", help="Whether or not thhe phenotype is from the SNOMED vocab, including diseases.",
+                                      action="store_true", default=False)
+    parser.add_argument("--verbose", help="Adjust verbosity.",
                                       action="store_true", default=False)
     parser.add_argument("--outlier-sd", help="filter samples with phenotype values exceeding this number of SDs",
                                         type=int, required=False)
@@ -167,43 +169,51 @@ def main():
             os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
     samples = pd.read_csv(sampfile)
 
+    # Process snomed conditions
     if args.snomed:
+        # Create the conditions dataframe based on the query
         ptdata = SQLToDF(aou_queries.ConstructSnomedSQL(args.concept_id))
-        #ptdata.rename({:"phenotype"}, inplace=True, axis=1)
-        data = pd.merge(ptdata, demog, on="person_id", how="inner")
-        data = pd.merge(data, samples)
-        MSG("After filter samples, have %s data points"%data.shape[0])
+        MSG("Right after query, have %s data points"%ptdata.shape[0])
+
+        # Merge with sample data
+        data = pd.merge(ptdata, demog, on="person_id", how="right")
+        data = pd.merge(data, samples, on="person_id", how="right")
+
+        # Set age and sex columns
         data["age"] = data["condition_start_datetime"].dt.year - data["date_of_birth"].dt.year
-        data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
-        pheno_df = data[["person_id", "condition_concept_id", "age", "sex_at_birth_Male"]].copy()
-        pheno_df["has_t2d"] = data["condition_concept_id"].apply(lambda x: 1 if int(x) in [4193704, 201826] else 0)
-        cases_ids = pheno_df[pheno_df["has_t2d"] == True]["person_id"]
-        cases_ids = list(set(list(cases_ids)))
-        data["phenotype"] = None
-        for idx, row in data.iterrows():
-            if row["person_id"] in cases_ids:
-                row["phenotype"] = 1
-            else:
-                row["phenotype"] = 0
-        # To double check the sex_at_birth_Male is the same for all entries in the same group ID
-        #print(pheno_df.groupby(["id"]).sex_at_birth_Male.nunique().eq(1).sum())
-        #pheno_df["id"] = pheno_df["person_id"]
-        #pheno_df = pheno_df.groupby(["id"]).agg({"person_id": max,
-        #                                         "has_t2d": max,
-        #                                         "age": min,
-        #                                         "sex_at_birth_Male": max})
-        #pheno_df = pheno_df.rename(columns={"has_t2d": "phenotype"})
-        #data = pd.merge(data, pheno_df, on="person_id", how="inner")
-        #data = pheno_df
-        print("Number of rows with snomed phenotype true: ", len(data[data["phenotype"] == 1]))
-        print("Unique ids with snomed phenotype true: ", len(data[data["phenotype"] == 1]["person_id"].unique()))
+        #data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
+        MSG("After merge with demog and filter samples, have %s data points"%data.shape[0])
+        
+        # Compute the binary phenotype column
+        data = data.fillna(np.nan)
+        data["phenotype"] = data["condition_concept_id"].apply(
+            lambda x: 1 if not pd.isnull(x) and int(x) == int(args.concept_id) else 0)
+
+        # Merge and groupby to remove duplicate/uninformative rows
+        columns = ["person_id", "age", "sex_at_birth_Male", "phenotype"]
+        data = data[columns].groupby(["person_id"]).agg(
+                        {"phenotype": max,
+                        "age": np.mean,
+                        "sex_at_birth_Male": np.mean,
+                        }
+                        ).reset_index()
+        if args.verbose:
+            print("Number of elements after group_by: ", len(data))
+            print("Number of rows with snomed phenotype true: ", len(data[data["phenotype"] == 1]))
+            print("Number of rows with snomed phenotype false: ", len(data[data["phenotype"] == 0]))
+
+        # Store the results in the output file
         data[['person_id', 'phenotype',
               "age", "sex_at_birth_Male"]].to_csv(
                     args.phenotype+"_phenocovar.csv",
                     index=False, sep=",")
         return
     else:
+        # Process lab measurements
         ptdata = SQLToDF(aou_queries.ConstructTraitSQL(args.concept_id, args.ppi))
+    if args.units is None:
+        print("Error: --units is required.")
+        exit(1)
     data = pd.merge(ptdata, demog, on="person_id", how="inner")
     data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
     MSG("After merge, have %s data points"%data.shape[0])
