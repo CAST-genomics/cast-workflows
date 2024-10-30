@@ -20,7 +20,8 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
      #phenotype="hemoglobin_a1c"
      #phenotype="diabetes"
      #phenotype="glucose"
-     #snp_gwas_file="data/all_by_all/df_dump_${chr}_3019897.csv"
+     phenotype="mean_corpuscular_hemoglobin"
+     snp_gwas_file="data/all_by_all/df_dump_${chr}_${phenotype}.csv"
      
      #phenotype="haematocrit"
      #snp_gwas_file="data/all_by_all/df_dump_${chr}_3023314.csv"
@@ -33,7 +34,7 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
      
      #phenotype="urea"
      #snp_gwas_file="data/all_by_all/df_dump_${chr}_3013682.csv"
-
+    
      echo "Running gwas for $phenotype"
      ./aou_gwas.py --phenotype $phenotype \
            --num-pcs 10 \
@@ -43,11 +44,12 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
            --norm quantile \
            --is-imputed \
            --outdir outputs/${chr} \
+           --snp-gwas-file $snp_gwas_file \
            --plot
-     #      --snp-gwas-file $snp_gwas_file \
      most_significant_hit=$(tail -n +4 outputs/${chr}/${phenotype}_associaTR_${samples_prefix}.gwas.tab | cut -f6 | sort -g  | awk NF | head -n 1)
      echo "most_significant_hit for phenotype $phenotype is $most_significant_hit" >> $summary
      echo "----------- most_significant_hit for phenotype $phenotype is $most_significant_hit"
+    exit 0
   done
 #done
 exit 0
