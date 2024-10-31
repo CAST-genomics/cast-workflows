@@ -44,12 +44,12 @@ def RunWorkflow(wdl_file, json_file, json_options_file, wdl_dependencies_file, c
                         json=json_file, options=json_options_file)
                         # There is no conf flag in cromshell
                         #conf="/home/jupyter/cromwell.conf")
+		if wdl_dependencies_file.strip() != "":
+	  		cmd += " -d {otherwdl}".format(otherwdl=wdl_dependencies_file)
 	else:
 		cmd = "java -jar -Dconfig.file={} ".format("/home/jupyter/cromwell.conf") + \
 	  			"jar_files/cromwell-87.jar run {} ".format(wdl_file) + \
 	  			"--inputs {} --options {}".format(json_file, json_options_file)
-	if wdl_dependencies_file.strip() != "":
-		cmd += " -d {otherwdl}".format(otherwdl=wdl_dependencies_file)
 	if dryrun:
 		sys.stderr.write("Run: %s\n"%cmd)
 		return

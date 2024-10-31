@@ -20,7 +20,6 @@ workflow imputation_batch {
         File regions_file
        }
        scatter (i in range(246)) {
-               #File samples_file = samples_files[i]
                # Samples file is no longer used because we are taking all the samples
                # in each downloaded batch.
                File samples_file=samples_files[0]
