@@ -4,12 +4,17 @@
 # So the query is likely different from LOINC/PPI.
 # I'll have to change the query.
 
+
+python aou_phenotype_preprocessing.py \
+	--phenotype CAD \
+   	--concept-id 317576 \
+    --verbose \
+    --snomed
 python aou_phenotype_preprocessing.py \
 	--phenotype t2diabetes \
    	--concept-id 201826 \
+    --verbose \
     --snomed
-#SNOMEDCode: 73211009
-#OMOP Concept Id: 201820
 exit 0
 python aou_phenotype_preprocessing.py \
 	--phenotype glucose \
