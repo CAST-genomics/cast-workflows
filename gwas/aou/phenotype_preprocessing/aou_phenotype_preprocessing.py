@@ -183,7 +183,8 @@ def main():
         # Set age and sex columns
         data["age"] = data.apply(lambda row:
                 row["condition_start_datetime"].year - row["date_of_birth"].year \
-                if not pd.isnull(row["condition_start_datetime"]) else\
+                if ((not pd.isnull(row["condition_start_datetime"])) and \
+                    int(row["condition_concept_id"]) == int(args.concept_id)) else\
                 datetime.date.today().year - row["date_of_birth"].year,
             axis=1)
         MSG("After merge with demog and filter samples, have %s data points"%data.shape[0])
