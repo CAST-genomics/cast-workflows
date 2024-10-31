@@ -278,7 +278,7 @@ def ConstructTraitSQL(concept_id, ppi):
             `""" + os.environ["WORKSPACE_CDR"] + """.concept` m_source_concept 
                 ON measurement.measurement_source_concept_id = m_source_concept.concept_id"""
 
-def ConstructSnomedSQL(concept_id):
+def ConstructSnomedSQL(concept_ids):
     return """
     SELECT
         c_occurrence.person_id,
@@ -318,7 +318,7 @@ def ConstructSnomedSQL(concept_id):
                     FROM
                         `""" + os.environ["WORKSPACE_CDR"] + """.cb_criteria` cr       
                     WHERE
-                        concept_id IN (""" + concept_id + """)       
+                        concept_id IN (""" + concept_ids + """)       
                         AND full_text LIKE '%_rank1]%'      ) a 
                         ON (c.path LIKE CONCAT('%.', a.id, '.%') 
                         OR c.path LIKE CONCAT('%.', a.id) 

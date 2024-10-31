@@ -142,8 +142,13 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--phenotype", help="Phenotype ID", type=str, required=True)
     parser.add_argument("--samples", help="List of sample IDs,sex to keep", type=str, default=SAMPLEFILE)
-    parser.add_argument("--concept-id", help="Concept ID for phenotype", type=str, required=True)
-    parser.add_argument("--drugexposure-covariate-concept-ids", help="Comma-separated list of conceptid:conceptname to use as drug exposure covariates", type=str)
+    parser.add_argument("--concept-id", help="Concept ID or comma separated IDs for phenotype.",
+                        type=str, required=True)
+    parser.add_argument("--skip-concepts-in-controls", help="Skip controls with this concept ids." + \
+                        " Only taken into account for binar (snomed) phenotypes.",
+                        type=str)
+    parser.add_argument("--drugexposure-covariate-concept-ids",
+                        help="Comma-separated list of conceptid:conceptname to use as drug exposure covariates", type=str)
     parser.add_argument("--units", help="Comma-separated list of acceptable units. Accepted shorthands: blood", type=str)
     parser.add_argument("--range", help="min, max acceptable phenotype values", type=str)
     parser.add_argument("--ppi", help="Whether or not the phenotype is from the PPI measurements " + \
@@ -170,8 +175,12 @@ def main():
             os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
     samples = pd.read_csv(sampfile)
 
+    concept_ids_int = [int(concept) for concept in args.concept_id.split(",")]
     # Process snomed conditions
     if args.snomed:
+        if args.skip_concepts_in_controls:
+            all_concepts_for_query = ",".join([args.concept_id, args.skip_concepts_in_controls])
+            skip_concepts_in_controls_int = [int(concept) for concept in args.skip_concepts_in_controls(",")]
         # Create the conditions dataframe based on the query
         ptdata = SQLToDF(aou_queries.ConstructSnomedSQL(args.concept_id))
         MSG("Right after query, have %s data points"%ptdata.shape[0])
@@ -181,25 +190,34 @@ def main():
         data = pd.merge(data, samples, on="person_id", how="right")
         
         # Set age and sex columns
+        #data["age"] = data.apply(lambda row:
+        #        row["condition_start_datetime"].year - row["date_of_birth"].year \
+        #        if ((not pd.isnull(row["condition_start_datetime"])) and \
+        #            int(row["condition_concept_id"]) == int(args.concept_id)) else\
+        #        datetime.date.today().year - row["date_of_birth"].year,
+        #    axis=1)
         data["age"] = data.apply(lambda row:
-                row["condition_start_datetime"].year - row["date_of_birth"].year \
-                if ((not pd.isnull(row["condition_start_datetime"])) and \
-                    int(row["condition_concept_id"]) == int(args.concept_id)) else\
                 datetime.date.today().year - row["date_of_birth"].year,
             axis=1)
         MSG("After merge with demog and filter samples, have %s data points"%data.shape[0])
         
         # Compute the binary phenotype column
+        # Here we remove samples with concept ids indicated in --skip-concepts-in-controls.
         data = data.fillna(np.nan)
         data["phenotype"] = data["condition_concept_id"].apply(
-            lambda x: 1 if not pd.isnull(x) and int(x) == int(args.concept_id) else 0)
+            lambda x: 1 if not pd.isnull(x) and int(x) in concept_ids_int \
+            else 0)
+            #else -1 if not pd.isnull(x) and int(x) in skip_concepts_in_controls_int \
 
         # Merge and groupby to remove duplicate/uninformative rows
         columns = ["person_id", "age", "sex_at_birth_Male", "phenotype"]
         data = data[columns].groupby(["person_id"]).agg(
                         {"phenotype": max,
-                        "age": min,
-                        "sex_at_birth_Male": np.mean,
+                        "age": max,
+                        "sex_at_birth_Male": \
+                            lambda series: \
+                            print("Warning: mismatching sex_at_birth in entries of the same person") \
+                            if len(set(series)) > 1 else min(series),
                         }
                         ).reset_index()
         if args.verbose:
@@ -209,7 +227,8 @@ def main():
 
         # Store the results in the output file
         data[['person_id', 'phenotype',
-              "age", "sex_at_birth_Male"]].to_csv(
+              "age",
+              "sex_at_birth_Male"]].to_csv(
                     args.phenotype+"_phenocovar.csv",
                     index=False, sep=",")
         return
