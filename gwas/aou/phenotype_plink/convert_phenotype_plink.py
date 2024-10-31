@@ -66,8 +66,14 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--phenotype", help="Phenotypes file path, or phenotype name", type=str, required=True)
     parser.add_argument("--num-pcs", help="Number of PCs to use as covariates", type=int, default=10)
-    parser.add_argument("--ptcovars", help="Comma-separated list of phenotype-specific covariates. Default: age", type=str, default="age")
-    parser.add_argument("--sharedcovars", help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male", type=str, default="sex_at_birth_Male")
+    parser.add_argument("--is-binary", help="Denotes a binary phenotype. " + \
+                        "If not set, phenotype is assumed to be linear.", action="store_true")
+    parser.add_argument("--ptcovars",
+                            help="Comma-separated list of phenotype-specific covariates. Default: age",
+                            type=str, default="age")
+    parser.add_argument("--sharedcovars",
+                            help="Comma-separated list of shared covariates (besides PCs). " + \
+                            "Default: sex_at_birth_Male", type=str, default="sex_at_birth_Male")
 
     args = parser.parse_args()
 
@@ -99,6 +105,11 @@ def main():
 
     data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols], on=["IID"],how="inner")
     plink_pheno = plink[["FID","IID","phenotype"]]
+
+    if args.is_binary:
+        # In plink Case/control phenotypes are coded as control = 1, case = 2.
+        plink_pheno["phenotype"] = plink_pheno["phenotype"] + 1
+
     plink_pheno.to_csv(f"{args.phenotype}_pheno_plink.txt", sep="\t", index=False)
     data.to_csv(f"{args.phenotype}_covar_combined.txt", sep="\t", index=False)
     
