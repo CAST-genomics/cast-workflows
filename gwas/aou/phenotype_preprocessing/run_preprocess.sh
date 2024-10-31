@@ -6,16 +6,22 @@
 
 
 python aou_phenotype_preprocessing.py \
+	--phenotype t1diabetes \
+   	--concept-id 4008576,201820 \
+    --verbose \
+    --snomed
+#--skip-concepts-in-controls 4008576,201820 \
+#201826: Type 2 diabetes mellitus
+#4193704: Type 2 diabetes mellitus without complication
+#201820: Diabetes mellitus
+#4008576: Diabetes mellitus without complication
+
+exit 0
+python aou_phenotype_preprocessing.py \
 	--phenotype CAD \
    	--concept-id 317576 \
     --verbose \
     --snomed
-python aou_phenotype_preprocessing.py \
-	--phenotype t2diabetes \
-   	--concept-id 201826 \
-    --verbose \
-    --snomed
-exit 0
 python aou_phenotype_preprocessing.py \
 	--phenotype glucose \
    	--concept-id 40795740 \
