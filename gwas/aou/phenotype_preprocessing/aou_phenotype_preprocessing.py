@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import sys
+import datetime
 
 SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
     "passing_samples_v7.csv")
@@ -178,10 +179,13 @@ def main():
         # Merge with sample data
         data = pd.merge(ptdata, demog, on="person_id", how="right")
         data = pd.merge(data, samples, on="person_id", how="right")
-
+        
         # Set age and sex columns
-        data["age"] = data["condition_start_datetime"].dt.year - data["date_of_birth"].dt.year
-        #data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
+        data["age"] = data.apply(lambda row:
+                row["condition_start_datetime"].year - row["date_of_birth"].year \
+                if not pd.isnull(row["condition_start_datetime"]) else\
+                datetime.date.today().year - row["date_of_birth"].year,
+            axis=1)
         MSG("After merge with demog and filter samples, have %s data points"%data.shape[0])
         
         # Compute the binary phenotype column
@@ -193,7 +197,7 @@ def main():
         columns = ["person_id", "age", "sex_at_birth_Male", "phenotype"]
         data = data[columns].groupby(["person_id"]).agg(
                         {"phenotype": max,
-                        "age": np.mean,
+                        "age": min,
                         "sex_at_birth_Male": np.mean,
                         }
                         ).reset_index()
