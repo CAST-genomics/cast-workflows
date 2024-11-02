@@ -8,14 +8,14 @@ def read_region_phenotypes(filename):
 
 def main():
     #data = read_region_phenotypes("lab_measurement_phenotypes.csv")
-    data = read_region_phenotypes("snomed_phenotypes.csv")
+    data = read_region_phenotypes("binary_phenotypes.csv")
    
-    chroms = [chr11:1-136000000]
+    chroms = ["chr11:1-136000000"]
     #chroms = ["chr13:1-115000000", "chr15:1-102000000", "chr11:1-136000000"]
     for idx, row in data.iterrows():
         print("-------- Running for phenotype ", row["phenotype_name"])
         for chrom in chroms:
-            for phenotype in row["phenotypes"].split():
+            for phenotype in str(row["phenotypes"]).split():
                 command = "python query_allxall_associations.py " + \
                 "--type ACAF " + \
                 "--pop META " + \
