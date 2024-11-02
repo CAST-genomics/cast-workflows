@@ -1,0 +1,4 @@
+gene,region,phenotypes,phenotype_name
+-,wgs,3013682,urea
+INS,wgs,201826,Type 2 Diabetes
+INS,wgs,4193704,Type 2 Diabetes w/o complication
