@@ -1,6 +1,6 @@
 #!/bin/bash
-  chr="chr13"
-  mem=60
+  chr="chr2"
+  mem=120
   #mem=4
   #window=20
   window=10
