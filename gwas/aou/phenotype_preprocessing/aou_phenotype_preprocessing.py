@@ -138,103 +138,56 @@ def my_median(series):
         my_median = sorted(series)[int(len(series)/2)]
         return my_median
 
-def main():
-    parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument("--phenotype", help="Phenotype ID", type=str, required=True)
-    parser.add_argument("--samples", help="List of sample IDs,sex to keep", type=str, default=SAMPLEFILE)
-    parser.add_argument("--concept-id", help="Concept ID or comma separated IDs for phenotype.",
-                        type=str, required=True)
-    parser.add_argument("--skip-concepts-in-controls", help="Skip controls with this concept ids." + \
-                        " Only taken into account for binar (snomed) phenotypes.",
-                        type=str)
-    parser.add_argument("--drugexposure-covariate-concept-ids",
-                        help="Comma-separated list of conceptid:conceptname to use as drug exposure covariates", type=str)
-    parser.add_argument("--units", help="Comma-separated list of acceptable units. Accepted shorthands: blood", type=str)
-    parser.add_argument("--range", help="min, max acceptable phenotype values", type=str)
-    parser.add_argument("--ppi", help="Whether or not the phenotype is from the PPI measurements " + \
-                                      "as opposed to LOINC. Only physical measurements (e.g. height) " + \
-                                      "are in PPI.",
-                                      action="store_true", default=False)
-    parser.add_argument("--snomed", help="Whether or not thhe phenotype is from the SNOMED vocab, including diseases.",
-                                      action="store_true", default=False)
-    parser.add_argument("--verbose", help="Adjust verbosity.",
-                                      action="store_true", default=False)
-    parser.add_argument("--outlier-sd", help="filter samples with phenotype values exceeding this number of SDs",
-                                        type=int, required=False)
+def parse_snomed(samples, demog, args):
 
-    args = parser.parse_args()
-    MSG("Processing %s"%args.phenotype)
-    # Set up dataframes
-    demog = SQLToDF(aou_queries.demographics_sql)
+    # Create the conditions dataframe based on the query
+    ptdata = SQLToDF(aou_queries.ConstructSnomedSQL(args.snomed_ids))
+    MSG("Right after query, have %s data points"%ptdata.shape[0])
 
-    # Restrict to samples we want to keep
-    sampfile = args.samples
-    if sampfile.startswith("gs://"):
-        sampfile = sampfile.split("/")[-1]
-        if not os.path.isfile(sampfile):
-            os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
-    samples = pd.read_csv(sampfile)
+    # Merge with sample data
+    data = pd.merge(ptdata, demog, on="person_id", how="right")
+    data = pd.merge(data, samples, on="person_id", how="right")
+    
+    data["age"] = data.apply(lambda row:
+            datetime.date.today().year - row["date_of_birth"].year,
+        axis=1)
+    MSG("After merge with demog and filter samples, have %s data points"%data.shape[0])
+    
+    # Compute the binary phenotype column
+    # Here we remove samples with concept ids indicated in --skip-concepts-in-controls.
+    snomed_ids_int = [int(concept) for concept in args.snomed_ids.split(",")]
+    data = data.fillna(np.nan)
+    data["phenotype"] = data["condition_concept_id"].apply(
+        lambda x: 1 if not pd.isnull(x) and int(x) in snomed_ids_int \
+        else 0)
+        #else -1 if not pd.isnull(x) and int(x) in skip_concepts_in_controls_int \
 
-    concept_ids_int = [int(concept) for concept in args.concept_id.split(",")]
-    # Process snomed conditions
-    if args.snomed:
-        if args.skip_concepts_in_controls:
-            all_concepts_for_query = ",".join([args.concept_id, args.skip_concepts_in_controls])
-            skip_concepts_in_controls_int = [int(concept) for concept in args.skip_concepts_in_controls(",")]
-        # Create the conditions dataframe based on the query
-        ptdata = SQLToDF(aou_queries.ConstructSnomedSQL(args.concept_id))
-        MSG("Right after query, have %s data points"%ptdata.shape[0])
+    # Merge and groupby to remove duplicate/uninformative rows
+    columns = ["person_id", "age", "sex_at_birth_Male", "phenotype"]
+    data = data[columns].groupby(["person_id"]).agg(
+                    {"phenotype": max,
+                    "age": max,
+                    "sex_at_birth_Male": \
+                        lambda series: \
+                        print("Warning: mismatching sex_at_birth in entries of the same person") \
+                        if len(set(series)) > 1 else min(series),
+                    }
+                    ).reset_index()
+    if args.verbose:
+        print("Number of elements after group_by: ", len(data))
+        print("Number of rows with snomed phenotype true: ", len(data[data["phenotype"] == 1]))
+        print("Number of rows with snomed phenotype false: ", len(data[data["phenotype"] == 0]))
 
-        # Merge with sample data
-        data = pd.merge(ptdata, demog, on="person_id", how="right")
-        data = pd.merge(data, samples, on="person_id", how="right")
-        
-        # Set age and sex columns
-        #data["age"] = data.apply(lambda row:
-        #        row["condition_start_datetime"].year - row["date_of_birth"].year \
-        #        if ((not pd.isnull(row["condition_start_datetime"])) and \
-        #            int(row["condition_concept_id"]) == int(args.concept_id)) else\
-        #        datetime.date.today().year - row["date_of_birth"].year,
-        #    axis=1)
-        data["age"] = data.apply(lambda row:
-                datetime.date.today().year - row["date_of_birth"].year,
-            axis=1)
-        MSG("After merge with demog and filter samples, have %s data points"%data.shape[0])
-        
-        # Compute the binary phenotype column
-        # Here we remove samples with concept ids indicated in --skip-concepts-in-controls.
-        data = data.fillna(np.nan)
-        data["phenotype"] = data["condition_concept_id"].apply(
-            lambda x: 1 if not pd.isnull(x) and int(x) in concept_ids_int \
-            else 0)
-            #else -1 if not pd.isnull(x) and int(x) in skip_concepts_in_controls_int \
+    # Store the results in the output file
+    data[['person_id', 'phenotype',
+          "age",
+          "sex_at_birth_Male"]].to_csv(
+                args.phenotype+"_phenocovar.csv",
+                index=False, sep=",")
 
-        # Merge and groupby to remove duplicate/uninformative rows
-        columns = ["person_id", "age", "sex_at_birth_Male", "phenotype"]
-        data = data[columns].groupby(["person_id"]).agg(
-                        {"phenotype": max,
-                        "age": max,
-                        "sex_at_birth_Male": \
-                            lambda series: \
-                            print("Warning: mismatching sex_at_birth in entries of the same person") \
-                            if len(set(series)) > 1 else min(series),
-                        }
-                        ).reset_index()
-        if args.verbose:
-            print("Number of elements after group_by: ", len(data))
-            print("Number of rows with snomed phenotype true: ", len(data[data["phenotype"] == 1]))
-            print("Number of rows with snomed phenotype false: ", len(data[data["phenotype"] == 0]))
-
-        # Store the results in the output file
-        data[['person_id', 'phenotype',
-              "age",
-              "sex_at_birth_Male"]].to_csv(
-                    args.phenotype+"_phenocovar.csv",
-                    index=False, sep=",")
-        return
-    else:
-        # Process lab measurements
-        ptdata = SQLToDF(aou_queries.ConstructTraitSQL(args.concept_id, args.ppi))
+def parse_lab_measurements(samples, demog, args):
+    # Process lab measurements
+    ptdata = SQLToDF(aou_queries.ConstructTraitSQL(args.concept_id, args.ppi))
     if args.units is None:
         print("Error: --units is required.")
         exit(1)
@@ -307,6 +260,63 @@ def main():
     MSG("Final file has %s data points"%filtered.shape[0])
     filtered.rename({"value_as_number": "phenotype"}, inplace=True, axis=1)
     filtered[["person_id", "phenotype", "age", "sex_at_birth_Male"]+covar_cols].to_csv(args.phenotype+"_phenocovar.csv", index=False)
+
+
+def main():
+    parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument("--phenotype", help="Phenotype ID", type=str, required=True)
+    parser.add_argument("--samples", help="List of sample IDs,sex to keep", type=str, default=SAMPLEFILE)
+    parser.add_argument("--concept-id", help="Concept ID or comma separated IDs for phenotype.",
+                        type=str)
+    parser.add_argument("--skip-concepts-in-controls", help="Skip controls with this concept ids." + \
+                        " Only taken into account for binar (snomed) phenotypes.",
+                        type=str)
+    parser.add_argument("--drugexposure-covariate-concept-ids",
+                        help="Comma-separated list of conceptid:conceptname to use as drug exposure covariates", type=str)
+    parser.add_argument("--units", help="Comma-separated list of acceptable units. Accepted shorthands: blood", type=str)
+    parser.add_argument("--range", help="min, max acceptable phenotype values", type=str)
+    parser.add_argument("--ppi", help="Whether or not the phenotype is from the PPI measurements " + \
+                                      "as opposed to LOINC. Only physical measurements (e.g. height) " + \
+                                      "are in PPI.",
+                                      action="store_true", default=False)
+    parser.add_argument("--snomed-ids",
+                        help="The concept id from the SNOMED vocab usually used for diseases or conditions.",
+                        type=str)
+    parser.add_argument("--verbose", help="Adjust verbosity.",
+                                      action="store_true", default=False)
+    parser.add_argument("--outlier-sd", help="filter samples with phenotype values exceeding this number of SDs",
+                                        type=int, required=False)
+
+    args = parser.parse_args()
+    if (args.concept_id is None and args.snomed_ids is None) or \
+        args.concept_id and args.snomed_ids:
+        print("Error: Exactly one of --concept-id and --snomed-id should be set.")
+        exit(1)
+
+    MSG("Processing %s"%args.phenotype)
+    # Set up dataframes
+    demog = SQLToDF(aou_queries.demographics_sql)
+
+    # Restrict to samples we want to keep
+    sampfile = args.samples
+    if sampfile.startswith("gs://"):
+        sampfile = sampfile.split("/")[-1]
+        if not os.path.isfile(sampfile):
+            os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
+    samples = pd.read_csv(sampfile)
+
+    if args.snomed_ids:
+        parse_snomed(
+                    samples=samples,
+                    demog=demog,
+                    args=args
+                    )
+    elif args.concept_id:
+        parse_lab_measurements(
+                    samples=samples,
+                    demog=demog,
+                    args=args
+                    )
 
 if __name__ == "__main__":
     main()
