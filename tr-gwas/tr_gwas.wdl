@@ -96,7 +96,7 @@ task run_tr_gwas {
     command <<<
         # Run GWAS on each chrom
         echo "Current directory: $(pwd)"
-        echo "Expected files: $(ls -1 *.psam)"
+        echo "Expected files: $(ls *.psam)"
         PFILEARRAY=(~{sep=" " pgens})
         gwas_outfiles=""
         #gwas_logs=""
