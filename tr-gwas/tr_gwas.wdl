@@ -110,15 +110,14 @@ task run_tr_gwas {
                --keep ~{samples} \
                --covar-variance-standardize \
                --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
-            gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear"
+            gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear "
             #gwas_logs=+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.log"
 
         done
         
         echo $gwas_outfiles
         # Concatenate all results
-        head -n 1 ~{sep=" " $gwas_outfiles} > "~{out_prefix}_~{sample_name}_gwas.tab"
-        #head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}_gwas.tab"
+        head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}_gwas.tab"
 
         for file in ${gwas_outfiles}
         do
