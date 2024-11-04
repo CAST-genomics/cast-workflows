@@ -49,7 +49,6 @@ workflow tr_gwas {
     }
 }
 
-
 task convert_phenotype {
     input {
         File pheno
@@ -95,13 +94,13 @@ task run_tr_gwas {
 
     command <<<
         # Run GWAS on each chrom
-        echo "Current directory: $(pwd)"
-        echo "Expected files: $(ls *.psam)"
-        PFILEARRAY=(~{sep=" " pgens})
+        #echo "Expected files: $(ls *.psam)"
+        #PFILEARRAY=(~{sep=" " pgens})
+        PFILEARRAY=(~{pgens})
         gwas_outfiles=""
         #gwas_logs=""
-        for (( c = 0; c < ~{total}; c++ )); # bash array are 0-indexed 
-        do
+        # bash array are 0-indexed 
+        for (( c = 0; c < ~{total}; c++ )); do
             pfile=${PFILEARRAY[$c]}
             chrom_outprefix=$(basename $pfile _annotated.pgen)
             plink2 --pfile ${chrom_outprefix} \
@@ -120,6 +119,7 @@ task run_tr_gwas {
         head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}.tab"
         for file in ${gwas_outfiles}; do
             grep -v POS "$file" >> "~{out_prefix}_~{sample_name}.tab"
+        done
     >>>
 
     runtime {
