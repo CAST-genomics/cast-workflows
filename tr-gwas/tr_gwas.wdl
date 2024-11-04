@@ -116,9 +116,9 @@ task run_tr_gwas {
         done
         
         echo $gwas_outfiles
-
         # Concatenate all results
-        head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}_gwas.tab"
+        head -n 1 ~{sep=" " $gwas_outfiles} > "~{out_prefix}_~{sample_name}_gwas.tab"
+        #head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}_gwas.tab"
 
         for file in ${gwas_outfiles}
         do
