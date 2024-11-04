@@ -94,15 +94,13 @@ task run_tr_gwas {
 
     command <<<
         # Run GWAS on each chrom
-        #echo "Expected files: $(ls *.psam)" > psam.txt
         PFILEARRAY=(~{sep=" " pgens})
         gwas_outfiles=""
-        #gwas_logs=""
         # bash array are 0-indexed 
         for (( c = 0; c < ~{total}; c++ ))
         do
             pfile=${PFILEARRAY[$c]}
-            chrom_outprefix=$(basename $pfile _annotated.pgen)
+            chrom_outprefix=$(basename $pfile .pgen)
             plink2 --pfile ${chrom_outprefix} \
                --pheno ~{pheno} \
                --linear \
@@ -111,7 +109,6 @@ task run_tr_gwas {
                --covar-variance-standardize \
                --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
             gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear "
-            #gwas_logs=+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.log"
 
         done
         
