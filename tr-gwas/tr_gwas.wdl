@@ -100,7 +100,8 @@ task run_tr_gwas {
         gwas_outfiles=""
         #gwas_logs=""
         # bash array are 0-indexed 
-        for (( c = 0; c < ~{total}; c++ )); do
+        for (( c = 0; c < ~{total}; c++ ))
+        do
             pfile=${PFILEARRAY[$c]}
             chrom_outprefix=$(basename $pfile _annotated.pgen)
             plink2 --pfile ${chrom_outprefix} \
@@ -114,10 +115,12 @@ task run_tr_gwas {
             #gwas_logs=+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.log"
 
         done
+        
 
         # Concatenate all results
         head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}.tab"
-        for file in ${gwas_outfiles}; do
+        for file in ${gwas_outfiles}
+        do
             grep -v POS "$file" >> "~{out_prefix}_~{sample_name}.tab"
         done
     >>>
