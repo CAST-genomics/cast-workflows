@@ -94,7 +94,7 @@ task run_tr_gwas {
 
     command <<<
         # Run GWAS on each chrom
-        echo "Expected files: $(ls *.psam)" > psam.txt
+        #echo "Expected files: $(ls *.psam)" > psam.txt
         PFILEARRAY=(~{sep=" " pgens})
         gwas_outfiles=""
         #gwas_logs=""
@@ -115,12 +115,14 @@ task run_tr_gwas {
 
         done
         
+        echo $gwas_outfiles
 
         # Concatenate all results
-        head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}.tab"
+        head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}_gwas.tab"
+
         for file in ${gwas_outfiles}
         do
-            grep -v POS "$file" >> "~{out_prefix}_~{sample_name}.tab"
+            grep -v POS "$file" >> "~{out_prefix}_~{sample_name}_gwas.tab"
         done
     >>>
 
@@ -132,6 +134,6 @@ task run_tr_gwas {
     }
 
     output {
-       File outfile = "${out_prefix}_~{sample_name}.tab"
+       File outfile = "${out_prefix}_~{sample_name}_gwas.tab"
     }
 }
