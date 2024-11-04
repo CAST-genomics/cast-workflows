@@ -101,9 +101,9 @@ task run_tr_gwas {
         do
             pfile=${PFILEARRAY[$c]}
             echo $pfile
-            chrom_outprefix="${pfile%.pgen}"
-            #chrom_outprefix=$(basename $pfile .pgen)
-            plink2 --pfile ${chrom_outprefix} \
+            pfile_outprefix="${pfile%.pgen}"
+            chrom_outprefix=$(basename $pfile .pgen)
+            plink2 --pfile ${pfile_outprefix} \
                --pheno ~{pheno} \
                --linear \
                --covar ~{covar} \
