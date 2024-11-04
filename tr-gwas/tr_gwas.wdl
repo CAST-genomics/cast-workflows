@@ -94,9 +94,8 @@ task run_tr_gwas {
 
     command <<<
         # Run GWAS on each chrom
-        #echo "Expected files: $(ls *.psam)"
-        #PFILEARRAY=(~{sep=" " pgens})
-        PFILEARRAY=(~{pgens})
+        echo "Expected files: $(ls *.psam)" > psam.txt
+        PFILEARRAY=(~{sep=" " pgens})
         gwas_outfiles=""
         #gwas_logs=""
         # bash array are 0-indexed 
