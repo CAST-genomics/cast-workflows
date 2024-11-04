@@ -100,7 +100,9 @@ task run_tr_gwas {
         for (( c = 0; c < ~{total}; c++ ))
         do
             pfile=${PFILEARRAY[$c]}
-            chrom_outprefix=$(basename $pfile .pgen)
+            echo $pfile
+            chrom_outprefix="${pfile%.pgen}"
+            #chrom_outprefix=$(basename $pfile .pgen)
             plink2 --pfile ${chrom_outprefix} \
                --pheno ~{pheno} \
                --linear \
