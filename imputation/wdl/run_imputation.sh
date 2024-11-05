@@ -1,6 +1,6 @@
 #!/bin/bash
 
-chr="chr2"
+chr="chr17"
 
 # PVNTR ref
 ref="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/p_g_vntrs/phased/${chr}/vntr_ref_${chr}.sorted.annotated.vcf.gz"
