@@ -218,7 +218,6 @@ task beagle_phase {
         docker:"gcr.io/ucsd-medicine-cast/beagle:latest"
 	memory: mem + "GB"
 	disks: "local-disk " + mem + " SSD"
-        preemptible: 1
     }
 
     output {
@@ -259,20 +258,26 @@ task sort_index_beagle {
       Int mem
     }
 
+    String outfile_tmp="vntr_ref_~{chrom}.sorted.tmp.vcf.gz"
     String outfile="vntr_ref_~{chrom}.sorted.vcf.gz"
 
     command <<<
+        set -e
         tabix -p vcf ~{vcf}
-        bcftools sort -Oz ~{vcf} > ~{outfile} && tabix -p vcf ~{outfile}
+        bcftools sort -Oz ~{vcf} > ~{outfile_tmp} && tabix -p vcf ~{outfile_tmp}
+        bcftools view -h ~{outfile_tmp} | head -n 4 > header.txt
+        echo "##source=adVNTR ver. 1.5.0" >> header.txt
+        bcftools view -h ~{outfile_tmp} | tail -n +5 >> header.txt
+        bcftools reheader -h header.txt ~{outfile_tmp} | bcftools view -Oz > ~{outfile}
+        tabix -p vcf ~{outfile}
         echo "Number of TRs in the vcf file"
         bcftools view  ~{outfile} | grep -v "^#" | awk '$3 ~ /chr[0-9]*_[0-9]*$/{print}' | wc -l
     >>>
 
     runtime {
-        docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
+        docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
 	memory: mem + "GB"
-	disks: "local-disk " + mem*2 + " SSD"
-        preemptible: 1
+	disks: "local-disk " + mem + " SSD"
     }
 
     output {
@@ -285,8 +290,8 @@ task add_tags {
     input {
       File vcf
       File vcf_index
-      String annotation_vcf
-      String annotation_vcf_index
+      File annotation_vcf
+      File annotation_vcf_index
       Int mem
     }
 

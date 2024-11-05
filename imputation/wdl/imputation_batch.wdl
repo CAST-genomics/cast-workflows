@@ -53,6 +53,7 @@ workflow imputation_batch {
         call sort_index {
             input:
                 vcf=merge_outputs.merged_vcfs,
+                chrom=chrom,
                 mem=mem*2
         }
 
@@ -62,16 +63,18 @@ workflow imputation_batch {
                 vcf_index=sort_index.sorted_vcf_index,
                 annotation_vcf=ref_panel,
                 annotation_vcf_index=ref_panel_index,
+                chrom=chrom,
                 mem=mem,
         }
     
         call annotaTR {
             input:
-	        vcf=add_tags.outvcf,
-	        vcf_index=add_tags.outvcf_index,
-	        ref_vcf=ref_panel,
-	        ref_index=ref_panel_index,
-	        out_prefix=out_prefix,
+	            vcf=add_tags.outvcf,
+	            vcf_index=add_tags.outvcf_index,
+	            ref_vcf=ref_panel,
+	            ref_index=ref_panel_index,
+	            out_prefix=out_prefix,
+                chrom=chrom,
                 mem=mem,
         }
 
@@ -89,9 +92,10 @@ workflow imputation_batch {
 task sort_index {
     input {
         File vcf
+        String chrom
         Int? mem
     }
-    String out_prefix = "merged_samples.sorted"
+    String out_prefix = "imputed_~{chrom}.sorted"
     command <<<
         set -e
         echo "Sorting vcf file"
@@ -99,8 +103,8 @@ task sort_index {
     >>>
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-	memory: mem + "GB"
-	disks: "local-disk " + mem + " SSD"
+	    memory: mem + "GB"
+	    disks: "local-disk " + mem + " SSD"
     }
     output {
         File sorted_vcf = "~{out_prefix}.vcf.gz"
@@ -124,8 +128,8 @@ task merge_outputs {
     >>>
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-	memory: mem*4 + "GB"
-	disks: "local-disk " + mem*4 + " SSD"
+	    memory: mem*4 + "GB"
+	    disks: "local-disk " + mem*4 + " SSD"
     }
     output {
         File merged_vcfs = "~{out_prefix}.vcf.gz"
@@ -134,11 +138,12 @@ task merge_outputs {
 
 task add_tags {
     input {
-      File vcf
-      File vcf_index
-      File annotation_vcf
-      File annotation_vcf_index
-      Int? mem
+        File vcf
+        File vcf_index
+        File annotation_vcf
+        File annotation_vcf_index
+        String chrom
+        Int? mem
     }
 
    String basename = basename(vcf, ".vcf.gz")
@@ -149,12 +154,13 @@ task add_tags {
        touch ~{vcf_index} ~{annotation_vcf_index}
        bcftools annotate -Oz -a ~{annotation_vcf} -c CHROM,POS,VID,RU ~{vcf} > ~{outfile}
        tabix -p vcf ~{outfile}
+       gsutil cp *.vcf.gz* gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/imputation_output/~{chrom}/
    >>>
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
-	memory: mem + "GB"
-        #preemptible: 1
+	    memory: mem + "GB"
+        preemptible: 1
     }
 
     output {
@@ -170,6 +176,7 @@ task annotaTR {
         File ref_vcf
         File ref_index
         String out_prefix
+        String chrom
         Int? mem
     }
     
@@ -180,7 +187,8 @@ task annotaTR {
                  --out ~{out_prefix}_annotated \
                  --vcftype advntr \
                  --outtype pgen \
-                 --dosages bestguess_norm \
+                 --dosages bestguess_norm
+        gsutil cp ~{out_prefix}* gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/imputation_output/~{chrom}/
     >>>
 
     runtime {

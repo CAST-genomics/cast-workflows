@@ -436,7 +436,6 @@ def main():
     outpath = GetOutPath(args.phenotype, args.method, args.region, sampfile, args.outdir)
     runner.RunGWAS()
     WriteGWAS(runner.gwas, outpath+".tab", covars)
-    #runner.gwas = pd.read_csv(outpath+".tab", sep="\t")
 
     # Plot Manhattan
     print("args.plot is ", args.plot)

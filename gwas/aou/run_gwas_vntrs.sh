@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#aou_220k_imputed="../../imputation/wdl/data/imputed_p_g_vntrs_srwgs_sr_ml_filter.sorted.annotated.vcf.gz"
-#aou_220k_imputed="../../imputation/wdl/data/chr_11_imputed_rh.sorted.annotate.vcf.gz"
-aou_220k_imputed="../../imputation/wdl/data/imputed_samples_chr13.sorted.annotate.rh.vcf.gz"
-chr="chr13"
+chr="chr11"
+#aou_220k_imputed="../../imputation/wdl/data/imputed_chr15_p_g_vntrs_srwgs_sr_ml_filter.sorted.vcf.gz"
+aou_220k_imputed="../../imputation/wdl/data/imputed_chr11.annotated.vcf.gz"
+#aou_220k_imputed="../../imputation/wdl/data/imputed_samples_chr13.sorted.annotate.rh.vcf.gz"
 
 ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
 
@@ -17,23 +17,11 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
   echo "" > $summary
   for phenotype in $(tail -n +2 phenotypes_manifest.csv  | cut -d, -f1); do
      #phenotype="red_blood_cell_distribution_width"
-     #phenotype="hemoglobin_a1c"
-     #phenotype="diabetes"
-     #phenotype="glucose"
-     phenotype="mean_corpuscular_hemoglobin"
-     snp_gwas_file="data/all_by_all/df_dump_${chr}_${phenotype}.csv"
+     phenotype="type_2_diabetes"
+     #phenotype="height"
+     snp_gwas_file="data/all_by_all/df_dump_${chr}_EM_202.2.csv"
+     #snp_gwas_file="data/all_by_all/df_dump_${chr}_${phenotype}.csv"
      
-     #phenotype="haematocrit"
-     #snp_gwas_file="data/all_by_all/df_dump_${chr}_3023314.csv"
-
-     #phenotype="mean_platelet_volume"
-     #snp_gwas_file="data/all_by_all/df_dump_${chr}_3043111.csv"
-     
-     #phenotype="alkaline_phosphatase"
-     #snp_gwas_file="data/all_by_all/df_dump_${chr}_3035995.csv"
-     
-     #phenotype="urea"
-     #snp_gwas_file="data/all_by_all/df_dump_${chr}_3013682.csv"
     
      echo "Running gwas for $phenotype"
      ./aou_gwas.py --phenotype $phenotype \
