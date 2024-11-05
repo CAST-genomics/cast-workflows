@@ -100,7 +100,6 @@ task run_tr_gwas {
         for (( c = 0; c < ~{total}; c++ ))
         do
             pfile=${PFILEARRAY[$c]}
-            echo $pfile
             pfile_outprefix="${pfile%.pgen}"
             chrom_outprefix=$(basename $pfile .pgen)
             plink2 --pfile ${pfile_outprefix} \
@@ -114,7 +113,6 @@ task run_tr_gwas {
 
         done
         
-        echo $gwas_outfiles
         # Concatenate all results
         head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}_gwas.tab"
 
