@@ -95,9 +95,9 @@ task subset_vcf {
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-	memory: mem + "GB"
+	    memory: mem + "GB"
         #bootDiskSizeGb: mem
-	disks: "local-disk " + mem + " SSD"
+	    disks: "local-disk " + mem + " SSD"
         preemptible: 1
     }
 
@@ -149,7 +149,6 @@ task beagle {
         echo "vcf: ~{vcf}"
         java -Xmx~{mem}g -jar /beagle.jar \
             gt=~{vcf} \
-            ap=true \
             ref=~{ref_panel} \
             window=~{window_size} \
             overlap=~{overlap} \
@@ -161,8 +160,8 @@ task beagle {
     #file upto 300mb use mem=25
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/beagle:latest"
-	disks: "local-disk " + mem + " SSD"
-	memory: mem + "GB"
+	    disks: "local-disk " + mem*2 + " SSD"
+	    memory: mem*2 + "GB"
     }
 
     output {
@@ -197,8 +196,8 @@ task sort_index_beagle {
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
-	memory: mem*2 + "GB"
-	disks: "local-disk " + mem*4 + " SSD"
+	    memory: mem*2 + "GB"
+	    disks: "local-disk " + mem*4 + " SSD"
         preemptible: 1
     }
 

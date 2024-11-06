@@ -296,7 +296,7 @@ task add_tags {
     }
 
    String basename = basename(vcf, ".vcf.gz")
-   String outfile="~{basename}.annotate.vcf.gz"
+   String outfile="~{basename}.annotated.vcf.gz"
 
    command <<<
        bcftools annotate -Oz -a ~{annotation_vcf} -c CHROM,POS,VID,RU ~{vcf} > ~{outfile}
