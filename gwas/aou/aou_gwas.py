@@ -169,23 +169,21 @@ def get_overall_rc_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep=
     return (rc_1 + rc_2)/2.0
 
 
-def set_genotypes(data, args, annotations, cohort, samples):
+def set_genotypes(data, annotations, cohort, samples, phenotype, imputed, tr_vcf, outdir):
     print("Reading genotypes from the vcf file")
-    #print("is imputed: ", args.is_imputed)
-    imputed = args.is_imputed
     # Plot phenotype histogram
-    plot_histogram(data["phenotype"], os.path.join(args.outdir,
-                        "{}_histogram_after_norm.png".format(args.phenotype)))
+    plot_histogram(data["phenotype"], os.path.join(outdir,
+                        "{}_histogram_after_norm.png".format(phenotype)))
     # Read input VCF file into a dataframe
     lines = None
 
-    if args.tr_vcf.endswith("gz"):
+    if tr_vcf.endswith("gz"):
         # It is a compressed vcf file
-        with gzip.open(args.tr_vcf, "rt") as vcf_file:
+        with gzip.open(tr_vcf, "rt") as vcf_file:
             lines = vcf_file.readlines()
-    elif args.tr_vcf.endswith("vcf"):
+    elif tr_vcf.endswith("vcf"):
         # It is an uncompressed vcf file
-        with open(args.tr_vcf, "r") as vcf_file:
+        with open(tr_vcf, "r") as vcf_file:
             lines = vcf_file.readlines()
     else:
         print("Error: Cannot recognize tr-vcf file format. Should be either a vcf file or a vcf.gz file")
@@ -204,6 +202,7 @@ def set_genotypes(data, args, annotations, cohort, samples):
     #    if line.startswith("#"):
     #        normalized_file.write(line + "\n")
     # Focus on a few loci of interest
+    samples_set = set(list(samples))
     for chrom, start, gene in annotations:
         all_alleles = []
         empty_calls, no_calls = 0, 0
@@ -224,7 +223,7 @@ def set_genotypes(data, args, annotations, cohort, samples):
                 print("reading call ", counter)
             if column.isnumeric():
                 # Corresponds to a sample id
-                if str(column) not in list(samples):
+                if str(column) not in samples_set:
                     continue
                 if not imputed:
                     #print("Column: ", column)
@@ -268,9 +267,8 @@ def set_genotypes(data, args, annotations, cohort, samples):
         # Plot individual alleles for ACAN
         print("Plotting alleles histogram")
         print("gene: ", gene)
-        print("phenotype: ", args.phenotype)
-        if gene == "ACAN" and args.phenotype == "height":
-            plot_histogram(all_alleles, os.path.join(args.outdir, "ACAN_alleles_height_{}.png".format(cohort)))
+        print("phenotype: ", phenotype)
+        plot_histogram(all_alleles, os.path.join(outdir, "{}_alleles_{}_{}.png".format(gene, phenotype, cohort)))
         if no_calls + empty_calls > 0:
             print("Skipping {} empty calls and {} no calls for {} on vcf".format(
                     empty_calls, no_calls, gene))
@@ -410,7 +408,14 @@ def main():
             annotations = read_annotations(args.annotations)
             # This is necessary for genotype-phenotype plot
             # To run a quick check, randomly subsample the samples
-            data = set_genotypes(data, args, annotations, cohort, samples["person_id"])
+            data = set_genotypes(data=data,
+                                 annotations=annotations,
+                                 cohort=cohort,
+                                 samples=samples["person_id"],
+                                 phenotype=args.phenotype,
+                                 imputed=args.is_imputed,
+                                 tr_vcf=args.tr_vcf,
+                                 outdir=args.outdir)
     
     data = pd.merge(data, samples)
 
