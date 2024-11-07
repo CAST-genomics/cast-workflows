@@ -64,7 +64,13 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, outpath
 def annotate_points(ax, gwas):
     # Annotate points
     for point in [("chr15", "88855424", "ACAN"),
+                  ("chr15", "101489550","PCSK6"),
+                  ("chr15", "89776881", "MESP2"),
+                  ("chr15", "82342547" , "GOLGA6L10"),
+                  ("chr13", "112746309", "ATP11A"),
+                  ("chr11", "116844581", "SIK3"),
                   ("chr11", " 2161569", "INS"),
+                  ("chr11", "2161570", "INS"),
                   #("chr17", "30237128", "SLC6A4"),
                   #("chr6", "81752005", "TENT5A"),
                   #("chr20", "2652732", "NOP56"),

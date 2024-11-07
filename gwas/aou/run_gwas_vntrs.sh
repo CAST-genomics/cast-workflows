@@ -1,8 +1,8 @@
 #!/bin/bash
 
-chr="chr11"
-#aou_220k_imputed="../../imputation/wdl/data/imputed_chr15_p_g_vntrs_srwgs_sr_ml_filter.sorted.vcf.gz"
-aou_220k_imputed="../../imputation/wdl/data/imputed_chr11.annotated.rh.vcf.gz"
+chr="chr15"
+aou_220k_imputed="../../imputation/wdl/data/imputed_chr15_p_g_vntrs_srwgs_sr_ml_filter.sorted.vcf.gz"
+#aou_220k_imputed="../../imputation/wdl/data/imputed_chr11.annotated.rh.vcf.gz"
 #aou_220k_imputed="../../imputation/wdl/data/imputed_samples_chr13.sorted.annotate.rh.vcf.gz"
 
 ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
@@ -16,11 +16,11 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
 
   echo "" > $summary
   for phenotype in $(tail -n +2 phenotypes_manifest.csv  | cut -d, -f1); do
-     #phenotype="red_blood_cell_distribution_width"
-     phenotype="type_2_diabetes"
+     phenotype="red_blood_cell_distribution_width"
+     #phenotype="type_2_diabetes"
      #phenotype="height"
-     snp_gwas_file="data/all_by_all/df_dump_${chr}_EM_202.2.csv"
-     #snp_gwas_file="data/all_by_all/df_dump_${chr}_${phenotype}.csv"
+     #snp_gwas_file="data/all_by_all/df_dump_${chr}_EM_202.2.csv"
+     snp_gwas_file="data/all_by_all/df_dump_${chr}_${phenotype}.csv"
      
     
      echo "Running gwas for $phenotype"
@@ -33,6 +33,7 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
            --is-imputed \
            --outdir outputs/${chr} \
            --snp-gwas-file $snp_gwas_file \
+           --annotations annotations.csv \
            --plot
      most_significant_hit=$(tail -n +4 outputs/${chr}/${phenotype}_associaTR_${samples_prefix}.gwas.tab | cut -f6 | sort -g  | awk NF | head -n 1)
      echo "most_significant_hit for phenotype $phenotype is $most_significant_hit" >> $summary

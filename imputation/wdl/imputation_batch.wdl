@@ -19,7 +19,7 @@ workflow imputation_batch {
         Array[File] samples_files
         File regions_file
        }
-       scatter (i in range(6)) {
+       scatter (i in range(246)) {
                # Samples file is no longer used because we are taking all the samples
                # in each downloaded batch.
                File samples_file=samples_files[0]
@@ -73,7 +73,6 @@ workflow imputation_batch {
 	            vcf_index=add_tags.outvcf_index,
 	            ref_vcf=ref_panel,
 	            ref_index=ref_panel_index,
-	            out_prefix=out_prefix,
                 chrom=chrom,
                 mem=mem,
         }
@@ -158,7 +157,7 @@ task add_tags {
    >>>
 
     runtime {
-        docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
+        docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
 	    memory: mem + "GB"
         preemptible: 1
     }
@@ -175,20 +174,19 @@ task annotaTR {
         File vcf_index
         File ref_vcf
         File ref_index
-        String out_prefix
         String chrom
         Int? mem
     }
     
+    String basename = basename(vcf, ".vcf.gz")
     command <<<
         set -e
         annotaTR --vcf ~{vcf} \
                  --ref-panel ~{ref_vcf} \
-                 --out ~{out_prefix}_annotated \
+                 --out ~{basename}_annotated \
                  --vcftype advntr \
                  --outtype pgen \
                  --dosages bestguess_norm
-        gsutil cp ~{out_prefix}* gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/imputation_output/~{chrom}/
     >>>
 
     runtime {
@@ -199,8 +197,8 @@ task annotaTR {
     }
 
     output {
-        File pgen = "${out_prefix}_annotated.pgen"
-        File psam = "${out_prefix}_annotated.psam"
-        File pvar = "${out_prefix}_annotated.pvar"
+        File pgen = "${basename}_annotated.pgen"
+        File psam = "${basename}_annotated.psam"
+        File pvar = "${basename}_annotated.pvar"
     }
 }
