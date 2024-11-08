@@ -6,9 +6,6 @@ import scipy.stats as stats
 f_samples = sys.argv[1]
 f_phen = sys.argv[2]
 f_pcs = sys.argv[3]
-f_lancestry = sys.argv[4]
-lancestry_code = int(sys.argv[5])
-lancestry_pop = sys.argv[6]
 
 def Inverse_Quantile_Normalization(M):
     print("***")
@@ -19,15 +16,8 @@ def Inverse_Quantile_Normalization(M):
     Q = Q.transpose()
     return Q
 
-lancestry = pd.read_csv(f_lancestry, sep="\t")
-print(np.unique(lancestry[lancestry_pop], return_counts=True))
-lancestry = lancestry[lancestry[lancestry_pop]==lancestry_code]
 samples = pd.read_csv(f_samples)
-samples = samples.merge(lancestry['person_id'], on='person_id', how='inner')
 samples.rename(columns={'person_id': 'IID'}, inplace=True)
-print(samples.shape)
-
-
 
 phen = pd.read_csv(f_phen)
 phen.rename(columns={'person_id':'IID'},inplace=True)
@@ -41,7 +31,8 @@ merge2 = merge1.merge(pcs, on='IID', how='inner')
 merge2.insert(0, 'FID', 0)
 merge2['phenotype'] = Inverse_Quantile_Normalization(merge2['phenotype'].values)
 samples_pre = f_samples.split(".")[0]
-merge2.to_csv(f"{samples_pre}_{lancestry_pop}_{lancestry_code}", sep="\t", index=False)
+phen_pre = f_phen.split("_")[0]
+merge2.to_csv(f"{samples_pre}_{phen_pre}.tsv", sep="\t", index=False)
 
 
 
