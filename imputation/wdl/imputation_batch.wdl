@@ -12,6 +12,7 @@ workflow imputation_batch {
         String genetic_map
         String out_prefix
         String GOOGLE_PROJECT
+        String bucket
         String chrom
         Int? mem
         Int? window_size
@@ -63,6 +64,7 @@ workflow imputation_batch {
                 vcf_index=sort_index.sorted_vcf_index,
                 annotation_vcf=ref_panel,
                 annotation_vcf_index=ref_panel_index,
+                bucket=bucket,
                 chrom=chrom,
                 mem=mem,
         }
@@ -82,6 +84,8 @@ workflow imputation_batch {
                 pgen=annotaTR.pgen,
                 psam=annotaTR.psam,
                 pvar=annotaTR.pvar,
+                bucket=bucket,
+                GOOGLE_PROJECT=GOOGLE_PROJECT,
                 chrom=chrom,
                 mem=mem,
         }
@@ -149,15 +153,20 @@ task copy_to_bucket {
         File pgen
         File psam
         File pvar
+        String bucket
+        String GOOGLE_PROJECT
         String chrom
         Int? mem
     }
 
+   String basename = basename(pgen, ".pgen")
     command <<<
         set -e
-        gsutil cp *.pgen gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/imputation_output/~{chrom}/
-        gsutil cp *.psam gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/imputation_output/~{chrom}/
-        gsutil cp *.pvar gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/imputation_output/~{chrom}/
+        ls -lt
+        echo ~{pgen}
+        gsutil cp ~{pgen} ~{bucket}/saraj/imputation_output/~{chrom}/
+        gsutil cp ~{psam} ~{bucket}/saraj/imputation_output/~{chrom}/
+        gsutil cp ~{pvar} ~{bucket}/saraj/imputation_output/~{chrom}/
     >>>
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
@@ -177,19 +186,20 @@ task add_tags {
         File vcf_index
         File annotation_vcf
         File annotation_vcf_index
+        String bucket
         String chrom
         Int? mem
     }
 
    String basename = basename(vcf, ".vcf.gz")
-   String outfile="~{basename}.annotate.vcf.gz"
+   String outfile="~{basename}.annotated.vcf.gz"
 
    command <<<
        set -e
        touch ~{vcf_index} ~{annotation_vcf_index}
        bcftools annotate -Oz -a ~{annotation_vcf} -c CHROM,POS,VID,RU ~{vcf} > ~{outfile}
        tabix -p vcf ~{outfile}
-       gsutil cp *.vcf.gz* gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/imputation_output/~{chrom}/
+       gsutil cp *.vcf.gz* ~{bucket}/saraj/imputation_output/~{chrom}/
    >>>
 
     runtime {
@@ -199,8 +209,8 @@ task add_tags {
     }
 
     output {
-    File outvcf = "~{outfile}"
-    File outvcf_index = "~{outfile}.tbi"
+        File outvcf = "~{outfile}"
+        File outvcf_index = "~{outfile}.tbi"
   }
 }
 
@@ -217,9 +227,10 @@ task annotaTR {
     String basename = basename(vcf, ".vcf.gz")
     command <<<
         set -e
+        echo "basename: ~{basename}"
         annotaTR --vcf ~{vcf} \
                  --ref-panel ~{ref_vcf} \
-                 --out ~{basename}_annotated \
+                 --out ~{basename} \
                  --vcftype advntr \
                  --outtype pgen \
                  --dosages bestguess_norm
@@ -229,12 +240,11 @@ task annotaTR {
         docker:"gcr.io/ucsd-medicine-cast/trtools-6.0.2:latest"
         disks: "local-disk ~{mem} SSD"
         memory: mem + "GB"
-        preemptible: 1
     }
 
     output {
-        File pgen = "${basename}_annotated.pgen"
-        File psam = "${basename}_annotated.psam"
-        File pvar = "${basename}_annotated.pvar"
+        File pgen = "~{basename}.pgen"
+        File psam = "~{basename}.psam"
+        File pvar = "~{basename}.pvar"
     }
 }
