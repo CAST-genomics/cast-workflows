@@ -9,8 +9,9 @@ workflow create_reference {
         String regions
         String samples
         String out_prefix
-        String GOOGLE_PROJECT = ""
+        String GOOGLE_PROJECT
         Int window
+        String bucket
         Int mem
         String map
         String chrom
@@ -68,6 +69,7 @@ workflow create_reference {
           mem=mem,
           vcf=add_tags.outvcf,
           vcf_index=add_tags.outvcf_index,
+          bucket=bucket,
           chrom=chrom,
           GOOGLE_PROJECT=GOOGLE_PROJECT,
     }
@@ -230,15 +232,16 @@ task bref {
         File vcf
         File vcf_index
         Int mem
+        String bucket
         String GOOGLE_PROJECT
         String chrom
     }
     String basename = basename(vcf, ".vcf.gz")
     command <<<
         zcat ~{vcf} | java -jar /bref3.jar > ~{basename}.bref3
-        gsutil -u ~{GOOGLE_PROJECT} cp ~{vcf} gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/vntr_reference_panel/p_g_vntrs/phased/~{chrom}/
-        gsutil -u ~{GOOGLE_PROJECT} cp ~{vcf_index} gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/vntr_reference_panel/p_g_vntrs/phased/~{chrom}/
-        gsutil -u ~{GOOGLE_PROJECT} cp ~{basename}.bref3 gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/vntr_reference_panel/p_g_vntrs/phased/~{chrom}/
+        gsutil -u ~{GOOGLE_PROJECT} cp ~{vcf} ~{bucket}/saraj/vntr_reference_panel/p_g_vntrs/phased/~{chrom}/
+        gsutil -u ~{GOOGLE_PROJECT} cp ~{vcf_index} ~{bucket}/saraj/vntr_reference_panel/p_g_vntrs/phased/~{chrom}/
+        gsutil -u ~{GOOGLE_PROJECT} cp ~{basename}.bref3 ~{bucket}/saraj/vntr_reference_panel/p_g_vntrs/phased/~{chrom}/
     >>>
     runtime {
         docker:"sarajava/beagle:v4"

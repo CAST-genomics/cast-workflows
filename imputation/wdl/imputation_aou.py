@@ -144,6 +144,7 @@ def run_single_batch(args, samples_files):
 	json_dict[wdl_workflow + ".out_prefix"] = args.name
 	json_dict[wdl_workflow + ".GOOGLE_PROJECT"] = project
 	json_dict[wdl_workflow + ".mem"] = args.mem
+	json_dict[wdl_workflow + ".bucket"] = bucket
 	json_dict[wdl_workflow + ".chrom"] = args.chrom
 	json_dict[wdl_workflow + ".window_size"] = args.window
 	json_dict[wdl_workflow + ".overlap"] = args.overlap

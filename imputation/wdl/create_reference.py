@@ -90,6 +90,7 @@ def main():
 	json_dict[workflow + ".vntr_vcf_index"]=args.vntr_vcf+".tbi"
 	json_dict[workflow + ".regions"] = args.regions
 	json_dict[workflow + ".samples"] = args.samples
+	json_dict[workflow + ".bucket"] = bucket
 	json_dict[workflow + ".mem"] = args.mem
 	json_dict[workflow + ".window"] = args.window
 	if args.chrom is not None:
