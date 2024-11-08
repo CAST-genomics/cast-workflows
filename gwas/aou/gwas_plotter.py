@@ -10,32 +10,33 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-def plot_histogram(data, outpath):
+def plot_histogram(data, xlabel, outpath):
     plt.clf()
     plot = sns.histplot(data, binwidth=1)
+    plot.set_xlabel(xlabel)
     plt.savefig(outpath)
 
 def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, phenotype_label, outpath):
     plt.clf()
-    plotted_data = data[[genotype, phenotype]].dropna()
-    plotted_data = plotted_data.astype(float)
     if len(gwas) == 1:
         if gwas.iloc[0]["chrom"] != chrom or \
                 int(gwas.iloc[0]["pos"]) != int(pos):
-            print("No gwas data for chrom {} position {}".format(
-                chrom, pos))
+            #print("No gwas data for chrom {} position {}".format(
+            #    chrom, pos))
             return
     else: # To avoid warning on single element series
         if len(gwas.loc[(gwas["chrom"] == chrom) &\
                         (gwas["pos"] == int(pos))]) == 0:
-            print("No gwas data for chrom {} position {}".format(
-                chrom, pos))
+            #print("No gwas data for chrom {} position {}".format(
+            #    chrom, pos))
             return
     if len(gwas) == 1:
         effect_size = gwas.iloc[0]["beta"]
     else: # To avoid warning on single element series
         effect_size = gwas.loc[(gwas["chrom"] == chrom) &\
                         (gwas["pos"] == int(pos)), 'beta'].item()
+    plotted_data = data[[genotype, phenotype]].dropna()
+    plotted_data = plotted_data.astype(float)
     plot = sns.jointplot(
             data=plotted_data,
             alpha=0.5,

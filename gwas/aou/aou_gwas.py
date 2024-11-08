@@ -21,6 +21,7 @@ import re
 import vcf
 import gzip
 from io import StringIO
+from collections import Counter
 
 GWAS_METHODS = ["hail", "associaTR"]
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
@@ -172,7 +173,8 @@ def get_overall_rc_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep=
 def set_genotypes(data, annotations, cohort, samples, phenotype, imputed, tr_vcf, outdir):
     print("Reading genotypes from the vcf file")
     # Plot phenotype histogram
-    plot_histogram(data["phenotype"], os.path.join(outdir,
+    plot_histogram(data["phenotype"], phenotype,
+                    os.path.join(outdir,
                         "{}_histogram_after_norm.png".format(phenotype)))
     # Read input VCF file into a dataframe
     lines = None
@@ -206,10 +208,14 @@ def set_genotypes(data, annotations, cohort, samples, phenotype, imputed, tr_vcf
     for chrom, start, gene in annotations:
         all_alleles = []
         empty_calls, no_calls = 0, 0
-        print("Processing annotation {} {}:{}".format(gene, chrom, start))
         locus_calls = vcf_df[(vcf_df["CHROM"] == chrom) & \
                              (vcf_df["POS"] == str(start))
                              ]
+        if len(locus_calls) == 0:
+            # In a different chromosome
+            print("Skipping annotation for gene {} not in this chromosome".format(gene))
+            continue
+        print("Processing annotation {} {}:{}".format(gene, chrom, start))
         data.loc[:, [gene]] = np.nan
         samples_with_calls = set()
         shared_columns = []
@@ -263,14 +269,14 @@ def set_genotypes(data, annotations, cohort, samples, phenotype, imputed, tr_vcf
             else:
                 shared_columns.append(column)
         #data = data.dropna(subset=[gene, "phenotype"])
-        
+        print("Alleles count for the 4 most common alleles: ", Counter(all_alleles).most_common(4))
         # Plot individual alleles for ACAN
         if len(set(all_alleles)) > 1:
             print("Plotting alleles histogram")
             print("gene: ", gene)
             print("phenotype: ", phenotype)
             # Polymorphic vntr in the imputed set. Otherwise, if it's non-polymorphic, it'll get an error.
-            plot_histogram(all_alleles, os.path.join(outdir, "{}_alleles_{}_{}.png".format(gene, phenotype, cohort)))
+            plot_histogram(all_alleles, gene, os.path.join(outdir, "{}_alleles_{}_{}.png".format(gene, phenotype, cohort)))
         if no_calls + empty_calls > 0:
             print("Skipping {} empty calls and {} no calls for {} on vcf".format(
                     empty_calls, no_calls, gene))
@@ -450,9 +456,9 @@ def main():
             annotate = True
             p_value_threshold = -np.log10(5*10**-8)
             if args.annotations is not None:
-                print("plotting genotype phenotype for annotations ", annotations)
+                #print("plotting genotype phenotype for annotations ", annotations)
                 for chrom, pos, gene in annotations:
-                    print("chrom, pos and gene", chrom, pos, gene)
+                    #print("chrom, pos and gene", chrom, pos, gene)
                     plot_genotype_phenotype(data=data,
                         genotype=gene,
                         gwas=runner.gwas,
