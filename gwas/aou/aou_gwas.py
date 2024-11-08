@@ -219,7 +219,7 @@ def set_genotypes(data, annotations, cohort, samples, phenotype, imputed, tr_vcf
         counter = 0
         for column in vcf_df.columns:
             counter += 1
-            if counter % 1000 == 0:
+            if counter % 10000 == 0:
                 print("reading call ", counter)
             if column.isnumeric():
                 # Corresponds to a sample id
@@ -265,10 +265,12 @@ def set_genotypes(data, annotations, cohort, samples, phenotype, imputed, tr_vcf
         #data = data.dropna(subset=[gene, "phenotype"])
         
         # Plot individual alleles for ACAN
-        print("Plotting alleles histogram")
-        print("gene: ", gene)
-        print("phenotype: ", phenotype)
-        plot_histogram(all_alleles, os.path.join(outdir, "{}_alleles_{}_{}.png".format(gene, phenotype, cohort)))
+        if len(set(all_alleles)) > 1:
+            print("Plotting alleles histogram")
+            print("gene: ", gene)
+            print("phenotype: ", phenotype)
+            # Polymorphic vntr in the imputed set. Otherwise, if it's non-polymorphic, it'll get an error.
+            plot_histogram(all_alleles, os.path.join(outdir, "{}_alleles_{}_{}.png".format(gene, phenotype, cohort)))
         if no_calls + empty_calls > 0:
             print("Skipping {} empty calls and {} no calls for {} on vcf".format(
                     empty_calls, no_calls, gene))
@@ -443,22 +445,21 @@ def main():
     WriteGWAS(runner.gwas, outpath+".tab", covars)
 
     # Plot Manhattan
-    print("args.plot is ", args.plot)
     if args.plot:
-        print("In args.plot")
-        print("args.method is ", args.method)
         if args.method == "associaTR":
             annotate = True
             p_value_threshold = -np.log10(5*10**-8)
             if args.annotations is not None:
                 print("plotting genotype phenotype for annotations ", annotations)
                 for chrom, pos, gene in annotations:
+                    print("chrom, pos and gene", chrom, pos, gene)
                     plot_genotype_phenotype(data=data,
                         genotype=gene,
                         gwas=runner.gwas,
                         chrom=chrom,
                         pos=pos,
                         phenotype="phenotype",
+                        phenotype_label=args.phenotype,
                         outpath=os.path.join(args.outdir,
                                 "{}_genotype_{}_{}.png".format(
                                     gene, args.phenotype, cohort)))
