@@ -33,8 +33,9 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
            --is-imputed \
            --outdir outputs/${chr} \
            --snp-gwas-file $snp_gwas_file \
-           --annotations annotations.csv \
+           --annotations significant_hits.csv \
            --plot
+           #--annotations annotations.csv \
      most_significant_hit=$(tail -n +4 outputs/${chr}/${phenotype}_associaTR_${samples_prefix}.gwas.tab | cut -f6 | sort -g  | awk NF | head -n 1)
      echo "most_significant_hit for phenotype $phenotype is $most_significant_hit" >> $summary
      echo "----------- most_significant_hit for phenotype $phenotype is $most_significant_hit"

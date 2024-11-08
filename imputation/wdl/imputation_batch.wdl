@@ -77,10 +77,19 @@ workflow imputation_batch {
                 mem=mem,
         }
 
+        call copy_to_bucket {
+            input:
+                pgen=annotaTR.pgen,
+                psam=annotaTR.psam,
+                pvar=annotaTR.pvar,
+                chrom=chrom,
+                mem=mem,
+        }
+
         output {
-            File outfile_pgen = annotaTR.pgen
-            File outfile_psam = annotaTR.psam
-            File outfile_pvar = annotaTR.pvar
+            File outfile_pgen = copy_to_bucket.pgen_out
+            File outfile_psam = copy_to_bucket.psam_out
+            File outfile_pvar = copy_to_bucket.pvar_out
         }
 
         meta {
@@ -132,6 +141,33 @@ task merge_outputs {
     }
     output {
         File merged_vcfs = "~{out_prefix}.vcf.gz"
+    }
+}
+
+task copy_to_bucket {
+    input {
+        File pgen
+        File psam
+        File pvar
+        String chrom
+        Int? mem
+    }
+
+    command <<<
+        set -e
+        gsutil cp *.pgen gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/imputation_output/~{chrom}/
+        gsutil cp *.psam gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/imputation_output/~{chrom}/
+        gsutil cp *.pvar gs://fc-secure-f6524c24-64d9-446e-8643-415440f52b46/saraj/imputation_output/~{chrom}/
+    >>>
+    runtime {
+        docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
+	    memory: mem + "GB"
+        preemptible: 1
+    }
+    output {
+        File pgen_out = "~{pgen}"
+        File psam_out = "~{psam}"
+        File pvar_out = "~{pvar}"
     }
 }
 

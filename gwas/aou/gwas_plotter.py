@@ -15,7 +15,7 @@ def plot_histogram(data, outpath):
     plot = sns.histplot(data, binwidth=1)
     plt.savefig(outpath)
 
-def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, outpath):
+def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, phenotype_label, outpath):
     plt.clf()
     plotted_data = data[[genotype, phenotype]].dropna()
     plotted_data = plotted_data.astype(float)
@@ -27,7 +27,7 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, outpath
             return
     else: # To avoid warning on single element series
         if len(gwas.loc[(gwas["chrom"] == chrom) &\
-                        (gwas["pos"] == str(pos)), 'beta']) == 0:
+                        (gwas["pos"] == int(pos))]) == 0:
             print("No gwas data for chrom {} position {}".format(
                 chrom, pos))
             return
@@ -35,12 +35,13 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, outpath
         effect_size = gwas.iloc[0]["beta"]
     else: # To avoid warning on single element series
         effect_size = gwas.loc[(gwas["chrom"] == chrom) &\
-                        (gwas["pos"] == str(pos)), 'beta'].item()
+                        (gwas["pos"] == int(pos)), 'beta'].item()
     plot = sns.jointplot(
             data=plotted_data,
             alpha=0.5,
             x=genotype,
             y=phenotype)
+    plot.set_axis_labels(ylabel=phenotype_label, xlabel=genotype)
     print("effect size {:.4}".format(effect_size))
     # Draw a line corresponding to the effect size
     x_0 = data[genotype].mean()
@@ -55,9 +56,9 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, outpath
     plot.ax_joint.plot([point_1[0], x_0, point_2[0]],
                        [point_1[1], y_0, point_2[1]],
                        'b-', linewidth = 1)
-    plot.ax_joint.text(x=x_0 + data[genotype].std(),
+    plot.ax_joint.text(x=x_1 + data[genotype].std(),
             y=y_0 + data[phenotype].std(),
-            s="effect size: {:.4}".format(effect_size),
+            s="effect size:\n{:.4}".format(effect_size),
             fontsize="medium", weight='bold')
     plt.savefig(outpath)
 
