@@ -32,7 +32,6 @@ Example test to run tr-gwas :
 --name test \
 --phenotype platelet_count \
 --cohort EUR,AFR 
-
 ```
 
 This will print out a friendly turtle with the job ID if successful. Use the following to check the status of your job. It will take around 10-20 minutes to run. If successful the status will eventually change to "Succeeded".
@@ -59,16 +58,17 @@ cromshell list-outputs $JOBID
 ```
 ./tr_gwas_aou.py \
 --name test_all
-
-
 ```
 
 ## Output files 
+
+plink friendly phenotype files
 ```
-* plink friendly phenotype files
 <phenotype>_covar_combined.txt
 <phenotype>_pheno_plink.txt
+```
 
-* TR-gwas results 
+TR-gwas results 
+```
 <phenotype>_<cohort>_gwas.tab
 ```
