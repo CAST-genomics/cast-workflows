@@ -108,8 +108,9 @@ task run_tr_gwas {
                --covar ~{covar} \
                --keep ~{samples} \
                --covar-variance-standardize \
+               --vif 2000 \
                --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
-               --vif 2000
+               
             gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear "
 
         done
