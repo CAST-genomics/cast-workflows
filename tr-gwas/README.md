@@ -1,4 +1,4 @@
-# Running TR-GWAS on the All of Us workbench
+# Running TR-GWAS genome-wide on the All of Us workbench
 
 The goal of this workflow is to run TR-gwas genome-wide with plink2 across different phenotypes in different cohorts. 
 
@@ -23,7 +23,7 @@ cd cast-workflows/tr-gwas
 ../utils/configure-cromshell.py
 ```
 
-## Run a targeted phenotype and cohort
+## Run TR-Gwas on targeted phenotype and cohorts
 
 Example test to run tr-gwas :
 
@@ -53,12 +53,23 @@ You can check the output:
 cromshell list-outputs $JOBID
 ```
 
-## Run a full job on all samples and all phenotype 
+## Run a full job on all samples and all phenotypes 
 
 ```
 ./tr_gwas_aou.py \
 --name test_all
 ```
+## Detailed usage
+
+Required arguments:
+
+* `--name <STR>`: name of the run
+
+Optional arguments:
+
+* `--phenotype <STR>`: name of targeted phenotype, seperated by comma. Default: None, run all 
+* `--cohort <STR>`: name of targeted cohort, seperated by comma.  Options: AFR, EUR, NOT_AFR, ALL . Default: None, run all 
+
 
 ## Output files 
 
