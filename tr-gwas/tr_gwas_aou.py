@@ -33,15 +33,26 @@ def DownloadAncestry(filename):
 
 def GetPhenotypePath(phenotype):
 	phenotype_array = []
-	if ',' not in phenotype:
-		path = os.getenv("WORKSPACE_BUCKET")+"phenotypes/"+phenotype+"_phenocovar.csv"
+	phenotypes = [item.strip() for item in phenotype.split(',')]
+	for item in phenotypes: 
+		path = os.getenv("WORKSPACE_BUCKET")+"/phenotypes/"+item.strip()+"_phenocovar.csv"
 		phenotype_array.append(path)
-	else:
-		phenotypes = phenotype.split(",")
-		for item in phenotypes: 
-			path = os.getenv("WORKSPACE_BUCKET")+"phenotypes/"+item.strip()+"_phenocovar.csv"
-			phenotype_array.append(path)
 	return phenotype_array
+
+
+def GetCohortPath(cohort):
+	cohort_array = []
+	# Replace 'ALL' with 'passing_samples_v7.1' in cohort input and others
+	cohort = cohort.replace("ALL", "passing_samples_v7.1")
+	cohort = cohort.replace("AFR","AFR_BLACK")
+	cohort = cohort.replace("EUR","EUR_WHITE")
+	cohort = cohort.replace("NOT_AFR","NOT_AFR_BLACK")
+
+	cohorts = [item.strip() for item in cohort.split(',')]
+	for item in cohorts: 
+		path = os.getenv("WORKSPACE_BUCKET")+"/samples/"+item.strip()+"_plink.txt"
+		cohort_array.append(path)
+	return cohort_array
 
 
 def main():
@@ -49,7 +60,8 @@ def main():
 	parser.add_argument("--name", help="name of the run", required=True, type=str)
 	parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions",type=str, default="gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv")
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
-	parser.add_argument("--phenotype", help="name of the phenotype, seperated by ,", required=False, type=str)
+	parser.add_argument("--phenotype", help="name of the phenotype, seperated by comma", required=False, type=str)
+	parser.add_argument("--cohort", help="name of the cohort, seperated by comma, options: AFR, EUR, NOT_AFR, ALL", required=False, type=str)
 	args = parser.parse_args()
 
 
@@ -72,6 +84,13 @@ def main():
 		target_phenotype =  GetPhenotypePath(args.phenotype)
 	else: 
 		target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/") if blob.name.endswith('.csv')]
+
+
+	#return cohort array if choose targeted cohorts 
+	if args.cohort is not None:
+		target_cohort =  GetCohortPath(args.cohort )
+	else: 
+		target_cohort = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="samples/") if blob.name.endswith('.txt')]
 	
 	# Set up workflow JSON
 	json_dict = {}
@@ -79,7 +98,7 @@ def main():
 	json_dict["tr_gwas.psams"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.psam')]
 	json_dict["tr_gwas.pvars"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.pvar')]
 	#json_dict["tr_gwas.phenotypes"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/") if blob.name.endswith('.csv')]
-	json_dict["tr_gwas.cohorts"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="samples/") if blob.name.endswith('.txt')]
+	json_dict["tr_gwas.cohorts"] = target_cohort
 	json_dict["tr_gwas.GOOGLE_PROJECT"] = project
 	json_dict["tr_gwas.GCS_OAUTH_TOKEN"] = token
 	json_dict["tr_gwas.WORKSPACE_BUCKET"] = gs_prefix
