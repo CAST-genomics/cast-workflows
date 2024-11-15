@@ -10,12 +10,12 @@ workflow tr_gwas {
         String GOOGLE_PROJECT = ""
         String GCS_OAUTH_TOKEN = ""
         String WORKSPACE_BUCKET = ""
-      
     }
 
     ### Separate workflow for each phenotype ###
 
     scatter (pheno_file in phenotypes) {      
+       
         call convert_phenotype {
             input:
                 pheno=pheno_file,

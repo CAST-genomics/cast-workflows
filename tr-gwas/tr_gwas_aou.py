@@ -31,13 +31,25 @@ def DownloadAncestry(filename):
 	output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
 	print(output.decode("utf-8"))
 
+def GetPhenotypePath(phenotype):
+	phenotype_array = []
+	if ',' not in phenotype:
+		path = os.getenv("WORKSPACE_BUCKET")+"phenotypes/"+phenotype+"_phenocovar.csv"
+		phenotype_array.append(path)
+	else:
+		phenotypes = phenotype.split(",")
+		for item in phenotypes: 
+			path = os.getenv("WORKSPACE_BUCKET")+"phenotypes/"+item.strip()+"_phenocovar.csv"
+			phenotype_array.append(path)
+	return phenotype_array
+
 
 def main():
 	parser = argparse.ArgumentParser(__doc__)
 	parser.add_argument("--name", help="name of the run", required=True, type=str)
 	parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions",type=str, default="gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv")
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
-
+	parser.add_argument("--phenotype", help="name of the phenotype, seperated by ,", required=False, type=str)
 	args = parser.parse_args()
 
 
@@ -54,17 +66,24 @@ def main():
 	gs_prefix = f"gs://{bucket_name}/"
 	pfile = "tr_imputation/enstr-v3/results-250K/"
 
+
+	#return phenotype array if choose targeted phenotypes 
+	if args.phenotype is not None:
+		target_phenotype =  GetPhenotypePath(args.phenotype)
+	else: 
+		target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/") if blob.name.endswith('.csv')]
 	
 	# Set up workflow JSON
 	json_dict = {}
 	json_dict["tr_gwas.pgens"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.pgen')]
 	json_dict["tr_gwas.psams"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.psam')]
 	json_dict["tr_gwas.pvars"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.pvar')]
-	json_dict["tr_gwas.phenotypes"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/") if blob.name.endswith('.csv')]
+	#json_dict["tr_gwas.phenotypes"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/") if blob.name.endswith('.csv')]
 	json_dict["tr_gwas.cohorts"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="samples/") if blob.name.endswith('.txt')]
 	json_dict["tr_gwas.GOOGLE_PROJECT"] = project
 	json_dict["tr_gwas.GCS_OAUTH_TOKEN"] = token
 	json_dict["tr_gwas.WORKSPACE_BUCKET"] = gs_prefix
+	json_dict["tr_gwas.phenotypes"] = target_phenotype
 	
 
 	# Convert to json and save as a file
