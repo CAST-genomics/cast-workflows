@@ -19,4 +19,3 @@ push:
 	# Requires ~/.dockercfg
 	docker push ${name}:${tag}
 	docker push ${name}:latest
-	docker push ${name}:latest-native
