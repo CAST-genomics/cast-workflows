@@ -152,7 +152,7 @@ def UploadGS(local_path, gcp_path):
 	print(output.decode("utf-8"))	
 
 
-def FormatLR(manifest_file):
+def FormatLR(manifest_file,output_file="formatted_lr_manifest.csv"):
 	"""
 	Convert long read manifest file to "person_id,cram_uri,cram_index_uri"
 
@@ -160,6 +160,9 @@ def FormatLR(manifest_file):
 	---------
 	manifest_file : str
 	   File name
+
+	output_file : str
+		String output file name
 	"""
 	df = pd.read_csv(manifest_file)
 	selected_columns = ["research_id", "grch38-bam", "grch38-bai"]
@@ -170,11 +173,9 @@ def FormatLR(manifest_file):
                             "grch38-bai" : "cram_index_uri",
                             })
 	
-	selected.to_csv("formatted_lr_manifest.csv", index=False)
-	outname = selected.to_csv(index=False)
-	
+	selected.to_csv(output_file, index=False)
 
-	return outname
+	return output_file
 
 
 
@@ -231,24 +232,25 @@ def main():
 	output_bucket = bucket + "/" + args.name
 
 	# Set up file list
-	if args.file_list.startswith("gs://"):
-		DownloadGS(args.file_list)
-		file_list = os.path.basename(args.file_list)
-	else: file_list = args.file_list
+	if args.longtr is None: 
+		if args.file_list.startswith("gs://"):
+			DownloadGS(args.file_list)
+			file_list = os.path.basename(args.file_list)
+		else: file_list = args.file_list
 
-	# Set up batches of files
-	cram_batches_paths, cram_idx_batches_paths = \
-		GetFileBatches(file_list, int(args.batch_size), int(args.batch_num), \
-			gsprefix = bucket + "/" + "targetTRv7" +"/" + str(args.batch_size), action=args.action)
-	if args.action == "create-batches":
-		# We're done! quit before running jobs
-		sys.exit(1)
+		# Set up batches of files
+		cram_batches_paths, cram_idx_batches_paths = \
+			GetFileBatches(file_list, int(args.batch_size), int(args.batch_num), \
+				gsprefix = bucket + "/" + "targetTRv7" +"/" + str(args.batch_size), action=args.action)
+		if args.action == "create-batches":
+			# We're done! quit before running jobs
+			sys.exit(1)
 
 	# Set up longread file list
 	if args.longtr:
 		if args.longfile_list.startswith("gs://"):
 			DownloadGS(args.longfile_list)
-			longfile_list = os.path.basename(args.file_list)
+			longfile_list = os.path.basename(args.longfile_list)
 		else: longfile_list = args.longfile_list
 		# Select person id and cram, cram.crai path from manifest.csv and rename columns to match short-read manifest format
 		formatted_longlist = FormatLR(longfile_list)
