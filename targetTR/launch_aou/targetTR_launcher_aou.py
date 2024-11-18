@@ -169,10 +169,12 @@ def FormatLR(manifest_file):
                             "grch38-bam" : "cram_uri",
                             "grch38-bai" : "cram_index_uri",
                             })
-	output_str = selected.to_csv(index=False)
-	#selected.to_csv("formatted_lr_manifest.csv", index=False)
+	
+	selected.to_csv("formatted_lr_manifest.csv", index=False)
+	outname = selected.to_csv(index=False)
+	
 
-	return output_str
+	return outname
 
 
 
