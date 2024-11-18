@@ -127,6 +127,21 @@ task hipstr {
             counter=$((counter+1))
             sleep ~{sleep_seconds}
           done < ~{str_ref}
+
+          # Concatenate the VCF files
+          echo "##fileformat=VCFv4.1" > ~{out_prefix}.vcf
+          for num in $(seq 0 $((counter-1)))
+          do
+            zcat ~{out_prefix}_${num}.vcf.gz | grep "^##command" >> ~{out_prefix}.vcf
+          done
+          zcat ~{out_prefix}_0.vcf.gz | grep "^#" | \
+            grep -v fileformat | grep -v command >> ~{out_prefix}.vcf
+          for num in $(seq 0 $((counter-1)))
+          do
+            zcat ~{out_prefix}_${num}.vcf.gz | grep -v "^#" >> ~{out_prefix}.vcf
+          done
+          bgzip ~{out_prefix}.vcf
+        fi
       
       else
           ./LongTR --bams  ${bams_input} \         
@@ -136,25 +151,8 @@ task hipstr {
                   --phased-bam \
                   ${samps_flags} \
 
-        
-        # Concatenate the VCF files
-        echo "##fileformat=VCFv4.1" > ~{out_prefix}.vcf
-        for num in $(seq 0 $((counter-1)))
-        do
-           zcat ~{out_prefix}_${num}.vcf.gz | grep "^##command" >> ~{out_prefix}.vcf
-        done
-        zcat ~{out_prefix}_0.vcf.gz | grep "^#" | \
-          grep -v fileformat | grep -v command >> ~{out_prefix}.vcf
-        for num in $(seq 0 $((counter-1)))
-        do
-           zcat ~{out_prefix}_${num}.vcf.gz | grep -v "^#" >> ~{out_prefix}.vcf
-        done
-        bgzip ~{out_prefix}.vcf
+  
       fi
-
-
-      #run longTR
-      if [[ "~{longtr}" == true ]] ; then
      
     >>>
     
