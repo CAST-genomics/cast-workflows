@@ -16,7 +16,9 @@ workflow run_hipstr {
         Int sleep_seconds = 0
         String? extra_hipstr_args = "--min-reads 10"
         Boolean separate_hipstr_runs = false
+        Boolean longtr = false
 	      Int hipstr_mem = 16
+
     }
 
     call hipstr {
@@ -35,6 +37,7 @@ workflow run_hipstr {
           sleep_seconds=sleep_seconds,
           hipstr_mem=hipstr_mem,
           extra_hipstr_args=extra_hipstr_args,
+          longtr=longtr,
           separate_hipstr_runs=separate_hipstr_runs
     }
 
@@ -68,8 +71,10 @@ task hipstr {
         String GCS_OAUTH_TOKEN = ""
         Int sleep_seconds = 0
         Boolean separate_hipstr_runs = false
+        Boolean longtr = false
 	      Int hipstr_mem = 16
         String? extra_hipstr_args = "--min-reads 10"
+       
     } 
 
     command <<<
@@ -95,32 +100,43 @@ task hipstr {
         samps_flags="--bam-samps ${samps} --bam-libs ${samps}"
       fi
 
-      if [[ "~{separate_hipstr_runs}" == false ]] ; then
-      HipSTR \
-          --bams ${bams_input} \
-          --fasta ~{genome} \
-          --regions ~{str_ref} \
-          --str-vcf ~{out_prefix}.vcf.gz \
-          ${samps_flags} \
-          ~{extra_hipstr_args} 
-      else
-        # Run HipSTR separately on each STR
-        counter=0
-        while IFS= read -r line
-        do
-          # Update token. expires every hour
-          export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-          echo "$line" > str_${counter}.bed
-          HipSTR \
+      if [[ "~{longtr}" == false ]] ; then
+        if [[ "~{separate_hipstr_runs}" == false ]] ; then
+        HipSTR \
             --bams ${bams_input} \
             --fasta ~{genome} \
-            --regions str_${counter}.bed \
-            --str-vcf ~{out_prefix}_${counter}.vcf.gz \
+            --regions ~{str_ref} \
+            --str-vcf ~{out_prefix}.vcf.gz \
             ${samps_flags} \
             ~{extra_hipstr_args} 
-          counter=$((counter+1))
-          sleep ~{sleep_seconds}
-        done < ~{str_ref}
+        else
+          # Run HipSTR separately on each STR
+          counter=0
+          while IFS= read -r line
+          do
+            # Update token. expires every hour
+            export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+            echo "$line" > str_${counter}.bed
+            HipSTR \
+              --bams ${bams_input} \
+              --fasta ~{genome} \
+              --regions str_${counter}.bed \
+              --str-vcf ~{out_prefix}_${counter}.vcf.gz \
+              ${samps_flags} \
+              ~{extra_hipstr_args} 
+            counter=$((counter+1))
+            sleep ~{sleep_seconds}
+          done < ~{str_ref}
+      
+      else
+          ./LongTR --bams  ${bams_input} \         
+                  --fasta  ~{genome} \
+                  --regions  ~{str_ref} \
+                  --tr-vcf  ~{out_prefix}.vcf.gz \
+                  --phased-bam \
+                  ${samps_flags} \
+
+        
         # Concatenate the VCF files
         echo "##fileformat=VCFv4.1" > ~{out_prefix}.vcf
         for num in $(seq 0 $((counter-1)))
@@ -135,10 +151,16 @@ task hipstr {
         done
         bgzip ~{out_prefix}.vcf
       fi
+
+
+      #run longTR
+      if [[ "~{longtr}" == true ]] ; then
+     
     >>>
     
     runtime {
-        docker: "gcr.io/ucsd-medicine-cast/hipstr-gymreklab-gcs"
+        #docker: "gcr.io/ucsd-medicine-cast/hipstr-gymreklab-gcs"
+        docker: "gcr.io/ucsd-medicine-cast/hipstr-longtr:latest"
         memory: hipstr_mem + "GB"
         cpu: 2
       	maxRetries: 3

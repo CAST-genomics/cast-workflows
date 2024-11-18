@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import pandas as pd
 
 def GetFileBatches(file_list, batch_size, \
 	batch_num=-1, gsprefix=None, action="both"):
@@ -150,6 +151,29 @@ def UploadGS(local_path, gcp_path):
 	output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
 	print(output.decode("utf-8"))	
 
+
+def FormatLR(manifest_file):
+	"""
+	Convert long read manifest file to "person_id,cram_uri,cram_index_uri"
+
+	Arguments
+	---------
+	manifest_file : str
+	   File name
+	"""
+	df = pd.read_csv(manifest_file)
+	selected_columns = ["research_id", "grch38-bam", "grch38-bai"]
+	selected = df[selected_columns]
+	selected= selected.rename(columns={
+                            "research_id" : "person_id",
+                            "grch38-bam" : "cram_uri",
+                            "grch38-bai" : "cram_index_uri",
+                            })
+	
+	return selected
+
+
+
 def ZipWDL(wdl_dependencies_file):
 	"""
 	Put all WDL dependencies into a zip file
@@ -174,6 +198,8 @@ def main():
 	parser.add_argument("--file-list", help="List of crams and indices to process (manifest.csv)"
 		"Format: person_id,cram_uri,cram_index_uri", type=str, required=False, \
 		default="gs://fc-aou-datasets-controlled/v7/wgs/cram/manifest.csv")
+	parser.add_argument("--longfile-list", help="List of crams and indices to process (manifest.csv) for longread", type=str, required=False, \
+		default="gs://fc-aou-datasets-controlled/v7/wgs/long_read/manifest.csv")
 	parser.add_argument("--genome-id", help="File id of ref genome", type=str, default="gs://genomics-public-data/references/hg38/v0/Homo_sapiens_assembly38.fasta")
 	parser.add_argument("--genome-idx-id", help="File id of ref genome index", type=str, default="gs://genomics-public-data/references/hg38/v0/Homo_sapiens_assembly38.fasta.fai")
 	parser.add_argument("--action", help="Options: create-batches, run-batches, both", type=str, required=True)
@@ -182,6 +208,7 @@ def main():
 	parser.add_argument("--merge-mem", help="Merge hipstr run memory, modify if run smaller sample size, default=4G", required=False, type=int, default=4)
 	parser.add_argument("--extra-hipstr-args", help="Add more hipstr command", required=False, type=str, default="--min-reads 10")
 	parser.add_argument("--separate-hipstr-runs", help="Run a separate HipSTR call per STR", action="store_true")
+	parser.add_argument("--longtr", help="Run targeted LongTR, default=False", action="store_true")
 	args = parser.parse_args()
 
 	# Check if action is valid
@@ -213,6 +240,23 @@ def main():
 		# We're done! quit before running jobs
 		sys.exit(1)
 
+	# Set up longread file list
+	if args.longtr:
+		if args.longfile_list.startswith("gs://"):
+			DownloadGS(args.longfile_list)
+			longfile_list = os.path.basename(args.file_list)
+		else: longfile_list = args.longfile_list
+		# Select person id and cram, cram.crai path from manifest.csv and rename columns to match short-read manifest format
+		formatted_longlist = FormatLR(longfile_list)
+
+		cram_batches_paths, cram_idx_batches_paths = \
+		GetFileBatches(formatted_longlist, int(args.batch_size), int(args.batch_num), \
+			gsprefix = bucket + "/" + "targetTRv7" +"/" + "lr/" + str(args.batch_size), action=args.action)
+		if args.action == "create-batches":
+			# We're done! quit before running jobs
+			sys.exit(1)
+
+
 	# Upload TR bed file
 	if args.tr_bed.startswith("gs://"):
 		tr_bedfile_gcs = args.tr_bed
@@ -235,6 +279,7 @@ def main():
 	json_dict["targetTR.GOOGLE_PROJECT"] = project
 	json_dict["targetTR.GCS_OAUTH_TOKEN"] = token
 	json_dict["targetTR.cram_file_batches_str"] = cram_batches_paths
+	json_dict["targetTR.longtr"] = args.longtr
 
 	# Convert to json and save as a file
 	json_file = args.name+".aou.json"

@@ -18,6 +18,7 @@ workflow targetTR {
 		String GCS_OAUTH_TOKEN = ""
 		Float sleep_const = 0
 		Boolean separate_hipstr_runs = false
+		Boolean longtr = false
 		Int? hipstr_mem
 		Int? merge_mem
 		String? extra_hipstr_args
@@ -53,6 +54,7 @@ workflow targetTR {
 				sleep_seconds = sleep_seconds,
 				hipstr_mem = hipstr_mem,
 				separate_hipstr_runs = separate_hipstr_runs,
+				longtr = longtr,
 				extra_hipstr_args = extra_hipstr_args
 		}
 	}
