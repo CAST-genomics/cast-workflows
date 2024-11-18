@@ -157,7 +157,6 @@ task hipstr {
     >>>
     
     runtime {
-        #docker: "gcr.io/ucsd-medicine-cast/hipstr-gymreklab-gcs"
         docker: "gcr.io/ucsd-medicine-cast/hipstr-longtr:latest"
         memory: hipstr_mem + "GB"
         cpu: 2
