@@ -170,6 +170,8 @@ def FormatLR(manifest_file):
                             "grch38-bai" : "cram_index_uri",
                             })
 	
+	selected.to_csv("formatted_lr_manifest.csv", index=False)
+
 	return selected
 
 
