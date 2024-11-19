@@ -146,7 +146,7 @@ task hipstr {
       else
           LongTR \
                 --bams  ${bams_input} \         
-                --fasta  ~{genome} \
+                #--fasta  ~{genome} \
                 --regions  ~{str_ref} \
                 ${samps_flags} \
                 --phased-bam \
