@@ -144,13 +144,15 @@ task hipstr {
         fi
       
       else
+          ./LongTR--help
+          
           LongTR \
                 --bams  ${bams_input} \         
                 --fasta  ~{genome} \
                 --regions  ~{str_ref} \
                 --tr-vcf  ~{out_prefix}.vcf.gz \
                 --phased-bam \
-                ${samps_flags} \
+                ${samps_flags} 
 
   
       fi
