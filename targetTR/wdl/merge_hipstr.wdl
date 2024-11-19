@@ -6,7 +6,6 @@ workflow merge_hipstr {
         Array[File] vcf_indexes
         String out_prefix
 	      Int? merge_mem = 4
-        Boolean longtr = false
     }
 
     call mergestr {
@@ -14,8 +13,7 @@ workflow merge_hipstr {
           vcfs=vcfs,
           vcf_indexes=vcf_indexes,
           out_prefix=out_prefix+".merged",
-	        merge_mem=merge_mem,
-          longtr=longtr
+	        merge_mem=merge_mem
     }
 
     output {
@@ -34,7 +32,6 @@ task mergestr {
     String out_prefix
     Int total = length(vcfs)
     Int merge_mem = 4
-    Boolean longtr = false
   }
 
   command <<<
@@ -45,17 +42,14 @@ task mergestr {
            f=${FILEARRAY[$c]}
            vcf-validator $f && echo $f >> vcf.list
            vcf-validator $f || echo "Failed: " $f
-      #done
+      done
       echo $vcf.list
-      if [[ "~{longtr}" == false ]] ; then
-        mergeSTR --vcfs-list vcf.list --out ~{out_prefix}
-      else
-        mergeSTR --vcftype longtr --vcfs-list vcf.list --out ~{out_prefix}
+      mergeSTR --vcfs-list vcf.list --out ~{out_prefix}
   >>>
     
   runtime {
       #docker: "gcr.io/ucsd-medicine-cast/trtools-mergestr-files:latest"
-      docker: "gcr.io/ucsd-medicine-cast/trtools-6.0.2:latest"
+      docker: "gcr.io/ucsd-medicine-cast/trtools-6.1.0:latest"
       memory: merge_mem +"GB"
   }
 
