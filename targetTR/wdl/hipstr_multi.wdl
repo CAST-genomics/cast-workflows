@@ -144,6 +144,7 @@ task hipstr {
         fi
       
       else
+          echo ${bams_input}
           LongTR --bams  ${bams_input} \ 
                 --regions  ~{str_ref} \        
                 --fasta  ~{genome} \  
