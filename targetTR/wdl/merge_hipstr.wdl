@@ -40,7 +40,7 @@ task mergestr {
   command <<<
       touch vcf.list
       FILEARRAY=(~{sep=' ' vcfs}) # Load array into bash variable
-      for (( c = 0; c < ~{total}; c++ )) # bash array are 0-indexed ;)
+      for (( c = 0; c < ~{total}; c++ )) # bash array are 0-indexed ;
       do
            f=${FILEARRAY[$c]}
            vcf-validator $f && echo $f >> vcf.list
