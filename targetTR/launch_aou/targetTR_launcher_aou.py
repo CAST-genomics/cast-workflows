@@ -231,23 +231,8 @@ def main():
 	project = os.getenv("GOOGLE_PROJECT")
 	output_bucket = bucket + "/" + args.name
 
-	# Set up file list
-	if args.longtr is None: 
-		if args.file_list.startswith("gs://"):
-			DownloadGS(args.file_list)
-			file_list = os.path.basename(args.file_list)
-		else: file_list = args.file_list
-
-		# Set up batches of files
-		cram_batches_paths, cram_idx_batches_paths = \
-			GetFileBatches(file_list, int(args.batch_size), int(args.batch_num), \
-				gsprefix = bucket + "/" + "targetTRv7" +"/" + str(args.batch_size), action=args.action)
-		if args.action == "create-batches":
-			# We're done! quit before running jobs
-			sys.exit(1)
-
-	# Set up longread file list
-	else:
+	# Set up long file list
+	if args.longtr: 
 		if args.longfile_list.startswith("gs://"):
 			DownloadGS(args.longfile_list)
 			longfile_list = os.path.basename(args.longfile_list)
@@ -258,6 +243,22 @@ def main():
 		cram_batches_paths, cram_idx_batches_paths = \
 		GetFileBatches(formatted_longlist, int(args.batch_size), int(args.batch_num), \
 			gsprefix = bucket + "/" + "targetTRv7" +"/" + "lr/" + str(args.batch_size), action=args.action)
+		if args.action == "create-batches":
+			# We're done! quit before running jobs
+			sys.exit(1)
+
+	# Set up sr file list
+	else:
+		
+		if args.file_list.startswith("gs://"):
+			DownloadGS(args.file_list)
+			file_list = os.path.basename(args.file_list)
+		else: file_list = args.file_list
+
+		# Set up batches of files
+		cram_batches_paths, cram_idx_batches_paths = \
+			GetFileBatches(file_list, int(args.batch_size), int(args.batch_num), \
+				gsprefix = bucket + "/" + "targetTRv7" +"/" + str(args.batch_size), action=args.action)
 		if args.action == "create-batches":
 			# We're done! quit before running jobs
 			sys.exit(1)
