@@ -247,7 +247,7 @@ def main():
 			sys.exit(1)
 
 	# Set up longread file list
-	if args.longtr:
+	else:
 		if args.longfile_list.startswith("gs://"):
 			DownloadGS(args.longfile_list)
 			longfile_list = os.path.basename(args.longfile_list)
