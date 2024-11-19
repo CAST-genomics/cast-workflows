@@ -1,6 +1,6 @@
 # Definitions
 repository = gcr.io/ucsd-medicine-cast
-identifier = trtools-6.0.2
+identifier = trtools-6.1.0
 version = 0.0.0
 git_commit ?= $(shell git log --pretty=oneline -n 1 | cut -f1 -d " ")
 name = ${repository}/${identifier}
