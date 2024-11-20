@@ -72,7 +72,8 @@ workflow targetTR {
 	call dumpstr_t.run_dumpstr as dumpstr {
 		input :
 			vcf=merge_hipstr.outfile,
-			out_prefix=outprefix+".filtered"
+			out_prefix=outprefix+".filtered",
+			longtr=longtr
 	}
 
 	### Zip and index the VCF ###
