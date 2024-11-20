@@ -4,12 +4,14 @@ workflow run_dumpstr {
     input {
         File vcf
         String out_prefix
+        Boolean longtr = false
     }
 
     call dumpstr {
         input : 
           vcf=vcf,
-          out_prefix=out_prefix
+          out_prefix=out_prefix,
+          longtr=longtr
     }
 
     output {
@@ -17,7 +19,7 @@ workflow run_dumpstr {
     }
     
     meta {
-      description: "Run dumpSTR on a (HipSTR) VCF"
+      description: "Run dumpSTR on a HipSTR/LongTR VCF"
     }
 }
 
@@ -25,16 +27,29 @@ task dumpstr {
   input {
     File vcf
     String out_prefix
+    Boolean longtr = false
   }
 
   command <<<
-      dumpSTR --vcf ~{vcf} --out ~{out_prefix} \
-        --hipstr-min-call-Q 0.9 \
-        --hipstr-min-call-DP 10 \
-        --hipstr-max-call-DP 10000 \
-        --hipstr-min-supp-reads 2 \
-        --hipstr-max-call-stutter 0.15 \
-        --hipstr-max-call-flank-indel 0.15
+      if [[ "~{longtr}" == false ]] ; then
+        dumpSTR --vcf ~{vcf} --out ~{out_prefix} \
+          --hipstr-min-call-Q 0.9 \
+          --hipstr-min-call-DP 10 \
+          --hipstr-max-call-DP 10000 \
+          --hipstr-min-supp-reads 2 \
+          --hipstr-max-call-stutter 0.15 \
+          --hipstr-max-call-flank-indel 0.15
+      
+      else
+        dumpSTR --vcf ~{vcf} --out ~{out_prefix} \
+          --longtr-min-call-Q 0.9 \
+          --longtr-min-call-DP 10 \
+          --longtr-max-call-DP 10000 \
+          --longtr-min-supp-reads 2 \
+          --longtr-max-call-flank-indel 0.15
+      fi
+
+
   >>>
     
   runtime {
