@@ -43,7 +43,6 @@ task mergestr {
            vcf-validator $f && echo $f >> vcf.list
            vcf-validator $f || echo "Failed: " $f
       done
-      echo $vcf.list
       mergeSTR --vcfs-list vcf.list --out ~{out_prefix}
   >>>
     
