@@ -3,6 +3,7 @@ import gzip
 import sys
 import seaborn as sns
 import pandas as pd
+import numpy as np
 import statistics
 from scipy.stats import ks_2samp
 from collections import defaultdict
@@ -61,6 +62,7 @@ def filter_vcf(filename, sr_threshold, ml_threshold, out_filename, verbose=False
     num_calls = 0
     num_prev_no_call = 0
     num_all_no_calls = 0
+    num_vntrs_in_chrs = defaultdict(int)
     num_unique_alleles = []
     polymorphic_vntrs = []
     if filename.endswith("gz"):
@@ -122,6 +124,13 @@ def filter_vcf(filename, sr_threshold, ml_threshold, out_filename, verbose=False
                 polymorphic_vntrs.append(words[2])
             if words[0] == "chr15" and words[1] == "88855424":
                 print("For ACAN, num unique alleles: ", len(unique_alleles))
+            if len(unique_alleles) >= 100 and verbose:
+                print("For {}:{} we have {} unique alleles with min {} max {}".format(
+                        words[0], words[1], len(unique_alleles),
+                        min(unique_alleles),
+                        #np.mean(unique_alleles),
+                        max(unique_alleles)))
+            num_vntrs_in_chrs[words[0]] += 1
 
     # Write polymorphic VNTR IDs
     with open("polymorphic_vntrs.txt", "w+") as vntr_id_file:
@@ -137,6 +146,8 @@ def filter_vcf(filename, sr_threshold, ml_threshold, out_filename, verbose=False
                 float(num_updated_calls)/num_calls*100,
                 ))
         print("{} loci had all none / no calls".format(num_all_no_calls))
+        for key in num_vntrs_in_chrs.keys():
+            print("Total number of VNTRs in {}: {}".format(key, num_vntrs_in_chrs[key]))
     return float(num_updated_calls)/num_calls*100, num_unique_alleles
 
 def plot_heatmap(data, filename):
@@ -154,7 +165,8 @@ def filter_search(vcf, out_vcf):
             percent_removed, alleles_dist = filter_vcf(filename=vcf,
                    sr_threshold=sr_threshold,
                    ml_threshold=ml_threshold,
-                   out_filename=out_vcf)
+                   out_filename=out_vcf,
+                    verbose=True)
             results_df.loc[len(results_df)] = [sr_threshold, ml_threshold, percent_removed]
     results_df = results_df.pivot(
          index="sr_threshold",
@@ -259,7 +271,7 @@ if __name__ == "__main__":
     vcf = "data/merged_all_lrwgs_p_g_vntrs.sorted.vcf.gz"
     vcf_prev_ref = "data/ACAN_merged_samples.sorted.vcf"
     vcf_srwgs = "data/merged_samples_all_rh.sorted.vcf.gz"
-    out_vcf = "data/filtered_sr_6_ml_95_merged_all_lrwgs_p_g_vntrs.sorted.vcf"
+    out_vcf = "data/filtered_sr_6_ml_95_merged_all_lrwgs_p_g_vntrs_v2.sorted.vcf"
     #out_vcf = "data/tmp_filtered_merged_all_p_g_vntrs.sorted.vcf"
     #vcf="data/filtered_merged_all_p_g_vntrs.sorted.vcf"
     filter_search(vcf, out_vcf)

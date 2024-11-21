@@ -192,12 +192,18 @@ task add_tags {
     }
 
    String basename = basename(vcf, ".vcf.gz")
+   String outfile_tmp="~{basename}.tmp.annotated.vcf.gz"
    String outfile="~{basename}.annotated.vcf.gz"
 
    command <<<
        set -e
        touch ~{vcf_index} ~{annotation_vcf_index}
-       bcftools annotate -Oz -a ~{annotation_vcf} -c CHROM,POS,VID,RU ~{vcf} > ~{outfile}
+       bcftools annotate -Oz -a ~{annotation_vcf} -c CHROM,POS,VID,RU ~{vcf} > ~{outfile_tmp}
+       tabix -p vcf ~{outfile_tmp}
+       bcftools view -h ~{outfile_tmp} | head -n 4 > header.txt
+       echo "##source=adVNTR ver. 1.5.0" >> header.txt
+       bcftools view -h ~{outfile_tmp} | tail -n +5 >> header.txt
+       bcftools reheader -h header.txt ~{outfile_tmp} | bcftools view -Oz > ~{outfile}
        tabix -p vcf ~{outfile}
        gsutil cp *.vcf.gz* ~{bucket}/saraj/imputation_output/~{chrom}/
    >>>

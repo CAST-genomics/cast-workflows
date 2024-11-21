@@ -1,6 +1,6 @@
 #!/bin/bash
 
-chr="chr16"
+chr="chr12"
 
 # PVNTR ref
 ref="$WORKSPACE_BUCKET/saraj/vntr_reference_panel/p_g_vntrs/phased/${chr}/vntr_ref_${chr}.sorted.annotated.vcf.gz"
@@ -23,7 +23,7 @@ time python imputation_aou.py \
         --window 20 \
 	--overlap 2 \
 	--chrom $chr \
-	--mem 20 \
+	--mem 40 \
 	--map $map \
 	--samples-file $samples \
 	--regions-file $regions \
