@@ -1,9 +1,10 @@
 #!/bin/bash
 
-chr="chr11"
+chr="chr13"
 #aou_220k_imputed="../../imputation/wdl/data/imputed_chr15_p_g_vntrs_srwgs_sr_ml_filter.sorted.vcf.gz"
 #aou_220k_imputed="../../imputation/wdl/data/imputed_chr11.annotated.rh.vcf.gz"
 aou_220k_imputed="../../imputation/wdl/data/imputed_samples_chr13.sorted.annotate.rh.vcf.gz"
+#aou_220k_imputed="../../imputation/wdl/data/imputed_${chr}.sorted.annotate.rh.vcf.gz"
 
 ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
 
@@ -20,7 +21,7 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
      #phenotype="type_2_diabetes"
      #phenotype="height"
      #snp_gwas_file="data/all_by_all/df_dump_${chr}_EM_202.2.csv"
-     snp_gwas_file="data/all_by_all/df_dump_${chr}_${phenotype}.csv"
+     #snp_gwas_file="data/all_by_all/df_dump_${chr}_${phenotype}.csv"
      
     
      echo "Running gwas for $phenotype"
@@ -32,17 +33,15 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
            --norm quantile \
            --is-imputed \
            --outdir outputs/${chr} \
-           --snp-gwas-file $snp_gwas_file \
            --annotations significant_hits.csv \
            --plot
-           #--annotations annotations.csv \
+           #--snp-gwas-file $snp_gwas_file \
      most_significant_hit=$(tail -n +4 outputs/${chr}/${phenotype}_associaTR_${samples_prefix}.gwas.tab | cut -f6 | sort -g  | awk NF | head -n 1)
      echo "most_significant_hit for phenotype $phenotype is $most_significant_hit" >> $summary
      echo "----------- most_significant_hit for phenotype $phenotype is $most_significant_hit"
-    exit 0
+exit 0
   done
 #done
-exit 0
 
 
 # Running associatr
