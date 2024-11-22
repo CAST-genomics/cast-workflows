@@ -25,6 +25,7 @@ workflow tr_gwas {
         }
 
             scatter (cohort in cohorts) {
+                
                 call run_tr_gwas {
                     input:
                         pgens=pgens,
@@ -93,6 +94,16 @@ task run_tr_gwas {
     String sample_name = basename(samples,"_plink.txt")
 
     command <<<
+
+        #check if cohort is EUR, exclude PC6
+        
+        if [["~{sample_name}"=="EUR_WHITE" || "~{sample_name}"=="NOT_AFR_BLACK"]] ; then
+            cut --complement -f 10 ~{covar} > "~{sample_name}_~{out_prefix}_covar.txt"
+            covar_file="~{sample_name}_~{out_prefix}_covar.txt"
+
+        else 
+            covar_file=~{covar}           
+        fi
         # Run GWAS on each chrom
         PFILEARRAY=(~{sep=" " pgens})
         gwas_outfiles=""
@@ -105,10 +116,9 @@ task run_tr_gwas {
             plink2 --pfile ${pfile_outprefix} \
                --pheno ~{pheno} \
                --linear \
-               --covar ~{covar} \
+               --covar ${covar_file} \
                --keep ~{samples} \
                --covar-variance-standardize \
-               --vif 2000 \
                --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
                
             gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear "
