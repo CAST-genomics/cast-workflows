@@ -105,7 +105,7 @@ task run_tr_gwas {
             covar_file=~{covar}           
         fi
 
-        echo ~{covar_file}
+        echo ${covar_file}
         # Run GWAS on each chrom
         #PFILEARRAY=(~{sep=" " pgens})
         #gwas_outfiles=""
