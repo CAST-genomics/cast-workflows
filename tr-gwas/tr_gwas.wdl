@@ -107,33 +107,33 @@ task run_tr_gwas {
 
         echo ${covar_file}
         # Run GWAS on each chrom
-        #PFILEARRAY=(~{sep=" " pgens})
-        #gwas_outfiles=""
+        PFILEARRAY=(~{sep=" " pgens})
+        gwas_outfiles=""
         # bash array are 0-indexed 
-        #for (( c = 0; c < ~{total}; c++ ))
-        #do
-        #    pfile=${PFILEARRAY[$c]}
-        #    pfile_outprefix="${pfile%.pgen}"
-        #    chrom_outprefix=$(basename $pfile .pgen)
-        #    plink2 --pfile ${pfile_outprefix} \
-        #       --pheno ~{pheno} \
-        #       --linear \
-        #       --covar ${covar_file} \
-        #       --keep ~{samples} \
-        #       --covar-variance-standardize \
-        #       --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
-        #       
-        #    gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear "
+        for (( c = 0; c < ~{total}; c++ ))
+        do
+            pfile=${PFILEARRAY[$c]}
+            pfile_outprefix="${pfile%.pgen}"
+            chrom_outprefix=$(basename $pfile .pgen)
+            plink2 --pfile ${pfile_outprefix} \
+               --pheno ~{pheno} \
+               --linear \
+               --covar ${covar_file} \
+               --keep ~{samples} \
+               --covar-variance-standardize \
+               --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
+               
+            gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear "
 
-        #done
+        done
         
         # Concatenate all results
-        #head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}_gwas.tab"
+        head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}_gwas.tab"
 
-        #for file in ${gwas_outfiles}
-        #do
-        #    grep -v POS "$file" >> "~{out_prefix}_~{sample_name}_gwas.tab"
-        #done
+        for file in ${gwas_outfiles}
+        do
+            grep -v POS "$file" >> "~{out_prefix}_~{sample_name}_gwas.tab"
+        done
     >>>
 
     runtime {
