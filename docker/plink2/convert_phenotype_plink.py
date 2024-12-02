@@ -12,7 +12,6 @@ Usage:
 
 """
 
-
 import os
 import pandas as pd
 import subprocess
@@ -47,11 +46,13 @@ def DownloadPT(filename):
     cmd = "gsutil cp {filename} .".format(filename=filename)
     output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
     print(output.decode("utf-8"))
+
     return filename.split("/")[-1]  # Return local filename
 
 
 def GetFloatFromPC(x):
     x = x.replace("[","").replace("]","")
+
     return float(x)
 
 def LoadAncestry(ancestry_pred_path,project):
@@ -85,6 +86,7 @@ def convert_csv_to_plink (ptfile):
     df.insert(0, 'FID', 0)
     df.rename(columns={"person_id": "IID"}, inplace=True)
     df['IID'] = df['IID'].astype(str)
+
     return df
 
 def main():
@@ -126,7 +128,7 @@ def main():
     plink_pheno.to_csv(pheno_file_path, sep="\t", index=False)
     data.to_csv(covar_file_path, sep="\t", index=False)
     
-    sys.stderr.write(f"Done converting {args.phenotype} to plink format")
+    sys.stderr.write(f"Done converting {args.phenotype} to plink format.")
 
 if __name__ == "__main__":
     plink_pheno,data = main()
