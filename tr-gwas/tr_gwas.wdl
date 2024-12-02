@@ -132,7 +132,7 @@ task run_tr_gwas {
 
         for file in ${gwas_outfiles}
         do
-            grep -v POS "$file" >> "~{out_prefix}_~{sample_name}_gwas.tab"
+            tail -n +2 "$file" >> "~{out_prefix}_~{sample_name}_gwas.tab"
         done
     >>>
 

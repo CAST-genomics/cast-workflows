@@ -127,8 +127,6 @@ def main():
     data.to_csv(covar_file_path, sep="\t", index=False)
     
     sys.stderr.write("Done converting {args.phenotype} to plink format")
-    #print(f"Done converting {args.phenotype} to plink format")
-    #return plink_pheno,data
 
 if __name__ == "__main__":
     plink_pheno,data = main()
