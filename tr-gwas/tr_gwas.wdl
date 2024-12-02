@@ -46,7 +46,7 @@ workflow tr_gwas {
     }
 
     meta {
-        description: "Use plink2 to run genome-wide TR GWAS. It runs GWAS on each chromosome for each phenotype and merges summary statstics across all chromsomes."
+        description: "Use plink2 to run genome-wide TR GWAS. It runs GWAS on each chromosome for each phenotype and merges summary statstics across all chromosomes."
     }
 }
 

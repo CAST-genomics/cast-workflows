@@ -27,9 +27,9 @@ token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', '
 token = str.strip(token_fetch_command.stdout)
 project = os.getenv("GCS_REQUESTER_PAYS_PROJECT")
 bucket = os.getenv("WORKSPACE_BUCKET")
-print(f"Workspace Bucket: {bucket}")
+#print(f"Workspace Bucket: {bucket}")
 #print all the environmental variables 
-print(dict(os.environ))
+#print(dict(os.environ))
 
 def GetPTCovarPath(phenotype):
     return os.path.join(bucket, \
@@ -43,7 +43,7 @@ def DownloadPT(filename):
 	---------
 	filename : str
 	   GCP path
-	"""
+    """
     cmd = "gsutil cp {filename} .".format(filename=filename)
     output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
     print(output.decode("utf-8"))
@@ -64,7 +64,7 @@ def LoadAncestry(ancestry_pred_path,project):
 	   GCP path
     project : str
     google project for downloading
-	"""
+    """
     if ancestry_pred_path.startswith("gs://"):
         os.system(f"gsutil -u {project} cp {ancestry_pred_path} .")
         ancestry_pred_path = "ancestry_preds.tsv"
@@ -84,11 +84,12 @@ def convert_csv_to_plink (ptfile):
     df = pd.read_csv(ptfile)
     df.insert(0, 'FID', 0)
     df.rename(columns={"person_id": "IID"}, inplace=True)
+    df['IID'] = df['IID'].astype(str)
     return df
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument("--phenotype", help="Phenotypes file path, or phenotype name", type=str, required=True)
+    parser.add_argument("--phenotype", help="Comma-separated list of phenotypes to process. If not provided, process all available phenotypes", type=str, required=True)
     parser.add_argument("--num-pcs", help="Number of PCs to use as covariates", type=int, default=10)
     parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions",type=str, default="gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv")
     parser.add_argument("--ptcovars", help="Comma-separated list of phenotype-specific covariates. Default: age", type=str, default="age")
@@ -114,8 +115,6 @@ def main():
     ancestry = LoadAncestry(args.ancestry_pred_path,project)
     plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
 
-    plink['IID'] = plink['IID'].astype(str)
-
     # Extract phenotype and covars only
     data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols],on=["IID"],how="inner")
     plink_pheno = plink[["FID","IID","phenotype"]]
@@ -127,9 +126,9 @@ def main():
     plink_pheno.to_csv(pheno_file_path, sep="\t", index=False)
     data.to_csv(covar_file_path, sep="\t", index=False)
     
-    print(f"Done converting {args.phenotype} to plink format")
-    return plink_pheno,data
-
+    sys.stderr.write("Done converting {args.phenotype} to plink format")
+    #print(f"Done converting {args.phenotype} to plink format")
+    #return plink_pheno,data
 
 if __name__ == "__main__":
     plink_pheno,data = main()

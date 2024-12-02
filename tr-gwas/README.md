@@ -70,6 +70,10 @@ Optional arguments:
 * `--phenotype <STR>`: name of targeted phenotype, seperated by comma. Default: None, run all 
 * `--cohort <STR>`: name of targeted cohort, seperated by comma.  Options: AFR, EUR, NOT_AFR, ALL . Default: None, run all 
 
+Warning: This script manually filters PC6 for EUR and NOT_AFR cohorts
+
+
+## Samples preprocessed in cast-workflows/gwas/aou/sample_preprocessing
 
 ## Output files 
 
@@ -83,3 +87,8 @@ TR-gwas results
 ```
 <phenotype>_<cohort>_gwas.tab
 ```
+
+## TODO
+
+ (1) looks at pairwise correlation of all covariates + the phenotype and removes highly correlated ones and 
+ (2) filtering for any categorical covariates as we do in Margoliash et al. e.g. statin usage and sex are examples of categorial covariates we have used.
