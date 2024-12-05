@@ -119,6 +119,22 @@ Then, you can use the new batch size in a future run:
 
 To run batch creation and the batch jobs at the same time, set `--action both`. This is only recommended for small tests.
 
+## Run longTR
+
+It is recommended to first run a small test on a couple samples to make sure everything is set up correctly. e.g.:
+
+```
+./targetTR_launcher_aou.py \
+  --tr-bed test.bed \
+  --name mytest \
+  --batch-size 2 \
+  --batch-num 2 \
+  --action both \
+  --longtr 
+```
+
+
+
 ## Additional helpful cromshell commands
 
 To check metadata and logs, you can run:
