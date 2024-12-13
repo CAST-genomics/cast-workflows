@@ -65,7 +65,8 @@ workflow targetTR {
 			vcfs=run_hipstr.outfile,
 			vcf_indexes=run_hipstr.outfile_index,
 			out_prefix=outprefix,
-			merge_mem=merge_mem
+			merge_mem=merge_mem,
+			longtr=longtr
 	}
 
 	### DumpSTR on merged VCF ###
