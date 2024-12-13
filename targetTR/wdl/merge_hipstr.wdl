@@ -6,6 +6,7 @@ workflow merge_hipstr {
         Array[File] vcf_indexes
         String out_prefix
 	      Int? merge_mem = 4
+        Boolean longtr = false
     }
 
     call mergestr {
@@ -13,7 +14,8 @@ workflow merge_hipstr {
           vcfs=vcfs,
           vcf_indexes=vcf_indexes,
           out_prefix=out_prefix+".merged",
-	        merge_mem=merge_mem
+	        merge_mem=merge_mem,
+          longtr=longtr
     }
 
     output {
@@ -32,6 +34,7 @@ task mergestr {
     String out_prefix
     Int total = length(vcfs)
     Int merge_mem = 4
+    Boolean longtr = false
   }
 
   command <<<
@@ -43,7 +46,13 @@ task mergestr {
            vcf-validator $f && echo $f >> vcf.list
            vcf-validator $f || echo "Failed: " $f
       done
-      mergeSTR --vcfs-list vcf.list --out ~{out_prefix}
+
+      if [[ "~{longtr}" == false ]] ; then
+        mergeSTR --vcfs-list vcf.list --out ~{out_prefix}
+
+      else
+        mergeSTR --vcfs-list vcf.list --vcftype longtr --out ~{out_prefix}
+      fi
   >>>
     
   runtime {
