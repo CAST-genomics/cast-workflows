@@ -1,9 +1,9 @@
 chr=$1
-snppos=$2
-phenname=$3
-phen=$4
-from=$5
-to=$6
+from=$2
+to=$3
+snppos=$4
+phenname=$5
+phen=$6
 
 gnomix="${WORKSPACE_BUCKET}/gnomix/outputs/gnomix-chr${chr}.msp"
 
