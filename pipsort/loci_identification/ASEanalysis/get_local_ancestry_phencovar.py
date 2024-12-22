@@ -40,7 +40,8 @@ merge1 = phen.merge(samples, on='IID', how='inner')
 merge2 = merge1.merge(pcs, on='IID', how='inner')
 merge2.insert(0, 'FID', 0)
 merge2['phenotype'] = Inverse_Quantile_Normalization(merge2['phenotype'].values)
-samples_pre = f_samples.split(".")[0]
+#samples_pre = f_samples.split(".")[0]
+samples_pre = f_samples[:-4]
 merge2.to_csv(f"{samples_pre}_{lancestry_pop}_{lancestry_code}", sep="\t", index=False)
 
 

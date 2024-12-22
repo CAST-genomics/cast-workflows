@@ -8,7 +8,7 @@ phen=$6
 gnomix="${WORKSPACE_BUCKET}/gnomix/outputs/gnomix-chr${chr}.msp"
 
 # Check if the file exists in the bucket
-if gsutil -q stat "${gnomix}"; then
+if [ -f "gnomix-chr${chr}.msp" ]; then
     echo "File ${gnomix} exists."
 else
     gsutil cp "${gnomix}" .
@@ -33,10 +33,8 @@ else
     echo "plink file does not exist $chr $to $from $phenname"
     exit 1
 fi
-#gsutil cp "${WORKSPACE_BUCKET}/pipsort/plink/${chr}_${from}_${to}_${phenname}_plink.*" ./
+gsutil cp "${WORKSPACE_BUCKET}/pipsort/plink/${chr}_${from}_${to}_${phenname}_plink.*" ./
 
-#samples in AFR_BLACK.csv, EUR_WHITE.csv, NOT_AFR_BLACK.csv, passing_samples_v7.1.csv
-#lancestry_code in 0, 1, 2
 
 lancestry_codes=(0 1 2)
 samples_list=("AFR_BLACK" "EUR_WHITE" "NOT_AFR_BLACK" "passing_samples_v7.1")
@@ -69,9 +67,15 @@ for lancestry_code in "${lancestry_codes[@]}"; do
     # Extract fields from the output file
     if [[ -f plink2.phenotype.glm.linear ]]; then
       awk -v label="$label" 'NR > 1 {print label "," $11 "," $12 "," $13 "," $15}' plink2.phenotype.glm.linear >> $resultsfile
+      rm plink2.phenotype.glm.linear
     else
       echo "plink2.phenotype.glm.linear not found for lancestry_code=${lancestry_code}, samples=${samples}"
     fi
+    rm ${samples}_eur_${lancestry_code}
   done
 done
 
+rm region_lancestry.tsv
+rm ${chr}_${from}_${to}_${phenname}_plink.bed
+rm ${chr}_${from}_${to}_${phenname}_plink.bim
+rm ${chr}_${from}_${to}_${phenname}_plink.fam
