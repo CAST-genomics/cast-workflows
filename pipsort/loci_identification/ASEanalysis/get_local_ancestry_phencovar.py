@@ -21,9 +21,13 @@ def Inverse_Quantile_Normalization(M):
 
 lancestry = pd.read_csv(f_lancestry, sep="\t")
 print(np.unique(lancestry[lancestry_pop], return_counts=True))
-lancestry = lancestry[lancestry[lancestry_pop]==lancestry_code]
+if lancestry_code >= 0: # filter. If negative, then don't filter
+    lancestry = lancestry[lancestry[lancestry_pop]==lancestry_code]
 samples = pd.read_csv(f_samples)
-samples = samples.merge(lancestry['person_id'], on='person_id', how='inner')
+if lancestry_code >= 0:
+    samples = samples.merge(lancestry['person_id'], on='person_id', how='inner')
+else:
+    samples = samples.merge(lancestry, on='person_id', how='inner')
 samples.rename(columns={'person_id': 'IID'}, inplace=True)
 print(samples.shape)
 
@@ -34,7 +38,10 @@ phen.rename(columns={'person_id':'IID'},inplace=True)
 pcs = pd.read_csv(f_pcs, sep="\t")
 pcs.drop(columns='FID', inplace=True)
 
-samples = samples['IID']
+if lancestry_code >= 0:
+    samples = samples['IID']
+else:
+    samples = samples[['IID', lancestry_pop]]
 
 merge1 = phen.merge(samples, on='IID', how='inner')
 merge2 = merge1.merge(pcs, on='IID', how='inner')
@@ -42,7 +49,10 @@ merge2.insert(0, 'FID', 0)
 merge2['phenotype'] = Inverse_Quantile_Normalization(merge2['phenotype'].values)
 #samples_pre = f_samples.split(".")[0]
 samples_pre = f_samples[:-4]
-merge2.to_csv(f"{samples_pre}_{lancestry_pop}_{lancestry_code}", sep="\t", index=False)
+if lancestry_code >= 0:
+    merge2.to_csv(f"{samples_pre}_{lancestry_pop}_{lancestry_code}", sep="\t", index=False)
+else: #we didn't filter on lancestry code so write out diff file name
+    merge2.to_csv(f"{samples_pre}_{lancestry_pop}", sep="\t", index=False)
 
 
 
