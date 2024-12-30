@@ -50,7 +50,7 @@ python get_snp_phenocovar.py "${samples}.csv" "$phen" "AOU_10_PCS.tsv" "region_l
 final_results="${chr}_${snppos}_interaction_results.csv"
 > "$final_results" # Clear or create the file
 
-for chriter in {21..22}; do
+for chriter in {1..22}; do
 	echo "$chriter INTERACTION GWAS"
 	local_file="chr${chriter}_local_ancestry_0.csv"
 	if [[ ! -f "$local_file" ]]; then
