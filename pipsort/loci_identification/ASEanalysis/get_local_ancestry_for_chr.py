@@ -14,6 +14,7 @@ with open(gnomix, 'r') as file:
 array = np.array(second_line.strip().split('\t'))
 columns = list(array)
 df = pd.DataFrame(m, columns=columns)
+del m
 columns = df['spos'].astype('int')
 df = df.T
 df = df[6:]

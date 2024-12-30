@@ -17,31 +17,40 @@ fi
 awk -v pos="$snppos" '$2 <= pos && pos <= $3' gnomix-chr${chr}.msp > temp
 sed -n '2p' gnomix-chr${chr}.msp > temp2
 
-cat temp2 > region.txt
-cat temp >> region.txt
+#cat temp2 > region.txt
+#cat temp >> region.txt
 
-rm temp
-rm temp2
+#rm temp
+#rm temp2
 
-python gnomix_to_local_ancestry.py region.txt region_lancestry.tsv eur
+#python gnomix_to_local_ancestry.py region.txt region_lancestry.tsv eur
 
-gsutil -q stat ${WORKSPACE_BUCKET}/pipsort/plink/${chr}_${from}_${to}_${phenname}_plink.bed
-status=$?
-if [[ $status == 0 ]]; then
-    echo "plink file exists"
-else
-    echo "plink file does not exist $chr $to $from $phenname"
-    exit 1
-fi
-gsutil cp "${WORKSPACE_BUCKET}/pipsort/plink/${chr}_${from}_${to}_${phenname}_plink.*" ./
+#gsutil -q stat ${WORKSPACE_BUCKET}/pipsort/plink/${chr}_${from}_${to}_${phenname}_plink.bed
+#status=$?
+#if [[ $status == 0 ]]; then
+#    echo "plink file exists"
+#else
+#    echo "plink file does not exist $chr $to $from $phenname"
+#    exit 1
+#fi
+#gsutil cp "${WORKSPACE_BUCKET}/pipsort/plink/${chr}_${from}_${to}_${phenname}_plink.*" ./
 
 samples=passing_samples_v7.1
 snpvid=$(awk -v snppos="$snppos" '$4 == snppos {print $2}' "${chr}_${from}_${to}_${phenname}_plink.bim")
 
-resultsfile=${chr}_${from}_${to}_${snpvid}_results_interaction.csv
-echo "samples,variable,n,beta,se,p" > $resultsfile
+plink2 --bfile ${chr}_${from}_${to}_${phenname}_plink --snp $snpvid --make-bed --out $snppos
+numsamples=$(wc -l < "${snppos}.fam")
+python ../convert_bed_to_numpy.py ${snppos}.bed $numsamples 1
+#above will write out ${snppos}.npy
 
-python get_local_ancestry_phencovar.py "${samples}.csv" "$phen" "AOU_10_PCS.tsv" "region_lancestry.tsv" -1 "eur"
+python get_snp_phenocovar.py "${samples}.csv" "$phen" "AOU_10_PCS.tsv" "region_lancestry.tsv" $snppos
+
+
+
+
+
+#resultsfile=${chr}_${from}_${to}_${snpvid}_results_interaction.csv
+
 
 exit 0
 
