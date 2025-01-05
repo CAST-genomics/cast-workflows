@@ -2,8 +2,9 @@ chr=$1
 from=$2
 to=$3
 snppos=$4
-phenname=$5
-phen=$6
+snpposhg19=$5
+phenname=$6
+phen=$7
 
 gnomix="${WORKSPACE_BUCKET}/gnomix/outputs/gnomix-chr${chr}.msp"
 
@@ -14,7 +15,7 @@ else
     gsutil cp "${gnomix}" .
 fi
 
-awk -v pos="$snppos" '$2 <= pos && pos <= $3' gnomix-chr${chr}.msp > temp
+awk -v pos="$snpposhg19" '$2 <= pos && pos <= $3' gnomix-chr${chr}.msp > temp
 sed -n '2p' gnomix-chr${chr}.msp > temp2
 
 cat temp2 > region.txt
@@ -76,6 +77,7 @@ for lancestry_code in "${lancestry_codes[@]}"; do
 done
 
 rm region_lancestry.tsv
+rm region.txt
 rm ${chr}_${from}_${to}_${phenname}_plink.bed
 rm ${chr}_${from}_${to}_${phenname}_plink.bim
 rm ${chr}_${from}_${to}_${phenname}_plink.fam

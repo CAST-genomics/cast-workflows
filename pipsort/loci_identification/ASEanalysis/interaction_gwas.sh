@@ -2,8 +2,9 @@ chr=$1
 from=$2
 to=$3
 snppos=$4
-phenname=$5
-phen=$6
+snpposhg19=$5
+phenname=$6
+phen=$7
 
 logfile="alllogsgwasinteraction"
 
@@ -16,7 +17,7 @@ else
     gsutil cp "${gnomix}" .
 fi
 
-awk -v pos="$snppos" '$2 <= pos && pos <= $3' gnomix-chr${chr}.msp > temp
+awk -v pos="$snpposhg19" '$2 <= pos && pos <= $3' gnomix-chr${chr}.msp > temp
 sed -n '2p' gnomix-chr${chr}.msp > temp2
 
 cat temp2 > region.txt
