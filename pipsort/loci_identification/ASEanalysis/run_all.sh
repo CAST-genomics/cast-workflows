@@ -8,6 +8,6 @@ do
  echo ${myArray[3]}
  echo ${myArray[4]}
  echo ${myArray[5]}
- #bash full_local_ancestry.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} ${myArray[4]} ${myArray[5]} ${myArray[6]}
- bash interaction_gwas.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} ${myArray[4]} ${myArray[5]} ${myArray[6]}
+ bash full_local_ancestry.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} ${myArray[4]} ${myArray[5]} ${myArray[6]}
+ #bash interaction_gwas.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} ${myArray[4]} ${myArray[5]} ${myArray[6]}
 done < $infile
