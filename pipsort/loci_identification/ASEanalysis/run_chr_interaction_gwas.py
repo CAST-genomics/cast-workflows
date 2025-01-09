@@ -19,7 +19,8 @@ del df2
 del df
 
 index_first_covar = df3.columns.get_loc('age')
-index_last_covar = df3.columns.get_loc('snpgeno') + 1
+#index_last_covar = df3.columns.get_loc('snpgeno') + 1
+index_last_covar = df3.columns.get_loc('snpgeno')
 covariates = df3.columns[index_first_covar:index_last_covar]
 local_ancestry_cols = df3.columns[index_last_covar:]
 covariates = list(covariates)
@@ -32,7 +33,8 @@ def run_regression(col):
         df3.to_csv("AAA", index=False)
 
     # Define the predictors (covariates + numerical column + interaction term)
-    predictors = covariates + [col, 'interaction']
+    #predictors = covariates + [col, 'interaction']
+    predictors = covariates + ['interaction']
     X = sm.add_constant(df3[predictors])  # Add constant for the intercept
     y = df3['phenotype']
 

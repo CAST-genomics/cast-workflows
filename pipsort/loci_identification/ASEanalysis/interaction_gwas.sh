@@ -8,25 +8,25 @@ phen=$7
 
 logfile="alllogsgwasinteraction"
 
-gnomix="${WORKSPACE_BUCKET}/gnomix/outputs/gnomix-chr${chr}.msp"
+#gnomix="${WORKSPACE_BUCKET}/gnomix/outputs/gnomix-chr${chr}.msp"
 
 # Check if the file exists in the bucket
-if [ -f "gnomix-chr${chr}.msp" ]; then
-    echo "File ${gnomix} exists."
-else
-    gsutil cp "${gnomix}" .
-fi
+#if [ -f "gnomix-chr${chr}.msp" ]; then
+#    echo "File ${gnomix} exists."
+#else
+#    gsutil cp "${gnomix}" .
+#fi
 
-awk -v pos="$snpposhg19" '$2 <= pos && pos <= $3' gnomix-chr${chr}.msp > temp
-sed -n '2p' gnomix-chr${chr}.msp > temp2
+#awk -v pos="$snpposhg19" '$2 <= pos && pos <= $3' gnomix-chr${chr}.msp > temp
+#sed -n '2p' gnomix-chr${chr}.msp > temp2
 
-cat temp2 > region.txt
-cat temp >> region.txt
+#cat temp2 > region.txt
+#cat temp >> region.txt
 
-rm temp
-rm temp2
+#rm temp
+#rm temp2
 
-python gnomix_to_local_ancestry.py region.txt region_lancestry.tsv eur
+#python gnomix_to_local_ancestry.py region.txt region_lancestry.tsv eur
 
 gsutil -q stat ${WORKSPACE_BUCKET}/pipsort/plink/${chr}_${from}_${to}_${phenname}_plink.bed
 status=$?
@@ -46,7 +46,7 @@ numsamples=$(wc -l < "${snppos}.fam")
 python ../convert_bed_to_numpy.py ${snppos}.bed $numsamples 1
 #above will write out ${snppos}.npy
 
-python get_snp_phenocovar.py "${samples}.csv" "$phen" "AOU_10_PCS.tsv" "region_lancestry.tsv" $snppos
+python get_snp_phenocovar.py "${samples}.csv" "$phen" "AOU_10_PCS.tsv" $snppos
 
 final_results="${chr}_${snppos}_interaction_results.csv"
 > "$final_results" # Clear or create the file
@@ -72,8 +72,8 @@ done
 
 rm ${samples}_${snppos}
 rm $snppos.*
-rm region.txt
-rm region_lancestry.tsv
+#rm region.txt
+#rm region_lancestry.tsv
 rm ${chr}_${from}_${to}_${phenname}_plink.bed
 rm ${chr}_${from}_${to}_${phenname}_plink.bim
 rm ${chr}_${from}_${to}_${phenname}_plink.fam

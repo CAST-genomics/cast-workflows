@@ -6,8 +6,7 @@ import scipy.stats as stats
 f_samples = sys.argv[1]
 f_phen = sys.argv[2]
 f_pcs = sys.argv[3]
-f_lancestry = sys.argv[4]
-snppos = sys.argv[5]
+snppos = sys.argv[4]
 
 def Inverse_Quantile_Normalization(M):
     print("***")

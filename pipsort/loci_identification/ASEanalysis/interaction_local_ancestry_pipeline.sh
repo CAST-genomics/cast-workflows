@@ -44,12 +44,11 @@ echo "samples,variable,n,beta,se,p" > $resultsfile
 
 python get_local_ancestry_phencovar.py "${samples}.csv" "$phen" "AOU_10_PCS.tsv" "region_lancestry.tsv" -1 "eur"
 
-exit 0
 
 # Run plink2
 plink2 --bfile "${chr}_${from}_${to}_${phenname}_plink" \
        --snp "$snpvid" \
-       --linear interaction\
+       --linear interaction \
        --pheno "${samples}_eur" \
        --pheno-name phenotype \
        --covar "${samples}_eur" \
@@ -66,9 +65,9 @@ else
   echo "plink2.phenotype.glm.linear not found for lancestry_code=${lancestry_code}, samples=${samples}"
 fi
 
-rm region.txt
-rm ${samples}_eur
-rm region_lancestry.tsv
-rm ${chr}_${from}_${to}_${phenname}_plink.bed
-rm ${chr}_${from}_${to}_${phenname}_plink.bim
-rm ${chr}_${from}_${to}_${phenname}_plink.fam
+#rm region.txt
+#rm ${samples}_eur
+#rm region_lancestry.tsv
+#rm ${chr}_${from}_${to}_${phenname}_plink.bed
+#rm ${chr}_${from}_${to}_${phenname}_plink.bim
+#rm ${chr}_${from}_${to}_${phenname}_plink.fam
