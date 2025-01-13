@@ -47,8 +47,8 @@ workflow tr_extraction {
 
 task extract_str {
     input {
-        File vcf
-        File vcf_index
+        String vcf
+        String vcf_index
         File str
         String out_prefix
         String GOOGLE_PROJECT = ""
