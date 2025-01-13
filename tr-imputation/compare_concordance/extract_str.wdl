@@ -55,7 +55,7 @@ task extract_str {
         String GCS_OAUTH_TOKEN = ""
         
     }
-    String chrom_outprefix = basename(vcf, "annotated.vcf.gz")
+    String chrom_outprefix = basename(vcf, "_annotated.vcf.gz")
 
     command <<<
         set -e
@@ -68,7 +68,7 @@ task extract_str {
 
     runtime {
         docker: "gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-        disks: "local-disk 150 SSD"
+        #disks: "local-disk 150 SSD"
     }
     output {
         File outvcf = "${out_prefix}_${chrom_outprefix}.vcf.gz"
@@ -96,6 +96,6 @@ task merge_outputs {
 
     output {
         File outvcf = "${out_prefix}_merged.vcf.gz"
-        File outvcf_index = "${out_prefix}_merged.vcf.g.tbi"
+        File outvcf_index = "${out_prefix}_merged.vcf.gz.tbi"
     }
 }
