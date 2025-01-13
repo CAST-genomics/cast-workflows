@@ -40,7 +40,6 @@ def UploadGS(local_path, gcp_path):
 def main():
 	parser = argparse.ArgumentParser(__doc__)
 	parser.add_argument("--name", help="Name of the job", required=True, type=str)
-	parser.add_argument("--vcfdir", help="GCP bucket with batch VCF files", type=str, required=True)
 	parser.add_argument("--tr", help="List of TRs to be extracted", required=True, type=str)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	args = parser.parse_args()
