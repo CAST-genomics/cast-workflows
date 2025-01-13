@@ -1,6 +1,6 @@
 version 1.0
 
-workflow extract_str {
+workflow tr_extraction {
     input {
         Array[File] vcfs
         Array[File] vcfs_index
