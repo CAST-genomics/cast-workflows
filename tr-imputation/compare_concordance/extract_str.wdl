@@ -17,7 +17,8 @@ workflow extract_str {
             input:
                 vcf=vcf,
                 vcf_index=vcf_index,
-                str=str
+                str=str,
+                out_prefix=out_prefix
         }
 
     }   
