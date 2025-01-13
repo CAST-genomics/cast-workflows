@@ -1,6 +1,6 @@
 version 1.0
 
-workflow batch_imputation {
+workflow extract_str {
     input {
         Array[File] vcfs
         Array[File] vcfs_index
