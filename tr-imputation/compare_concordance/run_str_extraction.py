@@ -62,7 +62,7 @@ def main():
 	if args.tr.startswith("gs://"):
 		tr_gcs = args.tr
 	else:
-		tr_gcs = bucket + "/" + args.name + "/" + args.tr
+		tr_gcs = gs_prefix + args.name + "/" + args.tr
 		UploadGS(args.tr, tr_gcs)
 
 	# Set up workflow JSON
