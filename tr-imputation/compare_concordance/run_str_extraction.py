@@ -3,7 +3,7 @@
 Script to launch AOU TR imputation
  
 
-./run_str_extraction_aou.py \
+./run_str_extraction.py \
 --name test \
 --str ukb_finemapped.txt
 
