@@ -7,6 +7,7 @@ workflow tr_extraction {
         File str 
         String out_prefix
         String GOOGLE_PROJECT = ""
+        String GCS_OAUTH_TOKEN = ""
         
     }
 
@@ -21,7 +22,8 @@ workflow tr_extraction {
                 vcf_index=vcf_index,
                 str=str,
                 out_prefix=out_prefix,
-                GOOGLE_PROJECT = GOOGLE_PROJECT
+                GOOGLE_PROJECT=GOOGLE_PROJECT,
+                GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN
         }
 
     }   
@@ -50,6 +52,7 @@ task extract_str {
         File str
         String out_prefix
         String GOOGLE_PROJECT = ""
+        String GCS_OAUTH_TOKEN = ""
         
     }
     String chrom_outprefix = basename(vcf, "annotated.vcf.gz")
@@ -58,6 +61,7 @@ task extract_str {
         set -e
 
         export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         bcftools view -R ~{str} -f"%CHROM\t%POS\t%REF\t%ALT\t[%TGT\t]\n" ~{vcf} -Oz -o "~{out_prefix}_~{chrom_outprefix}.vcf.gz"
         tabix -p vcf "~{out_prefix}_~{chrom_outprefix}.vcf.gz"
     >>>

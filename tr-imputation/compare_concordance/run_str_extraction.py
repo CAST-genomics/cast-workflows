@@ -72,6 +72,7 @@ def main():
 	json_dict["tr_extraction.str"] = args.tr
 	json_dict["tr_extraction.out_prefix"] = args.name
 	json_dict["tr_extraction.GOOGLE_PROJECT"] = project
+	json_dict["tr_extraction.GCS_OAUTH_TOKEN"] = token
 	
 
 	# Convert to json and save as a file
