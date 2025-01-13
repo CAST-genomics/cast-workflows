@@ -4,8 +4,8 @@ Script to launch AOU TR imputation
  
 
 ./run_str_extraction.py \
---name test \
---str ukb_finemapped.txt
+--name ukb_imputation \
+--str ukb_finemapped_hg38_str.txt
 
 
 """
@@ -18,7 +18,7 @@ import subprocess
 import sys
 from google.cloud import storage
 
-sys.path.append("../utils")
+sys.path.append("../../utils")
 import aou_utils
 
 
