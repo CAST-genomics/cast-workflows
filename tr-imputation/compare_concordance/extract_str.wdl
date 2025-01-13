@@ -6,6 +6,8 @@ workflow tr_extraction {
         Array[File] vcfs_index
         File str 
         String out_prefix
+        String GOOGLE_PROJECT = ""
+        
     }
 
     ### Call each chromosome vcf ###
@@ -18,7 +20,8 @@ workflow tr_extraction {
                 vcf=vcf,
                 vcf_index=vcf_index,
                 str=str,
-                out_prefix=out_prefix
+                out_prefix=out_prefix,
+                GOOGLE_PROJECT = GOOGLE_PROJECT
         }
 
     }   
@@ -46,12 +49,15 @@ task extract_str {
         File vcf_index
         File str
         String out_prefix
+        String GOOGLE_PROJECT = ""
+        
     }
     String chrom_outprefix = basename(vcf, "annotated.vcf.gz")
 
     command <<<
         set -e
-        
+
+        export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
         bcftools view -R ~{str} -f"%CHROM\t%POS\t%REF\t%ALT\t[%TGT\t]\n" ~{vcf} -Oz -o "~{out_prefix}_~{chrom_outprefix}.vcf.gz"
         tabix -p vcf "~{out_prefix}_~{chrom_outprefix}.vcf.gz"
     >>>

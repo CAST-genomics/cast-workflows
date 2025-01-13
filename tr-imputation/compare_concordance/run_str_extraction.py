@@ -71,6 +71,7 @@ def main():
 	json_dict["tr_extraction.vcfs_index"] =  [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.vcf.gz.tbi')]
 	json_dict["tr_extraction.str"] = args.tr
 	json_dict["tr_extraction.out_prefix"] = args.name
+	json_dict["tr_extraction.GOOGLE_PROJECT"] = project
 	
 
 	# Convert to json and save as a file
