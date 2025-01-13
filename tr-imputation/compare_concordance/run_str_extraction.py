@@ -69,7 +69,7 @@ def main():
 	json_dict = {}
 	json_dict["tr_extraction.vcfs"] =  [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.vcf.gz')]
 	json_dict["tr_extraction.vcfs_index"] =  [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.vcf.gz.tbi')]
-	json_dict["tr_extraction.str"] = args.tr
+	json_dict["tr_extraction.str"] = tr_gcs
 	json_dict["tr_extraction.out_prefix"] = args.name
 	json_dict["tr_extraction.GOOGLE_PROJECT"] = project
 	json_dict["tr_extraction.GCS_OAUTH_TOKEN"] = token
