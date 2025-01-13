@@ -68,7 +68,7 @@ task extract_str {
 
     runtime {
         docker: "gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-        #disks: "local-disk 150 SSD"
+        disks: "local-disk 150 SSD"
     }
     output {
         File outvcf = "${out_prefix}_${chrom_outprefix}.vcf.gz"
