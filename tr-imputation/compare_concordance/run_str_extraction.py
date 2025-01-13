@@ -85,7 +85,7 @@ def main():
 		json.dump(json_options_dict, f, indent=4)
 
 	# Run workflow on AoU using cromwell
-	aou_utils.RunWorkflow("compare_concordance/wdl/extract_str.wdl", json_file, \
+	aou_utils.RunWorkflow("extract_str.wdl", json_file, \
 		json_options_file, dryrun=args.dryrun)
 
 if __name__ == "__main__":
