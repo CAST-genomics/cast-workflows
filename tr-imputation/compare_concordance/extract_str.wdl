@@ -14,8 +14,8 @@ workflow tr_extraction {
     ### Call each chromosome vcf ###
     Int num = length(vcfs)
     scatter (i in range(num)) {
-        File vcf = vcfs[i]
-        File vcf_index = vcfs_index[i]
+        String vcf = vcfs[i]
+        String vcf_index = vcfs_index[i]
         call extract_str{
             input:
                 vcf=vcf,
@@ -58,8 +58,6 @@ task extract_str {
     String chrom_outprefix = basename(vcf, "annotated.vcf.gz")
 
     command <<<
-        set -e
-
         export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         bcftools view -R ~{str} -f"%CHROM\t%POS\t%REF\t%ALT\t[%TGT\t]\n" ~{vcf} -Oz -o "~{out_prefix}_~{chrom_outprefix}.vcf.gz"
