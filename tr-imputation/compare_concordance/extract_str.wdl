@@ -14,8 +14,8 @@ workflow tr_extraction {
     ### Call each chromosome vcf ###
     Int num = length(vcfs)
     scatter (i in range(num)) {
-        String vcf = vcfs[i]
-        String vcf_index = vcfs_index[i]
+        File vcf = vcfs[i]
+        File vcf_index = vcfs_index[i]
         call extract_str{
             input:
                 vcf=vcf,
@@ -47,8 +47,8 @@ workflow tr_extraction {
 
 task extract_str {
     input {
-        String vcf
-        String vcf_index
+        File vcf
+        File vcf_index
         File str
         String out_prefix
         String GOOGLE_PROJECT = ""
@@ -58,9 +58,10 @@ task extract_str {
     String chrom_outprefix = basename(vcf, "annotated.vcf.gz")
 
     command <<<
+        set -e
         export GCS_REQUESTER_PAYS_PROJECT=~{GOOGLE_PROJECT}
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
-        bcftools view -R ~{str} -f"%CHROM\t%POS\t%REF\t%ALT\t[%TGT\t]\n" ~{vcf} -Oz -o "~{out_prefix}_~{chrom_outprefix}.vcf.gz"
+        bcftools view -R ~{str} -f"%CHROM\t%POS\t%REF\t%ALT\t[%TGT\t]\n" ~{vcf} -Oz -o "~{out_prefix}_~{chrom_outprefix}.vcf.gz" 
         tabix -p vcf "~{out_prefix}_~{chrom_outprefix}.vcf.gz"
     >>>
 
@@ -68,8 +69,8 @@ task extract_str {
         docker: "gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
     }
     output {
-        File outvcf = "${out_prefix}_~{chrom_outprefix}.vcf.gz"
-        File outvcf_index = "${out_prefix}_~{chrom_outprefix}.vcf.gz.tbi"
+        File outvcf = "${out_prefix}_${chrom_outprefix}.vcf.gz"
+        File outvcf_index = "${out_prefix}_${chrom_outprefix}.vcf.gz.tbi"
     }
 }
 
@@ -81,16 +82,18 @@ task merge_outputs {
     }
 
     command <<<
-        bcftools merge --force-samples ~{sep=" " vcfs} -Oz -o ~{out_prefix}_merged.vcf.gz
+        set -e
+        bcftools merge --force-samples ~{sep=" " vcfs} -Oz -o ~{out_prefix}_merged.vcf.gz 
         tabix -p vcf ~{out_prefix}_merged.vcf.gz
     >>>
 
     runtime {
         docker: "gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
+        preemptible: 1
     }
 
     output {
-        File outvcf = "~{out_prefix}_merged.vcf.gz"
-        File outvcf_index = "~{out_prefix}_merged.vcf.g.tbi"
+        File outvcf = "${out_prefix}_merged.vcf.gz"
+        File outvcf_index = "${out_prefix}_merged.vcf.g.tbi"
     }
 }
