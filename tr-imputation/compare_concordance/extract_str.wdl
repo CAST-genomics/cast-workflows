@@ -90,7 +90,7 @@ task merge_outputs {
 
     runtime {
         docker: "gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-        memory: "10G"
+        memory: "15G"
         disks: "local-disk 50 SSD"
        
     }
