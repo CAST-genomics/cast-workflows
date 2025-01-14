@@ -84,14 +84,13 @@ task merge_outputs {
     }
 
     command <<<
-        set -e
         bcftools merge --force-samples ~{sep=" " vcfs} -Oz -o ~{out_prefix}_merged.vcf.gz 
         tabix -p vcf ~{out_prefix}_merged.vcf.gz
     >>>
 
     runtime {
         docker: "gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-        memory: "6G"
+        memory: "10G"
         disks: "local-disk 50 SSD"
        
     }
