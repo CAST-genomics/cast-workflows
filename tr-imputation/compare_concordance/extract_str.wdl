@@ -28,16 +28,9 @@ workflow tr_extraction {
 
     }   
 
-    call merge_outputs {
-        input:
-            vcfs=extract_str.outvcf,
-            vcfs_index=extract_str.outvcf_index,
-            out_prefix=out_prefix
-    } 
-
     output {
-        File outfile = merge_outputs.outvcf
-        File outfile_index = merge_outputs.outvcf_index
+        Array[File] outfile = extract_str.outvcf
+        Array[File] outfile_index = extract_str.outvcf_index
     }
 
     meta {
@@ -76,27 +69,3 @@ task extract_str {
     }
 }
 
-task merge_outputs {
-    input {
-        Array[File] vcfs
-        Array[File] vcfs_index
-        String out_prefix
-    }
-
-    command <<<
-        bcftools merge --force-samples ~{sep=" " vcfs} -Oz -o ~{out_prefix}_merged.vcf.gz 
-        tabix -p vcf ~{out_prefix}_merged.vcf.gz
-    >>>
-
-    runtime {
-        docker: "gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-        memory: "15G"
-        disks: "local-disk 50 SSD"
-       
-    }
-
-    output {
-        File outvcf = "${out_prefix}_merged.vcf.gz"
-        File outvcf_index = "${out_prefix}_merged.vcf.gz.tbi"
-    }
-}
