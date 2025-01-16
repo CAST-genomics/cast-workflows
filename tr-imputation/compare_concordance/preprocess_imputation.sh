@@ -23,27 +23,25 @@ awk 'BEGIN {OFS="\t"}
     # Print the header line (only for the first record)
     if (NR == 1) {
         print;  # Print the header
-        #print "";  # Print an empty line after the header
     }
 
     # For the remaining lines (after the header), calculate the copy number sum for each variant and sample
     if (NR > 1) {
-        variant = $1;  # The first column is the variant (e.g., CHROM:POS)
-        ref = length($2);   # The second column is the sample name (e.g., Sample1)
+        variant = $1;  # The first column is the ID
+        ref = length($2);   # The second column is the ref allele length 
 
         printf "%s\t%s", variant, ref;
 
-        # Loop through each sample genotype (starting from the second column)
-        for(i=3; i<=NF; i++) {  # Start from the third column since the second column is copied
+        # Loop through each sample genotype (starting from the third column)
+        for(i=3; i<=NF; i++) {  
             sum = 0;
 
-            # Handle the case where genotype is in the format of 0|0, 1|0, etc.
+            # Handle the case where genotype is in the format of xx|xx
             if ($i ~ /\|/) {
                 split($i, alleles, "|");  # Split the genotype by "|"
                 sum = length(alleles[1]) + length(alleles[2]);  # Sum the lengths of the two alleles
             } else {
-                # For formats like 0, 1, or 2, directly use the number itself
-                sum = $i;  # This assumes the number is the copy number itself
+                sum = $i;  
             }
 
             # Output the copy number sum for this sample
