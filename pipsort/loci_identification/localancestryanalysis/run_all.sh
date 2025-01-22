@@ -1,10 +1,13 @@
-#!/bin/bash
-
-for i in {15..20}; do
-    echo "Processing iteration $i"
-    gsutil cp "${WORKSPACE_BUCKET}/gnomix/outputs/gnomix-chr${i}.msp" ./
-    python get_local_ancestry_chrinfo.py $i
-    gsutil cp chr${i}* "${WORKSPACE_BUCKET}/pipsort/localancestry/chrinfo/"
-    rm gnomix-chr${i}.msp
-
-done
+infile=inputs.csv
+infile=remaining.csv
+while IFS=$', ' read -r -a myArray
+do
+ echo ${myArray[0]} #chr
+ echo ${myArray[1]} #from
+ echo ${myArray[2]} #to
+ echo ${myArray[3]} #snpposhg38
+ #echo ${myArray[4]} #snpposhg19
+ echo ${myArray[5]} #phenname
+ echo ${myArray[6]} #phenocovar file
+ bash quartile_strat_local_ancestry.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} ${myArray[5]} ${myArray[6]}
+done < $infile
