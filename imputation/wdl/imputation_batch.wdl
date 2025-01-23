@@ -55,7 +55,7 @@ workflow imputation_batch {
             input:
                 vcf=merge_outputs.merged_vcfs,
                 chrom=chrom,
-                mem=mem*2
+                mem=mem
         }
 
         call add_tags {
@@ -115,8 +115,8 @@ task sort_index {
     >>>
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-	    memory: mem + "GB"
-	    disks: "local-disk " + mem + " SSD"
+	    memory: "~{mem} GB"
+	    disks: "local-disk ~{mem} SSD"
     }
     output {
         File sorted_vcf = "~{out_prefix}.vcf.gz"
@@ -140,8 +140,8 @@ task merge_outputs {
     >>>
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-	    memory: mem*4 + "GB"
-	    disks: "local-disk " + mem*4 + " SSD"
+	    memory: "~{mem} GB"
+	    disks: "local-disk ~{mem} SSD"
     }
     output {
         File merged_vcfs = "~{out_prefix}.vcf.gz"
@@ -170,7 +170,7 @@ task copy_to_bucket {
     >>>
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-	    memory: mem + "GB"
+	    memory: "~{mem} GB"
         preemptible: 1
     }
     output {
@@ -210,7 +210,7 @@ task add_tags {
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-	    memory: mem + "GB"
+	    memory: "~{mem} GB"
         preemptible: 1
     }
 
@@ -245,7 +245,7 @@ task annotaTR {
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/trtools-6.0.2:latest"
         disks: "local-disk ~{mem} SSD"
-        memory: mem + "GB"
+        memory: "~{mem} GB"
     }
 
     output {

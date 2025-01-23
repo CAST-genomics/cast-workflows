@@ -69,10 +69,10 @@ task subset_vcf {
         String ref_panel
         String ref_panel_index
         File? samples_file
-	File? regions_file
+	    File? regions_file
         Int? mem
         String GOOGLE_PROJECT = ""
-        String out_prefix=out_prefix
+        String out_prefix
     }
 
     command <<<
@@ -95,9 +95,9 @@ task subset_vcf {
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
-	    memory: mem + "GB"
+	    memory:  "~{mem} GB"
         #bootDiskSizeGb: mem
-	    disks: "local-disk " + mem + " SSD"
+	    disks: "local-disk ~{mem} SSD"
         preemptible: 1
     }
 
@@ -160,8 +160,8 @@ task beagle {
     #file upto 300mb use mem=25
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/beagle:latest"
-	    disks: "local-disk " + mem*2 + " SSD"
-	    memory: mem*2 + "GB"
+	    disks: "local-disk ~{mem} SSD"
+	    memory: "~{mem} GB"
     }
 
     output {
@@ -196,8 +196,8 @@ task sort_index_beagle {
 
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/vcfutils:latest"
-	    memory: mem*2 + "GB"
-	    disks: "local-disk " + mem*4 + " SSD"
+	    memory: "~{mem} GB"
+	    disks: "local-disk ~{mem} SSD"
         preemptible: 1
     }
 
