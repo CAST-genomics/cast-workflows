@@ -30,7 +30,6 @@ def _get_alleles(vcf_df_row):
         print("Error: Repeat Unit (RU) not provided in the info field")
         return
     ru_len = len(ru)
-    #print("ru_len, ru, len ref allele", ru_len, ru, len(ref_allele))
     len_ref_allele = len(ref_allele)
     len_alt_alleles = [len(alt_allele) for alt_allele in alt_alleles]
     return len_ref_allele, len_alt_alleles, ru_len
@@ -38,11 +37,9 @@ def _get_alleles(vcf_df_row):
 def _get_rc_from_allele(allele, ref_allele, alt_alleles, ru_len):
     if allele == 0:
         ref_rc = int(ref_allele/ru_len)
-        #print("ref_rc ", ref_rc)
         return ref_rc
     else:
         rc = int(alt_alleles[allele-1]/ru_len)
-        #print("call {} allele {}".format(allele, rc))
         return rc
 
 def _get_individual_rcs_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep="/"):
@@ -57,7 +54,8 @@ def _get_overall_rc_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep
     rc_2 = _get_rc_from_allele(int(allele_2), ref_allele_len, alt_alleles_len, ru_len)
     return (rc_1 + rc_2)/2.0
 
-def _write_genotypes_for_locus(tr_vcf, chrom, start, gene, out_filename, imputed=True):
+def _write_genotypes_for_locus(tr_vcf, chrom, start, gene, out_filename,
+                               imputed=True, vntr_coordinates_threshold=10):
     data = {}
     print("Reading genotypes from the vcf file")
     # Read input VCF file into a dataframe
@@ -83,18 +81,22 @@ def _write_genotypes_for_locus(tr_vcf, chrom, start, gene, out_filename, imputed
     vcf_df["CHROM"] = vcf_df["CHROM"].astype(str)
     vcf_df["POS"] = vcf_df["POS"].astype(str)
     print("DF shape", vcf_df.shape)
-    #print(vcf_df[(vcf_df["POS"].astype(int) < start + 1000) & \
-    #             (vcf_df["POS"].astype(int) > start - 1000)])
 
     # Get all calls for this locus
     all_alleles = []
     empty_calls, no_calls = 0, 0
     locus_calls = vcf_df[(vcf_df["CHROM"] == chrom) & \
-                         (vcf_df["POS"] == str(start))
-                         ]
+                         (vcf_df["POS"].astype(int) < start + vntr_coordinates_threshold) & \
+                         (vcf_df["POS"].astype(int) > start - vntr_coordinates_threshold)]
     if len(locus_calls) == 0:
         # In a different chromosome
         print("Error: Locus in gene {} not found in {}.".format(gene, chrom))
+        return
+    elif len(locus_calls) > 1:
+        print("Error: Multiple loci within the {}bp of input coordinates. ".format(
+                    vntr_coordinates_threshold) + \
+                "Please adjust the vntr_coordinates_threshold to have one " + \
+                "locus selected.")
         return
     print("Processing annotation {} {}:{}".format(gene, chrom, start))
     samples_with_calls = set()
@@ -171,7 +173,7 @@ def create_covars(cohort_filename, output_filename):
         )
         
     
-def run_phewas(locus, cohort_filename, out_filename, n_threads):
+def run_phewas(locus, cohort_filename, out_filename, min_phecode_count, n_threads):
     covars = ["sex_at_birth",
               #"genetic_ancestry",
               "age_at_last_event",
@@ -186,9 +188,9 @@ def run_phewas(locus, cohort_filename, out_filename, n_threads):
         sex_at_birth_col="sex_at_birth",
         male_as_one=True,
         covariate_cols=covars,
+        min_phecode_count=min_phecode_count,
         independent_variable_of_interest=genotype_colname,
         min_cases=50,
-        min_phecode_count=2,
         output_file_name=out_filename,
     )
     example_phewas.run(n_threads=n_threads)
@@ -216,6 +218,8 @@ def parse_arguments():
                         "This is used to find the corresponding record on the tr_vcf to load genotypes.")
     parser.add_argument("--n-threads", type=int, default=3,
                         help="Number of threads.")
+    parser.add_argument("--min-phecode-count", type=int, default=2,
+                        help="Minimum count of a single phecode present for each sample to be considered a case.")
     args = parser.parse_args()
     return args
 
@@ -250,16 +254,19 @@ def main():
                       output_filename=cohort_genotype_covars_filename)
 
     # Run phewas
-    phewas_output_filename = "{}/{}_phewas_results.csv".format(outdir, args.locus)
+    phewas_output_filename = "{}/{}_phewas_results_min_phecode_count_{}.csv".format(
+                outdir, args.locus, args.min_phecode_count)
     if not os.path.exists(phewas_output_filename):
         run_phewas(args.locus,
+               min_phecode_count=args.min_phecode_count,
                cohort_filename=cohort_genotype_covars_filename,
                out_filename=phewas_output_filename,
                 n_threads=args.n_threads)
     
 
     # Plot Manhattan
-    plot_filename = "{}/manhattan_{}.png".format(outdir, args.locus)
+    plot_filename = "{}/manhattan_{}_min_phecode_count_{}.png".format(
+                    outdir, args.locus, args.min_phecode_count)
     p = Plot(phewas_output_filename)
     p.manhattan(label_values="p_value",
                 label_count=10,
