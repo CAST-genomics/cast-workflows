@@ -6,6 +6,7 @@ import gzip
 import os
 import pandas as pd
 from collections import Counter
+import argparse
 
 
 def call_count_phecodes():
@@ -73,6 +74,7 @@ def _write_genotypes_for_locus(tr_vcf, chrom, start, gene, out_filename, imputed
     else:
         print("Error: Cannot recognize tr-vcf file format. Should be either a vcf file or a vcf.gz file")
         exit(1)
+
     # Remove header lines for the dataframe
     lines_clean = [line for line in lines if not line.startswith("##")]
     columns = lines_clean[0].replace("\n", "").replace("#", "").split("\t")
@@ -81,6 +83,8 @@ def _write_genotypes_for_locus(tr_vcf, chrom, start, gene, out_filename, imputed
     vcf_df["CHROM"] = vcf_df["CHROM"].astype(str)
     vcf_df["POS"] = vcf_df["POS"].astype(str)
     print("DF shape", vcf_df.shape)
+    #print(vcf_df[(vcf_df["POS"].astype(int) < start + 1000) & \
+    #             (vcf_df["POS"].astype(int) > start - 1000)])
 
     # Get all calls for this locus
     all_alleles = []
@@ -90,7 +94,7 @@ def _write_genotypes_for_locus(tr_vcf, chrom, start, gene, out_filename, imputed
                          ]
     if len(locus_calls) == 0:
         # In a different chromosome
-        print("Skipping annotation for gene {}. Locus not found in {}.".format(gene, chrom))
+        print("Error: Locus in gene {} not found in {}.".format(gene, chrom))
         return
     print("Processing annotation {} {}:{}".format(gene, chrom, start))
     samples_with_calls = set()
@@ -167,7 +171,7 @@ def create_covars(cohort_filename, output_filename):
         )
         
     
-def run_phewas(locus, cohort_filename, out_filename):
+def run_phewas(locus, cohort_filename, out_filename, n_threads):
     covars = ["sex_at_birth",
               #"genetic_ancestry",
               "age_at_last_event",
@@ -187,7 +191,7 @@ def run_phewas(locus, cohort_filename, out_filename):
         min_phecode_count=2,
         output_file_name=out_filename,
     )
-    example_phewas.run()
+    example_phewas.run(n_threads=n_threads)
 
 def read_target_loci(filename):
     target_loci = []
@@ -198,7 +202,25 @@ def read_target_loci(filename):
         target_loci.append((str(chrom), str(start), str(gene)))
     return target_loci
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(prog = "phewas_runner",
+                description="Runs phewas for a given TR locus using pheTK.")
+
+    parser.add_argument("--locus", type=str, required=True,
+                        help="The gene name of the locus for phewas.")
+    parser.add_argument("--chrom", type=str, required=True,
+                        help="The chromosome where the tr is located. " + \
+                        "This is used to load the corresponding vcf file to read genotypes.")
+    parser.add_argument("--start", type=int, required=True,
+                        help="The coordinates where the tr is located." + \
+                        "This is used to find the corresponding record on the tr_vcf to load genotypes.")
+    parser.add_argument("--n-threads", type=int, default=3,
+                        help="Number of threads.")
+    args = parser.parse_args()
+    return args
+
 def main():
+    args = parse_arguments()
     # The call_count_phecodes only needs to be called once.
     # The phecode_counts csv file is generated for all 250k individuals.
     #call_count_phecodes()
@@ -209,17 +231,16 @@ def main():
         os.mkdir(outdir)
 
     # Select a locus
-    locus, chrom, start = "INS", "chr11", 2161569
-    cohort_genotype_filename = "{}/genotypes_{}.csv".format(outdir, locus)
-    cohort_genotype_covars_filename = "{}/cohort_with_covariates_{}.csv".format(outdir, locus)
+    cohort_genotype_filename = "{}/genotypes_{}.csv".format(outdir, args.locus)
+    cohort_genotype_covars_filename = "{}/cohort_with_covariates_{}.csv".format(outdir, args.locus)
 
     # Populate the genotype file
-    tr_vcf = "../imputation/wdl/data/imputed_{}.annotated.rh.vcf.gz".format(chrom)
+    tr_vcf = "../imputation/wdl/data/imputed_{}.annotated.rh.vcf.gz".format(args.chrom)
     if not os.path.exists(cohort_genotype_filename):
         _write_genotypes_for_locus(tr_vcf=tr_vcf,
-                              chrom=chrom,
-                              start=start,
-                              gene=locus,
+                              chrom=args.chrom,
+                              start=args.start,
+                              gene=args.locus,
                               out_filename=cohort_genotype_filename,
                               imputed=True)
     
@@ -229,19 +250,20 @@ def main():
                       output_filename=cohort_genotype_covars_filename)
 
     # Run phewas
-    phewas_output_filename = "{}/{}_phewas_results.csv".format(outdir, locus)
+    phewas_output_filename = "{}/{}_phewas_results.csv".format(outdir, args.locus)
     if not os.path.exists(phewas_output_filename):
-        run_phewas(locus,
+        run_phewas(args.locus,
                cohort_filename=cohort_genotype_covars_filename,
-               out_filename=phewas_output_filename)
+               out_filename=phewas_output_filename,
+                n_threads=args.n_threads)
     
 
     # Plot Manhattan
-    plot_filename = "{}/manhattan_{}.png".format(outdir, locus)
+    plot_filename = "{}/manhattan_{}.png".format(outdir, args.locus)
     p = Plot(phewas_output_filename)
     p.manhattan(label_values="p_value",
-                label_count=30,
-                label_value_threshold=1.5,
+                label_count=10,
+                label_value_threshold=2,
                 save_plot=True,
                 output_file_name=plot_filename,
                 output_file_type="png")
