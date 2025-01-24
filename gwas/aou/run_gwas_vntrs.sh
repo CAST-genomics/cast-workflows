@@ -1,10 +1,10 @@
 #!/bin/bash
 
-chr="chr13"
+chr="chr1"
 #aou_220k_imputed="../../imputation/wdl/data/imputed_chr15_p_g_vntrs_srwgs_sr_ml_filter.sorted.vcf.gz"
 #aou_220k_imputed="../../imputation/wdl/data/imputed_chr11.annotated.rh.vcf.gz"
-aou_220k_imputed="../../imputation/wdl/data/imputed_samples_chr13.sorted.annotate.rh.vcf.gz"
-#aou_220k_imputed="../../imputation/wdl/data/imputed_${chr}.sorted.annotate.rh.vcf.gz"
+#aou_220k_imputed="../../imputation/wdl/data/imputed_samples_chr13.sorted.annotate.rh.vcf.gz"
+aou_220k_imputed="../../imputation/wdl/data/imputed_${chr}.annotated.rh.vcf.gz"
 
 ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
 
@@ -17,7 +17,8 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
 
   echo "" > $summary
   for phenotype in $(tail -n +2 phenotypes_manifest.csv  | cut -d, -f1); do
-     phenotype="red_blood_cell_distribution_width"
+     #phenotype="red_blood_cell_distribution_width"
+     phenotype="glaucoma"
      #phenotype="type_2_diabetes"
      #phenotype="height"
      #snp_gwas_file="data/all_by_all/df_dump_${chr}_EM_202.2.csv"
@@ -39,69 +40,6 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
      most_significant_hit=$(tail -n +4 outputs/${chr}/${phenotype}_associaTR_${samples_prefix}.gwas.tab | cut -f6 | sort -g  | awk NF | head -n 1)
      echo "most_significant_hit for phenotype $phenotype is $most_significant_hit" >> $summary
      echo "----------- most_significant_hit for phenotype $phenotype is $most_significant_hit"
-exit 0
+    exit 0
   done
 #done
-
-
-# Running associatr
-echo "running gwas for imputed calls"
-samples="samples/AFR_BLACK.csv"
-./aou_gwas.py --phenotype height \
-	      --num-pcs 10 \
-	      --method associaTR \
-	      --tr-vcf $aou_220k_imputed \
-	      --samples $samples \
-	      --is-imputed \
-	      --norm-by-sex \
-	      --norm quantile \
-	      --annotations annotations_acan.txt \
-	      --plot
-exit 0
-samples="samples/EUR_WHITE.csv"
-./aou_gwas.py --phenotype height \
-	      --num-pcs 10 \
-	      --method associaTR \
-	      --tr-vcf $aou_220k_imputed \
-	      --annotations annotations_acan.txt \
-	      --samples $samples \
-	      --is-imputed \
-	      --norm-by-sex \
-	      --norm quantile \
-	      --plot
-samples="samples/passing_samples_v7.1.csv"
-./aou_gwas.py --phenotype height \
-	      --num-pcs 10 \
-	      --method associaTR \
-	      --tr-vcf $aou_220k_imputed \
-	      --annotations annotations_acan.txt \
-	      --samples $samples \
-	      --is-imputed \
-	      --norm-by-sex \
-	      --norm quantile \
-	      --plot
-echo "running gwas for advntr calls"
-./aou_gwas.py --phenotype height \
-	      --num-pcs 10 \
-	      --method associaTR \
-	      --tr-vcf $lrwgs_data \
-	      --annotations annotations_acan.txt \
-	      --norm quantile \
-	      --samples $samples \
-	      --norm-by-sex \
-	      --annotations annotations_acan.txt \
-	      --plot
-#	      --tr-vcf merged_samples.vcf \
-exit 0
-echo "running gwas for reference"
-samples="samples/passing_samples_v7.1.csv"
-./aou_gwas.py --phenotype height \
-	      --num-pcs 10 \
-	      --method associaTR \
-	      --tr-vcf $ref\
-	      --samples $samples \
-	      --norm-by-sex \
-	      --norm quantile \
-	      --annotations annotations_acan.txt \
-	      --plot
-exit 0
