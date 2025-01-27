@@ -4,8 +4,8 @@ Script to launch AOU TR imputation
  
 
 ./run_str_extraction.py \
---name ukb_imputation \
---str ukb_finemapped_hg38_str.txt
+--name imputation \
+--str compare_str.txt
 
 
 """

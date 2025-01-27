@@ -2,15 +2,16 @@
 
 VCF=$1
 OUTPREFIX=$2
+STR=$3
 
 # Extract header (chrom, position, ref, alt, sample genotypes)
 bcftools view -h $VCF | grep "^#CHROM" | cut -f 1,2,3,4,5,10- > ${OUTPREFIX}.txt
 
 # Extract imputation genotype (variant ID and sample genotypes)
-bcftools query -R ukb_finemapped_hg38_str.txt -f"%CHROM\t%POS\t%ID\t%REF\t%ALT\t[%TGT\t]\n" $VCF >> ${OUTPREFIX}.txt
+bcftools query -R $STR -f"%CHROM\t%POS\t%ID\t%REF\t%ALT\t[%TGT\t]\n" $VCF >> ${OUTPREFIX}.txt
 
 # Prepare header for output file with sample IDs
-echo -e "variant\t ref \t$(bcftools query -R ukb_finemapped_hg38_str.txt -f"%ID\t" $VCF)" > ${OUTPREFIX}_gtsum.txt
+echo -e "variant\t ref \t$(bcftools query -R $STR -f"%ID\t" $VCF)" > ${OUTPREFIX}_gtsum.txt
 
 # Extract genotype information (remove header lines, we only want the g
 cat ${OUTPREFIX}.txt | cut -f 3,4,6- > ${OUTPREFIX}_cut.txt
