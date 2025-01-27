@@ -25,7 +25,7 @@ In all cases you'll have to run the following steps in the AoU workbench before 
 
 ```
 git clone https://github.com/cast-genomics/cast-workflows/
-cd cast-workflows/tr-imputation
+cd cast-workflows/tr-imputation/compare_concordance/
 ../utils/configure-cromshell.py
 ```
 
