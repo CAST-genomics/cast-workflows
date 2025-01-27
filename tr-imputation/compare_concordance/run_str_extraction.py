@@ -5,7 +5,7 @@ Script to launch AOU TR imputation
 
 ./run_str_extraction.py \
 --name imputation \
---str compare_str.txt
+--tr compare_str.txt
 
 
 """
