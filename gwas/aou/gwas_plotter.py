@@ -21,15 +21,11 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, phenoty
     if len(gwas) == 1:
         if gwas.iloc[0]["chrom"] != chrom or \
                 abs(int(gwas.iloc[0]["pos"]) - int(pos)) < 10:
-            #print("No gwas data for chrom {} position {}".format(
-            #    chrom, pos))
             return
     else: # To avoid warning on single element series
         if len(gwas.loc[(gwas["chrom"].astype(str) == chrom) &\
                         (gwas["pos"].astype(int) > int(pos) - 10) &\
                         (gwas["pos"].astype(int) < int(pos) + 10)]) == 0:
-            #print("No gwas data for chrom {} position {}".format(
-            #    chrom, pos))
             return
     if len(gwas) == 1:
         effect_size = gwas.iloc[0]["beta"]
@@ -41,10 +37,10 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, phenoty
     plotted_data = plotted_data.astype(float)
     plot = sns.jointplot(
             data=plotted_data,
-            #alpha=0.5,
             x=genotype,
             y=phenotype,
             kind="reg")
+    plot.plot(sns.boxplot, sns.histplot)
     plot.set_axis_labels(ylabel=phenotype_label, xlabel=genotype)
     print("effect size {:.4}".format(effect_size))
     plt.savefig(outpath)
@@ -52,23 +48,6 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, phenoty
 def annotate_points(ax, gwas, annotations):
     # Annotate points
     for point in annotations:
-        """[("chr15", "88855424", "ACAN"),
-          ("chr15", "101489550","PCSK6"),
-          ("chr15", "89776881", "MESP2"),
-          ("chr15", "82342547" , "GOLGA6L10"),
-          ("chr13", "112746309", "ATP11A"),
-          ("chr11", "116844581", "SIK3"),
-          ("chr11", " 2161569", "INS"),
-          ("chr11", "2161570", "INS"),
-          #("chr17", "30237128", "SLC6A4"),
-          #("chr6", "81752005", "TENT5A"),
-          #("chr20", "2652732", "NOP56"),
-          #("chrX", "43654436", "MAOA"),
-          #("chr15", "101334170", "PCSK6"),
-          #("chr12", "2255790", "CACNA1C"),
-          #("chr1", "155190864", "MUC1"),
-          #("chr21", "43776443", "CSTB"),
-          ]:"""
         chrom, position, label = point
         locus = gwas[(gwas["chrom"] == chrom) & \
                  (gwas["pos"] < int(position) + 10) &\
