@@ -4,7 +4,14 @@
 # So the query is likely different from LOINC/PPI.
 # I'll have to change the query.
 
-
+python aou_phenotype_preprocessing.py \
+	--phenotype glaucoma \
+    --concept-id SO_375.1 \
+    --phecode-cohort-file ../../../phewas/my_phecode_counts.csv \
+    --phecode-count 2 \
+    --no-phecode-controls \
+    --verbose
+exit 0
 python aou_phenotype_preprocessing.py \
 	--phenotype t2diabetes \
    	--snomed-ids 201826,4193704 \
