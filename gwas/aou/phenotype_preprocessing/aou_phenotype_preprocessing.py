@@ -19,6 +19,9 @@ import pandas as pd
 import sys
 import datetime
 
+# To avoid the SettingWithCopyWarning
+pd.options.mode.chained_assignment = None
+
 SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
     "passing_samples_v7.csv")
 
@@ -185,6 +188,56 @@ def parse_snomed(samples, demog, args):
                 args.phenotype+"_phenocovar.csv",
                 index=False, sep=",")
 
+
+def parse_phecode_cohort_file(samples, demog, args):
+    # Create a samples and demog df
+    all_samples_data = pd.merge(samples, demog, on="person_id", how="left")
+
+    # Set the age to the current age
+    all_samples_data["age"] = datetime.date.today().year - \
+        all_samples_data["date_of_birth"].dt.year
+
+    # Load the phecode cohort into a dataframe
+    phecode_df = pd.read_csv(args.phecode_cohort_file)
+    
+    # Select the concept id of interest
+    phecode_df = phecode_df[phecode_df["phecode"].astype(str) == str(args.concept_id)]
+    cases = phecode_df[phecode_df["count"].astype(int) >= args.phecode_count]
+    
+    # Merge cases with sample data
+    case_data = all_samples_data[all_samples_data["person_id"].isin(cases["person_id"])]
+    case_data["phenotype"] = 1
+    case_data = case_data[['person_id', 'phenotype', "age", "sex_at_birth"]]
+
+    # Gather controls
+    if args.no_phecode_controls:
+        excluded_from_controls = phecode_df["person_id"]
+    else:
+        excluded_from_controls = cases["person_id"]
+    controls = all_samples_data[~all_samples_data["person_id"].isin(excluded_from_controls)]
+    controls["phenotype"] = 0
+    control_data = controls[['person_id', 'phenotype', "age", "sex_at_birth"]]
+    
+    data = pd.concat([case_data, control_data])
+    if args.verbose:
+        print("Num cases: ", len(case_data))
+        print("Num controls: ", len(control_data))
+        print("Num samples: ", len(samples))
+        print("Num samples with phecode data: ", len(phecode_df))
+    if args.verbose:
+        print("cases head: ", case_data.head())
+        print("controls head: ", control_data.head())
+
+    # Rename and infer columns.
+    data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
+    
+    filename = args.phenotype + "_phenocovar.csv"
+    return data[['person_id', 'phenotype',
+          "age",
+          "sex_at_birth_Male"]].to_csv(
+        filename,
+        index=False, sep=",")
+
 def parse_lab_measurements(samples, demog, args):
     # Process lab measurements
     ptdata = SQLToDF(aou_queries.ConstructTraitSQL(args.concept_id, args.ppi))
@@ -269,7 +322,7 @@ def main():
     parser.add_argument("--concept-id", help="Concept ID or comma separated IDs for phenotype.",
                         type=str)
     parser.add_argument("--skip-concepts-in-controls", help="Skip controls with this concept ids." + \
-                        " Only taken into account for binar (snomed) phenotypes.",
+                        " Only taken into account for binary (snomed) phenotypes.",
                         type=str)
     parser.add_argument("--drugexposure-covariate-concept-ids",
                         help="Comma-separated list of conceptid:conceptname to use as drug exposure covariates", type=str)
@@ -282,6 +335,18 @@ def main():
     parser.add_argument("--snomed-ids",
                         help="The concept id from the SNOMED vocab usually used for diseases or conditions.",
                         type=str)
+    parser.add_argument("--phecode-cohort-file", help="File with phenocodes and counts for each sample." + \
+                            "If provided, no queries will be made for phenotype extraction and only the phecode " + \
+                            "file is used. --phecode-count should be set to use this file.")
+    parser.add_argument("--phecode-count", help="Used only in the case that --phecode-cohort-file is present." + \
+                            "Minimum number of phecode counts present for each sample to be considered a case.",
+                        type=int)
+    parser.add_argument("--no-phecode-controls", help="Used only in the case that --phecode-count is present." + \
+                            "Build the controls based on samples that have no phecode count in the " + \
+                            "phecode cohort file. If not set, any sample that is not in cases, will be used " + \
+                            "as controls including samples with phecode counts less than the " + \
+                            "--phecode-count threshold.",
+                        action="store_true")
     parser.add_argument("--verbose", help="Adjust verbosity.",
                                       action="store_true", default=False)
     parser.add_argument("--outlier-sd", help="filter samples with phenotype values exceeding this number of SDs",
@@ -292,7 +357,11 @@ def main():
         args.concept_id and args.snomed_ids:
         print("Error: Exactly one of --concept-id and --snomed-id should be set.")
         exit(1)
-
+    if (args.phecode_count is not None and args.phecode_cohort_file is None) or \
+        (args.phecode_count is None and args.phecode_cohort_file is not None):
+        print("Error: Both --phecode-cohort-file and --phecode-count should be provided.")
+        exit(1)
+        
     MSG("Processing %s"%args.phenotype)
     # Set up dataframes
     demog = SQLToDF(aou_queries.demographics_sql)
@@ -311,8 +380,14 @@ def main():
                     demog=demog,
                     args=args
                     )
-    elif args.concept_id:
+    elif args.concept_id and args.phecode_cohort_file is None:
         parse_lab_measurements(
+                    samples=samples,
+                    demog=demog,
+                    args=args
+                    )
+    elif args.concept_id and args.phecode_cohort_file:
+        parse_phecode_cohort_file(
                     samples=samples,
                     demog=demog,
                     args=args
