@@ -19,6 +19,7 @@ import scipy.stats as stats
 import warnings
 import re
 import vcf
+from cyvcf2 import VCF
 import gzip
 from io import StringIO
 from collections import Counter
@@ -105,39 +106,18 @@ def read_annotations(filename):
     with open(filename, "r") as annotations_file:
         lines = annotations_file.readlines()
     for line in lines:
-        chrom, start, gene = line.strip().split(",")
+        if line.startswith("chrom"):
+            # Header line
+            continue
+        chrom, start, gene = line.strip().split(",")[:3]
         annotations.append((str(chrom), str(start), str(gene)))
     return annotations
 
-def get_rc_from_allele_record(record, allele):
+def get_alleles(record):
     ref_allele = record.REF
-    alt_alleles = record.ALT.split(",")
-    ru = record.INFO.split(";")[2].replace("RU=", "")
-    ru_len = len(ru)
-    #print("ru_len, ru, len ref allele", ru_len, ru, len(ref_allele))
-    if allele == 0:
-        ref_rc = int(len(ref_allele)/ru_len)
-        #print("ref_rc ", ref_rc)
-        return ref_rc
-    else:
-        rc = int(len(alt_alleles[allele-1])/ru_len)
-        #print("call {} allele {}".format(allele, rc))
-        return rc
-
-def get_mean_rc_from_call_record(record, call, sep="/"):
-    allele_1, allele_2 = call.split(sep)
-    rc_1 = get_rc_from_allele_record(record, int(allele_1))
-    rc_2 = get_rc_from_allele_record(record, int(allele_2))
-    return (rc_1 + rc_2) / 2
-
-def get_alleles(vcf_df_row):
-    ref_allele = vcf_df_row["REF"].array[0]
-    alt_alleles = vcf_df_row["ALT"].array[0].split(",")
-    info_fields = vcf_df_row["INFO"].array[0].split(";")
-    ru = None
-    for info_field in info_fields:
-        if info_field.startswith("RU"):
-            ru = info_field.replace("RU=", "")
+    alt_alleles = record.ALT
+    info_fields = record.INFO
+    ru = info_fields["RU"]
     if ru is None:
         print("Error: Repeat Unit (RU) not provided in the info field")
         return
@@ -157,120 +137,50 @@ def get_rc_from_allele(allele, ref_allele, alt_alleles, ru_len):
         #print("call {} allele {}".format(allele, rc))
         return rc
 
-def get_individual_rcs_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep="/"):
-    allele_1, allele_2 = call.split(sep)
-    rc_1 = get_rc_from_allele(int(allele_1), ref_allele_len, alt_alleles_len, ru_len)
-    rc_2 = get_rc_from_allele(int(allele_2), ref_allele_len, alt_alleles_len, ru_len)
-    return rc_1, rc_2
-
-def get_overall_rc_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep="/"):
-    allele_1, allele_2 = call.split(sep)
-    rc_1 = get_rc_from_allele(int(allele_1), ref_allele_len, alt_alleles_len, ru_len)
-    rc_2 = get_rc_from_allele(int(allele_2), ref_allele_len, alt_alleles_len, ru_len)
-    return (rc_1 + rc_2)/2.0
-
-
-def set_genotypes(data, annotations, cohort, samples, phenotype, imputed, tr_vcf, outdir):
+def set_genotypes(data, annotations, cohort, samples, phenotype, tr_vcf, outdir):
     print("Reading genotypes from the vcf file")
+    # Extract the chrom from the tr_vcf file
+    words = re.split("_|\.", tr_vcf)
+    vcf_chrom = [word for word in words if word.startswith("chr")][0]
     # Plot phenotype histogram
     plot_histogram(data["phenotype"], phenotype,
                     os.path.join(outdir,
                         "{}_histogram_after_norm.png".format(phenotype)))
-    # Read input VCF file into a dataframe
-    lines = None
+    samples_str = [str(sample) for sample in samples]
+    vcf = VCF(tr_vcf, samples = samples_str)
+    vcf_samples = vcf.samples
 
-    if tr_vcf.endswith("gz"):
-        # It is a compressed vcf file
-        with gzip.open(tr_vcf, "rt") as vcf_file:
-            lines = vcf_file.readlines()
-    elif tr_vcf.endswith("vcf"):
-        # It is an uncompressed vcf file
-        with open(tr_vcf, "r") as vcf_file:
-            lines = vcf_file.readlines()
-    else:
-        print("Error: Cannot recognize tr-vcf file format. Should be either a vcf file or a vcf.gz file")
-        exit(1)
-    #vcf_df = pd.read_csv(StringIO(re.sub("#CHROM", "CHROM", lines)), sep="\t", comment='#')
-    # Remove header lines for the dataframe
-    lines_clean = [line for line in lines if not line.startswith("##")]
-    columns = lines_clean[0].replace("\n", "").replace("#", "").split("\t")
-    df_lines = [line.split("\t") for line in lines_clean[1:]]
-    vcf_df = pd.DataFrame(df_lines, columns=columns)
-    # Fix CHROM column name
-    print("DF shape", vcf_df.shape)
-    # Set up an output vcf file for normalized values
-    #normalized_file = open("normalized.vcf", "w+")
-    #for line in lines:
-    #    if line.startswith("#"):
-    #        normalized_file.write(line + "\n")
     # Focus on a few loci of interest
-    samples_set = set(list(samples))
     for chrom, start, gene in annotations:
         all_alleles = []
         empty_calls, no_calls = 0, 0
-        locus_calls = vcf_df[(vcf_df["CHROM"] == chrom) & \
-                             (vcf_df["POS"] == str(start))
-                             ]
-        if len(locus_calls) == 0:
-            # In a different chromosome
-            print("Skipping annotation for gene {} not in this chromosome".format(gene))
+        if chrom != vcf_chrom:
             continue
+        variant = list(vcf("{}:{}-{}".format(chrom, int(start)-10, int(start) + 10)))[0]
         print("Processing annotation {} {}:{}".format(gene, chrom, start))
         data.loc[:, [gene]] = np.nan
         samples_with_calls = set()
-        shared_columns = []
         print("Reading ref and alt alleles")
-        ref_allele_len, alt_alleles_len, ru_len = get_alleles(locus_calls)
+        ref_allele_len, alt_alleles_len, ru_len = get_alleles(variant)
         print("Reading calls")
         counter = 0
-        for column in vcf_df.columns:
+        for i, sample_call in enumerate(variant.genotypes):
             counter += 1
+            sample = vcf_samples[i]
             if counter % 10000 == 0:
                 print("reading call ", counter)
-            if column.isnumeric():
-                # Corresponds to a sample id
-                if str(column) not in samples_set:
-                    continue
-                if not imputed:
-                    #print("Column: ", column)
-                    #print("Locus call", locus_calls[column].to_string())
-                    if len(locus_calls[column].array) == 0:
-                        # An error causing an empty value in the vcf file
-                        empty_calls += 1
-                        continue
-                    call = locus_calls[column].array[0]
-                    call = call.split(":")[0]
-                    if call == ".":
-                        # Equal to no call
-                        no_calls += 1
-                        continue
-                    rc = get_overall_rc_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep="/")
-                    # Get individual alleles for plotting
-                    rc_1, rc_2 = get_individual_rcs_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep="/")
-                    all_alleles.extend([rc_1, rc_2])
-                else: # imputed
-                    if len(locus_calls[column]) == 0:
-                        # Equal to no call
-                        continue
-                    call = locus_calls[column].array[0]
-                    call = call.split(":")[0]
-                    #print("Locus call after split ", call)
-                    rc = get_overall_rc_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep="|")
-                    # Get individual alleles for plotting
-                    rc_1, rc_2 = get_individual_rcs_from_call(call, ref_allele_len, alt_alleles_len, ru_len, sep="|")
-                    all_alleles.extend([rc_1, rc_2])
+            rc_1 = get_rc_from_allele(int(sample_call[0]), ref_allele_len, alt_alleles_len, ru_len)
+            rc_2 = get_rc_from_allele(int(sample_call[1]), ref_allele_len, alt_alleles_len, ru_len)
+            rc = (rc_1 + rc_2) / 2.0
+            all_alleles.extend([rc_1, rc_2])
 
-
-                # Remove outliers for CACNA1C
-                #if gene == "CACNA1C" and (rc < 2*180 or rc > 2*205):
-                #    continue
-                samples_with_calls.add(column)
-                data.loc[data["person_id"]==column, gene] = rc
-            else:
-                shared_columns.append(column)
+            samples_with_calls.add(sample)
+            data.loc[data["person_id"]==sample, gene] = rc
+            #else:
+            #    shared_columns.append(column)
         #data = data.dropna(subset=[gene, "phenotype"])
         print("Alleles count for the 4 most common alleles: ", Counter(all_alleles).most_common(4))
-        # Plot individual alleles for ACAN
+        # Plot alleles
         if len(set(all_alleles)) > 1:
             print("Plotting alleles histogram")
             print("gene: ", gene)
@@ -318,8 +228,11 @@ def main():
     parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions", default=ANCESTRY_PRED_PATH)
     parser.add_argument("--region", help="chr:start-end to restrict to. Default is genome-wide", type=str)
     parser.add_argument("--num-pcs", help="Number of PCs to use as covariates", type=int, default=10)
-    parser.add_argument("--ptcovars", help="Comma-separated list of phenotype-specific covariates. Default: age", type=str, default="age")
-    parser.add_argument("--sharedcovars", help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male", type=str, default="sex_at_birth_Male")
+    parser.add_argument("--ptcovars", help="Comma-separated list of phenotype-specific covariates. Default: age",
+                            type=str, default="age")
+    parser.add_argument("--sharedcovars",
+                help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male",
+                            type=str, default="sex_at_birth_Male")
     parser.add_argument("--tr-vcf", help="VCF file with TR genotypes. Required if running associaTR", type=str)
     parser.add_argument("--is-imputed", help="Indicate if the tr-vcf file is imputed", action="store_true")
     parser.add_argument("--annotations", help="CSV file with annotations for plotting" + \
@@ -348,6 +261,10 @@ def main():
         pass
     else:
         ptcovar_path = GetPTCovarPath(args.phenotype)
+
+    # Create output dir if does not exist
+    if os.path.exists(args.outdir):
+        os.makedirs(args.outdir, exist_ok=True)
 
     # Check options
     if args.method not in GWAS_METHODS:
@@ -421,7 +338,6 @@ def main():
                                  cohort=cohort,
                                  samples=samples["person_id"],
                                  phenotype=args.phenotype,
-                                 imputed=args.is_imputed,
                                  tr_vcf=args.tr_vcf,
                                  outdir=args.outdir)
     
@@ -501,6 +417,7 @@ def main():
 
         PlotManhattan(gwas, outpath+".manhattan.png",
                       hue=hue,
+                      annotations=annotations,
                       annotate=annotate,
                       p_value_threshold=p_value_threshold)
         PlotQQ(runner.gwas, outpath+".qq.png")
