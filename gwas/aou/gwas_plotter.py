@@ -20,13 +20,14 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, phenoty
     plt.clf()
     if len(gwas) == 1:
         if gwas.iloc[0]["chrom"] != chrom or \
-                int(gwas.iloc[0]["pos"]) != int(pos):
+                abs(int(gwas.iloc[0]["pos"]) - int(pos)) < 10:
             #print("No gwas data for chrom {} position {}".format(
             #    chrom, pos))
             return
     else: # To avoid warning on single element series
-        if len(gwas.loc[(gwas["chrom"] == chrom) &\
-                        (gwas["pos"] == int(pos))]) == 0:
+        if len(gwas.loc[(gwas["chrom"].astype(str) == chrom) &\
+                        (gwas["pos"].astype(int) > int(pos) - 10) &\
+                        (gwas["pos"].astype(int) < int(pos) + 10)]) == 0:
             #print("No gwas data for chrom {} position {}".format(
             #    chrom, pos))
             return
@@ -34,57 +35,44 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, phenoty
         effect_size = gwas.iloc[0]["beta"]
     else: # To avoid warning on single element series
         effect_size = gwas.loc[(gwas["chrom"] == chrom) &\
-                        (gwas["pos"] == int(pos)), 'beta'].item()
+                        (gwas["pos"] > int(pos) - 10) &\
+                        (gwas["pos"] < int(pos) + 10), 'beta'].item()
     plotted_data = data[[genotype, phenotype]].dropna()
     plotted_data = plotted_data.astype(float)
     plot = sns.jointplot(
             data=plotted_data,
-            alpha=0.5,
+            #alpha=0.5,
             x=genotype,
-            y=phenotype)
+            y=phenotype,
+            kind="reg")
     plot.set_axis_labels(ylabel=phenotype_label, xlabel=genotype)
     print("effect size {:.4}".format(effect_size))
-    # Draw a line corresponding to the effect size
-    x_0 = data[genotype].mean()
-    y_0 = data[phenotype].mean()
-    x_1 = data[genotype].mean() - 2 * data[genotype].std()
-    x_2 = data[genotype].mean() + 2 * data[genotype].std()
-
-    point_1 = [x_1,
-               y_0 + (x_1 - x_0) * effect_size]
-    point_2 = [x_2,
-               y_0 + (x_2 - x_0) * effect_size]
-    plot.ax_joint.plot([point_1[0], x_0, point_2[0]],
-                       [point_1[1], y_0, point_2[1]],
-                       'b-', linewidth = 1)
-    plot.ax_joint.text(x=x_1 + data[genotype].std(),
-            y=y_0 + data[phenotype].std(),
-            s="effect size:\n{:.4}".format(effect_size),
-            fontsize="medium", weight='bold')
     plt.savefig(outpath)
 
-def annotate_points(ax, gwas):
+def annotate_points(ax, gwas, annotations):
     # Annotate points
-    for point in [("chr15", "88855424", "ACAN"),
-                  ("chr15", "101489550","PCSK6"),
-                  ("chr15", "89776881", "MESP2"),
-                  ("chr15", "82342547" , "GOLGA6L10"),
-                  ("chr13", "112746309", "ATP11A"),
-                  ("chr11", "116844581", "SIK3"),
-                  ("chr11", " 2161569", "INS"),
-                  ("chr11", "2161570", "INS"),
-                  #("chr17", "30237128", "SLC6A4"),
-                  #("chr6", "81752005", "TENT5A"),
-                  #("chr20", "2652732", "NOP56"),
-                  #("chrX", "43654436", "MAOA"),
-                  #("chr15", "101334170", "PCSK6"),
-                  #("chr12", "2255790", "CACNA1C"),
-                  #("chr1", "155190864", "MUC1"),
-                  #("chr21", "43776443", "CSTB"),
-                  ]:
+    for point in annotations:
+        """[("chr15", "88855424", "ACAN"),
+          ("chr15", "101489550","PCSK6"),
+          ("chr15", "89776881", "MESP2"),
+          ("chr15", "82342547" , "GOLGA6L10"),
+          ("chr13", "112746309", "ATP11A"),
+          ("chr11", "116844581", "SIK3"),
+          ("chr11", " 2161569", "INS"),
+          ("chr11", "2161570", "INS"),
+          #("chr17", "30237128", "SLC6A4"),
+          #("chr6", "81752005", "TENT5A"),
+          #("chr20", "2652732", "NOP56"),
+          #("chrX", "43654436", "MAOA"),
+          #("chr15", "101334170", "PCSK6"),
+          #("chr12", "2255790", "CACNA1C"),
+          #("chr1", "155190864", "MUC1"),
+          #("chr21", "43776443", "CSTB"),
+          ]:"""
         chrom, position, label = point
         locus = gwas[(gwas["chrom"] == chrom) & \
-                 (gwas["pos"] == int(position))]
+                 (gwas["pos"] < int(position) + 10) &\
+                 (gwas["pos"] > int(position) - 10)]
         if len(locus) > 0:
             x = locus["pos"].values[0]
             y = locus["-log10pvalue"].values[0]
@@ -92,6 +80,7 @@ def annotate_points(ax, gwas):
 
 def PlotManhattan(gwas, outpath,
                 hue,
+                annotations,
                 annotate=False,
                 p_value_threshold=-np.log10(5*10**-8),
                 extra_points=None
@@ -115,7 +104,7 @@ def PlotManhattan(gwas, outpath,
 
 
     if annotate:
-        annotate_points(plot.ax, gwas)
+        annotate_points(plot.ax, gwas, annotations)
 
     # Set labels
     plot.ax.set_xlabel("Chromosome")
