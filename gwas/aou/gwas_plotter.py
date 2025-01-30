@@ -11,13 +11,12 @@ import pandas as pd
 import seaborn as sns
 
 def plot_histogram(data, xlabel, outpath):
-    plt.clf()
-    plot = sns.histplot(data, binwidth=1)
+    plot = sns.histplot(data, binwidth=0.5)
     plot.set_xlabel(xlabel)
     plt.savefig(outpath)
+    plt.clf()
 
 def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, phenotype_label, outpath):
-    plt.clf()
     if len(gwas) == 1:
         if gwas.iloc[0]["chrom"] != chrom or \
                 abs(int(gwas.iloc[0]["pos"]) - int(pos)) < 10:
@@ -35,15 +34,31 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, phenoty
                         (gwas["pos"] < int(pos) + 10), 'beta'].item()
     plotted_data = data[[genotype, phenotype]].dropna()
     plotted_data = plotted_data.astype(float)
-    plot = sns.jointplot(
+
+    # Create a joint grid
+    plot = sns.JointGrid()
+    # Plot phenotype
+    # Plot joint plot in the middle
+    sns.boxplot(
             data=plotted_data,
             x=genotype,
             y=phenotype,
-            kind="reg")
-    plot.plot(sns.boxplot, sns.histplot)
+            ax=plot.ax_joint,
+            orient="v",
+            native_scale=True,
+            showfliers=False,
+            )
+    # Plot marginals
+    sns.histplot(y=plotted_data[phenotype],
+                ax=plot.ax_marg_y)
+    # Plot genotypes
+    sns.histplot(x=plotted_data[genotype],
+                ax=plot.ax_marg_x)
+
     plot.set_axis_labels(ylabel=phenotype_label, xlabel=genotype)
     print("effect size {:.4}".format(effect_size))
-    plt.savefig(outpath)
+    plt.savefig(outpath, bbox_inches="tight")
+    plt.clf()
 
 def annotate_points(ax, gwas, annotations):
     # Annotate points
