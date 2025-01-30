@@ -169,7 +169,6 @@ def set_genotypes(data, annotations, cohort, samples, phenotype, tr_vcf, outdir)
             sample = vcf_samples[i]
             if counter % 10000 == 0:
                 print("reading call ", counter)
-                break
             rc_1 = get_rc_from_allele(int(sample_call[0]), ref_allele_len, alt_alleles_len, ru_len)
             rc_2 = get_rc_from_allele(int(sample_call[1]), ref_allele_len, alt_alleles_len, ru_len)
             rc = (rc_1 + rc_2) / 2.0
