@@ -169,6 +169,7 @@ def set_genotypes(data, annotations, cohort, samples, phenotype, tr_vcf, outdir)
             sample = vcf_samples[i]
             if counter % 10000 == 0:
                 print("reading call ", counter)
+                break
             rc_1 = get_rc_from_allele(int(sample_call[0]), ref_allele_len, alt_alleles_len, ru_len)
             rc_2 = get_rc_from_allele(int(sample_call[1]), ref_allele_len, alt_alleles_len, ru_len)
             rc = (rc_1 + rc_2) / 2.0
@@ -176,9 +177,6 @@ def set_genotypes(data, annotations, cohort, samples, phenotype, tr_vcf, outdir)
 
             samples_with_calls.add(sample)
             data.loc[data["person_id"]==sample, gene] = rc
-            #else:
-            #    shared_columns.append(column)
-        #data = data.dropna(subset=[gene, "phenotype"])
         print("Alleles count for the 4 most common alleles: ", Counter(all_alleles).most_common(4))
         # Plot alleles
         if len(set(all_alleles)) > 1:
@@ -401,7 +399,9 @@ def main():
             snp_gwas["variant"] = "SNP"
             print("gwas shape", gwas.shape)
             print("snp_gwas shape", snp_gwas.shape)
-            gwas = pd.concat([snp_gwas, gwas])
+            gwas = pd.concat([
+                        snp_gwas[snp_gwas.index.isin(gwas.index) == False],
+                        gwas])
             print("combined gwas shape", gwas.shape)
             columns = ["variant"] + columns
             hue = "variant"
