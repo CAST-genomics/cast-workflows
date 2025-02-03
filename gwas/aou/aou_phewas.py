@@ -3,6 +3,8 @@
 """
 Run PheWAS on All of Us
 Example: 
+
+gsutil cp $WORKSPACE_BUCKET/cromwell-execution/targetTR/4519d903-dde6-4c8e-b1ee-bcc2d7cd6dd7/call-sort_index/CBL_test.filtered.sorted.vcf.gz .
 ./aou_phewas.py --tr-vcf CBL_test.filtered.sorted.vcf.gz --region chr11:119206290-119206323 --out CBL_phewas
 """
 
