@@ -7,9 +7,10 @@ For most of our use cases, users do not interact with the WDL described here dir
 
 The outputs for each chromosome are
 
+```
 ${chrom}.vcf.gz
 ${chrom}.vcf.gz.tbi
-
+```
 
 ## Setup
 In all cases you'll have to run the following steps in the AoU workbench before starting a workflow:
