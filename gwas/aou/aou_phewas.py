@@ -141,7 +141,7 @@ def main():
         #if logistic:
             #model = smf.logit(ptdata["phenotype"], ptdata[["genotype"]+covars].astype(float))
 
-        model = sm.OLS(ptdata["phenotype"], ptdata[["genotype"]+covars].astype(float))
+        model = sm.OLS(ptdata[["genotype"],ptdata["phenotype"]+covars].astype(float))
             
         reg_result = model.fit()
         pval = reg_result.pvalues[0]
