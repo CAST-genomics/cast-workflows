@@ -49,4 +49,6 @@ for i in {1..22};do ./preprocess_imputation.sh "ukb_imputation_chr${i}.vcf.gz" "
 
 ## Use jupyter notebook to process downstream analysis
 
-Imputation_hipstr_comparison_all
+```
+Imputation_hipstr_comparison_updated_str.ipynb
+```
