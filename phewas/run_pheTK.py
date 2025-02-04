@@ -40,7 +40,7 @@ def get_genotype(tr_vcf, region, out_filename):
         trrecord = trh.HarmonizeRecord(trh.VcfTypes["hipstr"], record)
         afreqs = trrecord.GetAlleleFreqs()
         genotypes = trrecord.GetLengthGenotypes()
-        allele_sum = [sum(item)for item in genotypes]
+        allele_sum = int(round([sum(item)for item in genotypes]))
         trdf = pd.DataFrame({"person_id": samples, "genotype": allele_sum})
         nrecords += 1
     if nrecords == 0:
@@ -73,8 +73,8 @@ def create_covars(cohort_filename, output_filename):
 def run_phewas(locus, cohort_filename, out_filename, min_phecode_count, n_threads):
     covars = ["sex_at_birth",
               "age_at_last_event",
-              "pc0", "pc1", "pc2", "pc3", "pc4",
-              "pc5", "pc6", "pc7", "pc8", "pc9",
+              "pc1", "pc2", "pc3", "pc4",
+              "pc5", "pc6", "pc7", "pc8", "pc9", "pc10"
              ]
     genotype_colname = "genotype"
     example_phewas = PheWAS(
