@@ -147,7 +147,7 @@ def main():
         print("Skipping run phewas step as the file already exists.")
     else:
         print("Running Phewas.")
-        run_phewas(args.locus,
+        run_phewas(args.pos,
                min_phecode_count=args.min_phecode_count,
                cohort_filename=cohort_genotype_covars_filename,
                out_filename=phewas_output_filename,
