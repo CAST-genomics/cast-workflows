@@ -2,15 +2,13 @@ from PheTK.Phecode import Phecode
 from PheTK.Cohort import Cohort
 from PheTK.PheWAS import PheWAS
 from PheTK.Plot import Plot
-import gzip
 import os
-import re
+import sys
 import trtools.utils.tr_harmonizer as trh
 import trtools.utils.utils as utils
 import pandas as pd
-import numpy as np
-from collections import Counter
 import argparse
+
 sys.path.append("../utils")
 #import utils
 from utils import MSG, ERROR
