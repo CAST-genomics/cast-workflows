@@ -112,7 +112,7 @@ def main():
     args = parse_arguments()
     # The call_count_phecodes only needs to be called once.
     # The phecode_counts csv file is generated for all 250k individuals.
-    #call_count_phecodes()
+    call_count_phecodes()
     
     # Create output directory if it does not exist
     outdir = "outputs"
@@ -147,7 +147,7 @@ def main():
         print("Skipping run phewas step as the file already exists.")
     else:
         print("Running Phewas.")
-        run_phewas(args.pos,
+        run_phewas(args.region,
                min_phecode_count=args.min_phecode_count,
                cohort_filename=cohort_genotype_covars_filename,
                out_filename=phewas_output_filename,
