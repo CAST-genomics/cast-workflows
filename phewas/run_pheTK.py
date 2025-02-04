@@ -11,7 +11,9 @@ import pandas as pd
 import numpy as np
 from collections import Counter
 import argparse
-from ../utils import MSG, ERROR
+sys.path.append("../utils")
+#import utils
+from utils import MSG, ERROR
 
 '''
 ## example code 
