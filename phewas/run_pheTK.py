@@ -11,13 +11,13 @@ import pandas as pd
 import numpy as np
 from collections import Counter
 import argparse
-from utils import MSG, ERROR
+from ../utils import MSG, ERROR
 
 '''
 ## example code 
 !gsutil cp $WORKSPACE_BUCKET/cromwell-execution/targetTR/4519d903-dde6-4c8e-b1ee-bcc2d7cd6dd7/call-sort_index/CBL_test.filtered.sorted.vcf.gz* .
 tr_vcf="CBL_test.filtered.sorted.vcf.gz"
-python run_phewas.py --tr-vcf $tr_vcf --pos chr11:119206290-119206323 --out CBL_pheTK --n-threads 12
+python run_pheTK.py --tr-vcf $tr_vcf --pos chr11:119206290-119206323 --out CBL_pheTK --n-threads 12
 
 '''
 def call_count_phecodes():
