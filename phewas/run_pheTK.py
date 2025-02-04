@@ -17,7 +17,7 @@ from utils import MSG, ERROR
 ## example code 
 !gsutil cp $WORKSPACE_BUCKET/cromwell-execution/targetTR/4519d903-dde6-4c8e-b1ee-bcc2d7cd6dd7/call-sort_index/CBL_test.filtered.sorted.vcf.gz* .
 tr_vcf="CBL_test.filtered.sorted.vcf.gz"
-python run_pheTK.py --tr-vcf $tr_vcf --pos chr11:119206290-119206323 --out CBL_pheTK --n-threads 12
+python run_pheTK.py --tr-vcf $tr_vcf --region chr11:119206290-119206323 --out CBL_pheTK --n-threads 12
 
 '''
 def call_count_phecodes():
@@ -30,9 +30,9 @@ def call_count_phecodes():
     )
 
 #to extract genotype from targetTR (hipstr)
-def get_genotype(vcf, region, out_filename):
+def get_genotype(tr_vcf, region, out_filename):
     # Load TR genotypes
-    invcf = utils.LoadSingleReader(vcf, checkgz=True)
+    invcf = utils.LoadSingleReader(tr_vcf, checkgz=True)
     samples = invcf.samples
     region = invcf(region)
     nrecords = 0
