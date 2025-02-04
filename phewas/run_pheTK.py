@@ -142,7 +142,7 @@ def main():
 
     # Run phewas
     phewas_output_filename = "{}/{}_phewas_results_min_phecode_count_{}.csv".format(
-                outdir, args.locus, args.min_phecode_count)
+                outdir, args.region, args.min_phecode_count)
     if os.path.exists(phewas_output_filename):
         print("Skipping run phewas step as the file already exists.")
     else:
@@ -156,7 +156,7 @@ def main():
 
     # Plot Manhattan
     plot_filename = "{}/manhattan_{}_min_phecode_count_{}.png".format(
-                    outdir, args.pos, args.min_phecode_count)
+                    outdir, args.region, args.min_phecode_count)
     p = Plot(phewas_output_filename)
     p.manhattan(label_values="p_value",
                 label_count=10,
