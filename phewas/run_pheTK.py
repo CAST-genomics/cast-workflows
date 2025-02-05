@@ -30,17 +30,31 @@ def call_count_phecodes():
     )
 
 #to extract genotype from targetTR (hipstr)
-def get_genotype(tr_vcf, region, out_filename):
+def get_genotype(tr_vcf,out_filename,region_file=None,region=None):
     # Load TR genotypes
     invcf = utils.LoadSingleReader(tr_vcf, checkgz=True)
     samples = invcf.samples
-    region = invcf(region)
-    nrecords = 0
+    
+    # Open the region file and process each line
+
+    if region_file:
+        with open(region_file, 'r') as region_file:
+            for line in region_file:
+                line = line.strip()
+                if not line:
+                    continue  # Skip empty lines
+        region = invcf(line)
+        nrecords = 0
+    
+    elif region:
+        region = invcf(region)
+        nrecords = 0
+
     for record in region:
         trrecord = trh.HarmonizeRecord(trh.VcfTypes["hipstr"], record)
         afreqs = trrecord.GetAlleleFreqs()
         genotypes = trrecord.GetLengthGenotypes()
-        allele_sum = int(round([sum(item)for item in genotypes]))
+        allele_sum = float([sum(item)for item in genotypes])
         trdf = pd.DataFrame({"person_id": samples, "genotype": allele_sum})
         nrecords += 1
     if nrecords == 0:
@@ -95,8 +109,10 @@ def run_phewas(locus, cohort_filename, out_filename, min_phecode_count, n_thread
 def parse_arguments():
     parser = argparse.ArgumentParser(prog = "phewas_runner",
                 description="Runs phewas for a given TR locus using pheTK.")
-
-    parser.add_argument("--region",type=str, required=True, help="chr:start-end of target variant")
+    # Create mutually exclusive group for --region and --region_file
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--region","-r", type=str, required=True, help="chr:start-end of target variant")
+    group.add_argument("--region_file","-R", type=str, required=True, help="file contain str regions")
 
     parser.add_argument("--n-threads", type=int, default=3,
                         help="Number of threads.")
@@ -128,10 +144,21 @@ def main():
         MSG("Skipping cohort file building step as the file already exists.")
     else:
         MSG("Building cohort file.")
-        get_genotype(tr_vcf=args.tr_vcf,
-                              region=args.region,
-                              out_filename=cohort_genotype_filename)
+        if args.region:
+    # If region is provided, call get_genotype with region
+            get_genotype(tr_vcf=args.tr_vcf,
+                            out_filename=cohort_genotype_filename,
+                            region=args.region,
+                            region_file=None)  # Don't pass region_file if region is provided
     
+        elif args.region_file:
+    # If region_file is provided, call get_genotype with region_file
+            get_genotype(tr_vcf=args.tr_vcf,
+                            out_filename=cohort_genotype_filename,
+                            region=None,  # Don't pass region if region_file is provided
+                            region_file=args.region_file)
+            
+
     # Before creating covars, a cohort file should be created with the genotype.
     if os.path.exists(cohort_genotype_covars_filename):
         print("Skipping covars file building step as the file already exists.")
