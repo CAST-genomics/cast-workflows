@@ -111,8 +111,8 @@ def parse_arguments():
                 description="Runs phewas for a given TR locus using pheTK.")
     # Create mutually exclusive group for --region and --region_file
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--region","-r", type=str, required=True, help="chr:start-end of target variant")
-    group.add_argument("--region_file","-R", type=str, required=True, help="file contain str regions")
+    group.add_argument("--region","-r", type=str, help="chr:start-end of target variant")
+    group.add_argument("--region_file","-R", type=str, help="file contain str regions")
 
     parser.add_argument("--n-threads", type=int, default=3,
                         help="Number of threads.")
