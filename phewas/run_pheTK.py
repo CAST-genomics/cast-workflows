@@ -61,6 +61,8 @@ def get_genotype(tr_vcf,out_filename,region_file=None,region=None):
             trdf = pd.DataFrame({"person_id": samples, "genotype": allele_sum})
             all_trdf = pd.concat([all_trdf, trdf], ignore_index=True)
             nrecords += 1
+        else:
+            continue
     if nrecords == 0:
         ERROR("No matching TR records found")
     if nrecords > 1:
@@ -132,7 +134,7 @@ def main():
     args = parse_arguments()
     # The call_count_phecodes only needs to be called once.
     # The phecode_counts csv file is generated for all 250k individuals.
-    call_count_phecodes()
+    #call_count_phecodes()
     
     # Create output directory if it does not exist
     outdir = "outputs"
