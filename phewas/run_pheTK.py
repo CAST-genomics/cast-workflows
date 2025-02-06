@@ -20,6 +20,7 @@ tr_vcf="CBL_test.filtered.sorted.vcf.gz"
 python run_pheTK.py --tr-vcf $tr_vcf --region chr11:119206290-119206323 --out CBL_pheTK --n-threads 12
 
 '''
+
 def call_count_phecodes():
     phecode = Phecode(platform="aou")
     phecode.count_phecode(
@@ -30,39 +31,20 @@ def call_count_phecodes():
     )
 
 #to extract genotype from targetTR (hipstr)
-def get_genotype(tr_vcf,out_filename,region_file=None,region=None):
+def get_genotype(tr_vcf,region, out_filename):
     # Load TR genotypes
     invcf = utils.LoadSingleReader(tr_vcf, checkgz=True)
     samples = invcf.samples
-    # Initialize an empty DataFrame to store the results
-    all_trdf = pd.DataFrame()
-    # Open the region file and process each line
-
-    if region_file:
-        with open(region_file, 'r') as region_file:
-            for line in region_file:
-                line = line.strip()
-                if not line:
-                    continue  # Skip empty lines
-        region = invcf(line)
-        nrecords = 0
-    
-    elif region:
-        region = invcf(region)
-        nrecords = 0
-
-
+    region = invcf(region)
+    nrecords = 0
     for record in region:
-        if record:
-            trrecord = trh.HarmonizeRecord(trh.VcfTypes["hipstr"], record)
-            afreqs = trrecord.GetAlleleFreqs()
-            genotypes = trrecord.GetLengthGenotypes()
-            allele_sum = float([sum(item)for item in genotypes])
-            trdf = pd.DataFrame({"person_id": samples, "genotype": allele_sum})
-            all_trdf = pd.concat([all_trdf, trdf], ignore_index=True)
-            nrecords += 1
-        else:
-            continue
+        trrecord = trh.HarmonizeRecord(trh.VcfTypes["hipstr"], record)
+        afreqs = trrecord.GetAlleleFreqs()
+        genotypes = trrecord.GetLengthGenotypes()
+        allele_sum = [sum(item)for item in genotypes]
+        trdf = pd.DataFrame({"person_id": samples, "genotype": allele_sum})
+        nrecords += 1
+
     if nrecords == 0:
         ERROR("No matching TR records found")
     if nrecords > 1:
@@ -115,11 +97,7 @@ def run_phewas(locus, cohort_filename, out_filename, min_phecode_count, n_thread
 def parse_arguments():
     parser = argparse.ArgumentParser(prog = "phewas_runner",
                 description="Runs phewas for a given TR locus using pheTK.")
-    # Create mutually exclusive group for --region and --region_file
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--region","-r", type=str, help="chr:start-end of target variant")
-    group.add_argument("--region_file","-R", type=str, help="file contain str regions")
-
+    parser.add_argument("--region", type=str, required=True, help="chr:start-end of target variant")
     parser.add_argument("--n-threads", type=int, default=3,
                         help="Number of threads.")
     parser.add_argument("--min-phecode-count", type=int, default=2,
@@ -150,20 +128,12 @@ def main():
         MSG("Skipping cohort file building step as the file already exists.")
     else:
         MSG("Building cohort file.")
-        if args.region:
-    # If region is provided, call get_genotype with region
-            get_genotype(tr_vcf=args.tr_vcf,
-                            out_filename=cohort_genotype_filename,
-                            region=args.region,
-                            region_file=None)  # Don't pass region_file if region is provided
-    
-        elif args.region_file:
-    # If region_file is provided, call get_genotype with region_file
-            get_genotype(tr_vcf=args.tr_vcf,
-                            out_filename=cohort_genotype_filename,
-                            region=None,  # Don't pass region if region_file is provided
-                            region_file=args.region_file)
-            
+
+        get_genotype(tr_vcf=args.tr_vcf,
+                        region=args.region,
+                        out_filename=cohort_genotype_filename)
+                            
+   
 
     # Before creating covars, a cohort file should be created with the genotype.
     if os.path.exists(cohort_genotype_covars_filename):
