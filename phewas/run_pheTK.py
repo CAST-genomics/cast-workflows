@@ -34,7 +34,8 @@ def get_genotype(tr_vcf,out_filename,region_file=None,region=None):
     # Load TR genotypes
     invcf = utils.LoadSingleReader(tr_vcf, checkgz=True)
     samples = invcf.samples
-    
+    # Initialize an empty DataFrame to store the results
+    all_trdf = pd.DataFrame()
     # Open the region file and process each line
 
     if region_file:
@@ -50,13 +51,16 @@ def get_genotype(tr_vcf,out_filename,region_file=None,region=None):
         region = invcf(region)
         nrecords = 0
 
+
     for record in region:
-        trrecord = trh.HarmonizeRecord(trh.VcfTypes["hipstr"], record)
-        afreqs = trrecord.GetAlleleFreqs()
-        genotypes = trrecord.GetLengthGenotypes()
-        allele_sum = float([sum(item)for item in genotypes])
-        trdf = pd.DataFrame({"person_id": samples, "genotype": allele_sum})
-        nrecords += 1
+        if record:
+            trrecord = trh.HarmonizeRecord(trh.VcfTypes["hipstr"], record)
+            afreqs = trrecord.GetAlleleFreqs()
+            genotypes = trrecord.GetLengthGenotypes()
+            allele_sum = float([sum(item)for item in genotypes])
+            trdf = pd.DataFrame({"person_id": samples, "genotype": allele_sum})
+            all_trdf = pd.concat([all_trdf, trdf], ignore_index=True)
+            nrecords += 1
     if nrecords == 0:
         ERROR("No matching TR records found")
     if nrecords > 1:
