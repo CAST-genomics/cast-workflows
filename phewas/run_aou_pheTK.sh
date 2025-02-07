@@ -5,8 +5,6 @@
 ## To install run:
 #pip install PheTK --upgrade
 
-#!/bin/bash
-
 # Path to the region file and tr_vcf file
 region_file="$1"
 tr_vcf="$2"
@@ -24,5 +22,5 @@ while IFS= read -r line; do
     region=$(echo "$line" | awk '{print $1 ":" $2 - $3}')
     
     # Run the Python script with the provided arguments
-    python run_phewas.py --region "$region" --tr-vcf "$tr_vcf" --n-threads 12 --out "$region_pheTK"  
+    python run_pheTK.py --region "$region" --tr-vcf "$tr_vcf" --n-threads 12 --out "$region_pheTK"  
 done < "$region_file"
