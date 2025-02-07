@@ -20,7 +20,8 @@ fi
 # Iterate over each line in the region file
 while IFS= read -r line; do
     # Remove leading and trailing whitespaces
-    region=$(echo "$line" | xargs)
+    line=$(echo "$line" | xargs)
+    region=$(echo "$line" | awk '{print $1 ":" $2 - $3}')
     
     # Run the Python script with the provided arguments
     python run_phewas.py --region "$region" --tr-vcf "$tr_vcf" --n-threads 12 --out "$region_pheTK"  
