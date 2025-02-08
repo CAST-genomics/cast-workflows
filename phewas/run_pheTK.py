@@ -120,8 +120,8 @@ def main():
         os.mkdir(outdir)
 
    
-    cohort_genotype_filename = "{}/genotypes_{}.csv".format(outdir, args.out)
-    cohort_genotype_covars_filename = "{}/cohort_with_covariates_{}.csv".format(outdir, args.out)
+    cohort_genotype_filename = "{}/genotypes_{}.csv".format(outdir, args.region)
+    cohort_genotype_covars_filename = "{}/cohort_with_covariates_{}.csv".format(outdir, args.region)
 
     # Populate the genotype file
     if os.path.exists(cohort_genotype_filename):
