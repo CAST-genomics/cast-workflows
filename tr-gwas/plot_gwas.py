@@ -14,12 +14,41 @@ import argparse
 #download summary stats file from workspace bucket
 # gsutil cp {WORKSPACE_BUCKET}/tr-gwas_result/
 
-def GetOutPath(gwas):
-    return gwas.replace(".tab", "")
+def GetOutPath(file_path):
+    return file_path.replace(".tab", "")
+
+def read_file(file_path):
+    
+    data = []
+
+    # Initialize a flag for whether we are reading data after the header
+    is_reading_data = False
+    columns = []
+    header_found = False  # To track if we've already found the first header
+    # Check if the file exists
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"The file {file_path} does not exist.")
+    # Open the file
+    with open(file_path, 'r') as f:
+        for line in f:
+            line = line.strip()  # Remove leading/trailing whitespace
+            if line.startswith('==>'):
+                continue
+            if line.startswith('#CHROM'):
+                if not header_found:
+                    columns = line.split()  # Store the first header
+                    header_found = True  # Mark that we've found the first header
+                continue  # Skip all subsequent header lines
+
+            if header_found:
+                # Only process non-empty lines
+                if line:
+                    data.append(line.split())  # Split the line by whitespace or tab
+    df = pd.DataFrame(data, columns=columns)
+    return df
 
 
-def PlotManhattan(gwas, outpath):
-    df = pd.read_csv(gwas, sep='\t')
+def PlotManhattan(df, outpath):
     df = df[df['TEST'] == 'ADD']
     df_cleaned = df.dropna(subset=['P'])
     print(f'{df_cleaned.shape[0]} number of STRs are left after removing NA')
@@ -83,9 +112,12 @@ def main():
     parser.add_argument("--gwas", help="GWAS summary stats file path", type=str, required=True)
     args = parser.parse_args()
 
+
+    # Read data
+    gwas_df = read_file(args.gwas)  
     outpath = GetOutPath(args.gwas)
-    PlotManhattan(args.gwas, outpath+".manhattan.png")
-    PlotQQ(args.gwas, outpath+".qq.png")
+    PlotManhattan(gwas_df, outpath+".manhattan.png")
+    PlotQQ(gwas_df, outpath+".qq.png")
 
 if __name__ == "__main__":
     main()
