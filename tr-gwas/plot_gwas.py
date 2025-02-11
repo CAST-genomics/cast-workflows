@@ -118,9 +118,16 @@ def main():
     args = parser.parse_args()
 
 
+    # Create output directory if it does not exist
+    outdir = "outputs"
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+
+    
     # Read data
     gwas_df = read_file(args.gwas)  
-    outpath = GetOutPath(args.gwas)
+    filename = GetOutPath(args.gwas)
+    outpath = 'f{outdir}/{filename}'
     PlotManhattan(gwas_df, outpath)
     PlotQQ(gwas_df, outpath)
 
