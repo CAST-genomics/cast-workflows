@@ -48,9 +48,15 @@ def read_file(file_path):
 
 
 def PlotManhattan(df, outpath):
+    #drop na values
     df = df[df['TEST'] == 'ADD']
+    df['P'] = df['P'].replace('NA', np.nan)
     df_cleaned = df.dropna(subset=['P'])
     print(f'{df_cleaned.shape[0]} number of STRs are left after removing NA')
+    #convert str to numerical value 
+    df_cleaned['P'] = df_cleaned['P'].astype(float)
+    df_cleaned['#CHROM'] = df_cleaned['#CHROM'].astype(int)
+    df_cleaned['POS'] = df_cleaned['POS'].astype(int)
     df_cleaned['-log10p'] = -np.log10(df_cleaned.P)
     df_sorted = df_cleaned.sort_values(by=["#CHROM", "POS"])
     df_sorted.reset_index(inplace=True, drop=True)
@@ -62,7 +68,7 @@ def PlotManhattan(df, outpath):
     plot.ax.set_xlabel('Chromosomes')
     plot.ax.set_xticks(chrom_df)
     plot.ax.set_xticklabels(chrom_df.index)
-    plot.fig.suptitle(f'Manhattan plot of STR genome-wide association on Platelet Count on AllofUs {gwas}')
+    plot.fig.suptitle(f'Manhattan plot of STR genome-wide association on Platelet Count on AllofUs {outpath}')
     plot.ax.axhline(8, linestyle='--', linewidth=1)
     plot.savefig(f'{outpath}.manhattan.png', dpi=700)
 
@@ -104,7 +110,7 @@ def PlotQQ(gwas, outpath):
     ax.set_xlabel("Expected $-log_{10}(p)$")
     ax.set_ylabel("Observed $-log_{10}(p)$")
 
-    fig.savefig(outpath)
+    fig.savefig(outpath+".qq.png")
 
 def main():
     parser = argparse.ArgumentParser(description="Generate Manhattan and QQ plots for GWAS data.")
@@ -115,8 +121,8 @@ def main():
     # Read data
     gwas_df = read_file(args.gwas)  
     outpath = GetOutPath(args.gwas)
-    PlotManhattan(gwas_df, outpath+".manhattan.png")
-    PlotQQ(gwas_df, outpath+".qq.png")
+    PlotManhattan(gwas_df, outpath)
+    PlotQQ(gwas_df, outpath)
 
 if __name__ == "__main__":
     main()
