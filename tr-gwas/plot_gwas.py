@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import argparse
+import os
 
 #download summary stats file from workspace bucket
 # gsutil cp {WORKSPACE_BUCKET}/tr-gwas_result/
@@ -17,10 +18,8 @@ import argparse
 def GetOutPath(file_path):
     return file_path.replace(".tab", "")
 
-def read_file(file_path):
-    
+def read_file(file_path):  
     data = []
-
     # Initialize a flag for whether we are reading data after the header
     is_reading_data = False
     columns = []
