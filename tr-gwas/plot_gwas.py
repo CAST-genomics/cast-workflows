@@ -127,7 +127,7 @@ def main():
     # Read data
     gwas_df = read_file(args.gwas)  
     filename = GetOutPath(args.gwas)
-    outpath = 'f{outdir}/{filename}'
+    outpath = f'{outdir}/{filename}'
     PlotManhattan(gwas_df, outpath)
     PlotQQ(gwas_df, outpath)
 
