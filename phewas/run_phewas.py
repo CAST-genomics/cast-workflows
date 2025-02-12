@@ -150,6 +150,8 @@ def parse_arguments():
                         help="Minimum count of a single phecode present for each sample to be considered a case.")
     parser.add_argument("--tr-vcf", type=str, required=True,
                         help="Path to the tr-VCF (imputed) input file.")
+    parser.add_argument("--outdir", type=str, default="outputs",
+                        help="Path to the desired output directory.")
     parser.add_argument("--significance-threshold", type=float, default=5,
                         help="Significance threshold only considered for printing significant hits.")
     parser.add_argument("--no-plot", action="store_true",
@@ -162,14 +164,17 @@ def parse_arguments():
 
 def main():
     args = parse_arguments()
-    # The call_count_phecodes only needs to be called once.
-    # The phecode_counts csv file is generated for all 250k individuals.
-    #call_count_phecodes()
     
     # Create output directory if it does not exist
-    outdir = "outputs"
+    outdir = args.outdir
     if not os.path.exists(outdir):
         os.mkdir(outdir)
+
+    # The call_count_phecodes only needs to be called once.
+    # The phecode_counts csv file is generated for all 250k individuals.
+    phecodes_filename = "my_phecode_counts.csv"
+    if not os.path.exists(phecodes_filename):
+        call_count_phecodes()
 
     # Select a locus
     cohort_genotype_filename = "{}/genotypes_{}.csv".format(outdir, args.locus)
