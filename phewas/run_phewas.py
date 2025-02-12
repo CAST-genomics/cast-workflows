@@ -109,7 +109,7 @@ def run_phewas(locus, cohort_filename, out_filename, min_phecode_count, n_thread
               "pc5", "pc6", "pc7", "pc8", "pc9",
              ]
     genotype_colname = "genotype"
-    example_phewas = PheWAS(
+    phewas = PheWAS(
         phecode_version="X",
         phecode_count_csv_path="my_phecode_counts.csv",
         cohort_csv_path=cohort_filename,
@@ -121,7 +121,7 @@ def run_phewas(locus, cohort_filename, out_filename, min_phecode_count, n_thread
         min_cases=50,
         output_file_name=out_filename,
     )
-    example_phewas.run(n_threads=n_threads)
+    phewas.run(n_threads=n_threads)
 
 def read_target_loci(filename):
     target_loci = []
@@ -150,6 +150,8 @@ def parse_arguments():
                         help="Minimum count of a single phecode present for each sample to be considered a case.")
     parser.add_argument("--tr-vcf", type=str, required=True,
                         help="Path to the tr-VCF (imputed) input file.")
+    parser.add_argument("--no-plot", action="store_true",
+                        help="Skip the phewas manhattan plot.")
     args = parser.parse_args()
     return args
 
@@ -188,8 +190,8 @@ def main():
                       output_filename=cohort_genotype_covars_filename)
 
     # Run phewas
-    phewas_output_filename = "{}/{}_phewas_results_min_phecode_count_{}.csv".format(
-                outdir, args.locus, args.min_phecode_count)
+    phewas_output_filename = "{}/phewas_results_{}_{}.csv".format(
+                outdir, args.locus, args.start)
     if os.path.exists(phewas_output_filename):
         print("Skipping run phewas step as the file already exists.")
     else:
@@ -202,10 +204,11 @@ def main():
     
 
     # Plot Manhattan
-    plot_filename = "{}/manhattan_{}_min_phecode_count_{}.png".format(
+    if not args.no_plot:
+        plot_filename = "{}/manhattan_{}_min_phecode_count_{}.png".format(
                     outdir, args.locus, args.min_phecode_count)
-    p = Plot(phewas_output_filename)
-    p.manhattan(label_values="p_value",
+        p = Plot(phewas_output_filename)
+        p.manhattan(label_values="p_value",
                 label_count=10,
                 label_value_threshold=2,
                 save_plot=True,
