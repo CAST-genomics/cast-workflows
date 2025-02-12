@@ -82,10 +82,12 @@ def ppoints(n, a=None):
         a = .375 if n <= 10 else .5
     return (np.arange(n) + 1 - a) / (n + 1 - 2 * a)
 
-def PlotQQ(gwas, outpath):
-    df = pd.read_csv(gwas, sep='\t')
-    df['-log10pvalue'] = -np.log10(df['P'])
-    p_vals = df["-log10pvalue"].dropna().apply(lambda x: 10**-x)
+def PlotQQ(df, outpath):
+    df['P'] = df['P'].replace('NA', np.nan)
+    df = df.dropna(subset=['P'])
+    df['P'] = df['P'].astype(float)
+    df['-log10p'] = -np.log10(df.P)
+    p_vals = df["-log10p"].dropna().apply(lambda x: 10**-x)
     p_vals = p_vals[(0 < p_vals) & (p_vals < 1)]
     observed = -np.log10(np.sort(np.array(p_vals)))
     expected = -np.log10(ppoints(len(p_vals)))
