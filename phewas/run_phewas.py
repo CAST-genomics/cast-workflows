@@ -150,8 +150,13 @@ def parse_arguments():
                         help="Minimum count of a single phecode present for each sample to be considered a case.")
     parser.add_argument("--tr-vcf", type=str, required=True,
                         help="Path to the tr-VCF (imputed) input file.")
+    parser.add_argument("--significance-threshold", type=float, default=5,
+                        help="Significance threshold only considered for printing significant hits.")
     parser.add_argument("--no-plot", action="store_true",
                         help="Skip the phewas manhattan plot.")
+    parser.add_argument("--print-significant-hits", action="store_true",
+                        help="Print significant hits.")
+
     args = parser.parse_args()
     return args
 
@@ -201,7 +206,24 @@ def main():
                cohort_filename=cohort_genotype_covars_filename,
                out_filename=phewas_output_filename,
                 n_threads=args.n_threads)
-    
+
+    # Print significant hits.
+    if args.print_significant_hits:
+        with open(phewas_output_filename, "r") as phewas_result_file:
+            for idx, line in enumerate(phewas_result_file.readlines()):
+                if idx == 0:
+                    # This is the header.
+                    continue
+                words = line.split(",")
+                nlog_pvalue = float(words[4])
+                phenotype = words[12]
+                category = words[13]
+                if float(nlog_pvalue) > args.significance_threshold:
+                    print("Significant hit nlog_pvalue {} for VNTR at {}:{} and {} category {}".format(
+                        nlog_pvalue,
+                        args.locus, args.start,
+                        phenotype, category))
+                
 
     # Plot Manhattan
     if not args.no_plot:
