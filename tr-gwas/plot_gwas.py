@@ -68,7 +68,7 @@ def PlotManhattan(df, outpath):
     plot.ax.set_xlabel('Chromosomes')
     plot.ax.set_xticks(chrom_df)
     plot.ax.set_xticklabels(chrom_df.index)
-    plot.fig.suptitle(f'Manhattan plot of STR genome-wide association on Platelet Count on AllofUs {outpath}')
+    plot.fig.suptitle(f'Manhattan plot of STR genome-wide association on AllofUs {outpath}')
     plot.ax.axhline(8, linestyle='--', linewidth=1)
     plot.savefig(f'{outpath}.manhattan.png', dpi=700)
 
