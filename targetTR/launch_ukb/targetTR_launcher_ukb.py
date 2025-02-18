@@ -132,17 +132,19 @@ def main():
 	parser = argparse.ArgumentParser(__doc__)
 	parser.add_argument("--tr-bed", help="BED file with TR regions to genotype", required=True, type=str)
 	parser.add_argument("--name", help="Name of the TR job", required=True, type=str)
-	parser.add_argument("--batch-size", help="HipSTR batch size", type=int, default=500)
+	parser.add_argument("--batch-size", help="HipSTR batch size", type=int, default=300)
 	parser.add_argument("--batch-num", help="Number of batches. Default: -1 (all)", required=False, default=-1, type=int)
 	parser.add_argument("--file-list", help="List of crams and indices to process"
 		"Format of each line: cram-file-id cram-index-id", type=str, required=False, default="ukb_cram_and_index_files.txt")
 	parser.add_argument("--genome-id", help="File id of ref genome", type=str, default="file-GGJ1z28JbVqbpqB93YbPqbzz")
 	parser.add_argument("--genome-idx-id", help="File id of ref genome index", type=str, default="file-GGJ94JQJv7BGFYq8BGp62xPV")
-	parser.add_argument("--workflow-id", help="DNA Nexus workflow ID", required=False, default="workflow-Gpk7B3QJv7B6pgq32QJ5PQ3p")
+	parser.add_argument("--workflow-id", help="DNA Nexus workflow ID", required=False, default="workflow-GpkxfqjJv7B4pGXPp5K9V6q2")
 	# Options for multi-batches
-	parser.add_argument("--merge-workflow-id", help="DNA Nexus workflow ID for merging", required=False, default="workflow-Gpk7BBQJv7B3Qp9ZP907z42Z")
+	parser.add_argument("--merge-workflow-id", help="DNA Nexus workflow ID for merging", required=False, default="workflow-Gpkxg18Jv7B23bPjy26GF642")
 	parser.add_argument("--max-batches-per-workflow", help="Maximum number of batches to launch at once. -1 means all", required=False, default=10, type=int)
 	parser.add_argument("--concurrent", help="Launch all batches at once", action="store_true")
+	parser.add_argument("--hipstr-mem", help="Hipstr run memory, modify if run smaller sample size, default=16G", required=False, type=int, default=16)
+	parser.add_argument("--merge-mem", help="Merge hipstr run memory, modify if run smaller sample size, default=4G", required=False, type=int, default=4)
 	args = parser.parse_args()
 
 	# Set up workflow JSON
@@ -152,6 +154,8 @@ def main():
 	json_dict["stage-common.genome"] = dxpy.dxlink(args.genome_id)
 	json_dict["stage-common.genome_index"] = dxpy.dxlink(args.genome_idx_id)
 	json_dict["stage-common.outprefix"] = args.name
+	json_dict["stage-common.hipstr_mem"] = args.hipstr_mem
+	json_dict["stage-common.merge_mem"] = args.merge_mem
 	json_dict["stage-common.infer_samps_from_file"] = True
 
 	# Upload
