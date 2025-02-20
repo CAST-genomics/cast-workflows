@@ -17,11 +17,7 @@ from utils import MSG, ERROR
 import numpy as np
 import scipy.stats as stats
 import warnings
-import re
-import vcf
 from cyvcf2 import VCF
-import gzip
-from io import StringIO
 from collections import Counter
 
 GWAS_METHODS = ["hail", "associaTR"]
@@ -156,7 +152,7 @@ def set_genotypes(data, annotations, cohort, samples, phenotype, tr_vcf, outdir)
         empty_calls, no_calls = 0, 0
         if chrom != vcf_chrom:
             continue
-        variant = list(vcf("{}:{}-{}".format(chrom, int(start)-10, int(start) + 10)))[0]
+        variant = list(vcf("{}:{}-{}".format(chrom, int(start)-1, int(start) + 1)))[0]
         print("Processing annotation {} {}:{}".format(gene, chrom, start))
         data.loc[:, [gene]] = np.nan
         samples_with_calls = set()
@@ -224,6 +220,8 @@ def main():
     parser.add_argument("--samples", help="List of sample IDs, sex to keep", type=str, default=SAMPLEFILE)
     parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions", default=ANCESTRY_PRED_PATH)
     parser.add_argument("--region", help="chr:start-end to restrict to. Default is genome-wide", type=str)
+    parser.add_argument("--downsample", help="Down sample the controls to match the number of cases." + \
+                            "This is only valid for binary phenotypes.", action="store_true")
     parser.add_argument("--num-pcs", help="Number of PCs to use as covariates", type=int, default=10)
     parser.add_argument("--ptcovars", help="Comma-separated list of phenotype-specific covariates. Default: age",
                             type=str, default="age")
@@ -239,6 +237,13 @@ def main():
     parser.add_argument("--snp-gwas-file", help="File where SNP gwas dataframe was stored from the "+ \
                                                 "all by all dataset")
     parser.add_argument("--plot", help="Make a Manhattan plot", action="store_true")
+    parser.add_argument("--violin", help="Make the genotype_phenotype plot a violinplot instead of boxplot.",
+                            action="store_true")
+    parser.add_argument("--merge-bins", help="Merge bins in the genotype_phenotype plot.",
+                            action="store_true")
+    parser.add_argument("--plot-genotype-phenotype", help="Plot the genotype phenotype joint plot. " + \
+                        "This may take about half an hour for each single annotation point in the chromosome.",
+                        action="store_true")
     parser.add_argument("--norm", help="Normalize phenotype either quantile or zscore", type=str)
     parser.add_argument("--norm-by-sex",
                         help="Apply the normalization for each sex separately. Default: False",
@@ -259,6 +264,13 @@ def main():
     else:
         ptcovar_path = GetPTCovarPath(args.phenotype)
 
+    if args.violin and args.plot_genotype_phenotype is False:
+        Error("--violin must be used when --plot-genotype-phenotype is set.")
+    if args.merge_bins and args.plot_genotype_phenotype is False:
+        Error("--merge-bins must be used when --plot-genotype-phenotype is set.")
+    if args.plot_genotype_phenotype and args.annotations is None:
+        ERROR("--annotations must be provided when --plot-genotype-phenotype is set.")
+        
     # Create output dir if does not exist
     if os.path.exists(args.outdir):
         os.makedirs(args.outdir, exist_ok=True)
@@ -323,20 +335,20 @@ def main():
     # Set cohort name which is later used to name output files
     cohort = GetCohort(sampfile)
     
+    # Get annotations of specific TRs for plotting
+    annotations = read_annotations(args.annotations)
     # Plot genotype-phenotype plot and allele histogram
-    if args.method == "associaTR":
-        if args.annotations is not None:
-            # Get annotations of specific TRs for plotting
-            annotations = read_annotations(args.annotations)
-            # This is necessary for genotype-phenotype plot
-            # To run a quick check, randomly subsample the samples
-            data = set_genotypes(data=data,
-                                 annotations=annotations,
-                                 cohort=cohort,
-                                 samples=samples["person_id"],
-                                 phenotype=args.phenotype,
-                                 tr_vcf=args.tr_vcf,
-                                 outdir=args.outdir)
+    if args.method == "associaTR" \
+            and args.plot_genotype_phenotype:
+        # This is necessary for genotype-phenotype plot
+        # To run a quick check, randomly subsample the samples
+        data = set_genotypes(data=data,
+                         annotations=annotations,
+                         cohort=cohort,
+                         samples=samples["person_id"],
+                         phenotype=args.phenotype,
+                         tr_vcf=args.tr_vcf,
+                         outdir=args.outdir)
     
     data = pd.merge(data, samples)
 
@@ -368,7 +380,7 @@ def main():
         if args.method == "associaTR":
             annotate = True
             p_value_threshold = -np.log10(5*10**-8)
-            if args.annotations is not None:
+            if args.plot_genotype_phenotype:
                 #print("plotting genotype phenotype for annotations ", annotations)
                 for chrom, pos, gene in annotations:
                     #print("chrom, pos and gene", chrom, pos, gene)
@@ -379,6 +391,9 @@ def main():
                         pos=pos,
                         phenotype="phenotype",
                         phenotype_label=args.phenotype,
+                        downsample=args.downsample,
+                        violin=args.violin,
+                        merge_bins=args.merge_bins,
                         outpath=os.path.join(args.outdir,
                                 "{}_genotype_{}_{}.png".format(
                                     gene, args.phenotype, cohort)))

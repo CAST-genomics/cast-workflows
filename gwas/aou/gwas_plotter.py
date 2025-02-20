@@ -16,30 +16,70 @@ def plot_histogram(data, xlabel, outpath):
     plt.savefig(outpath)
     plt.clf()
 
-def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos, phenotype_label, outpath):
+def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
+                            phenotype_label, outpath, downsample, violin,
+                            merge_bins,
+                            min_gt_count=10):
     if len(gwas) == 1:
         if gwas.iloc[0]["chrom"] != chrom or \
-                abs(int(gwas.iloc[0]["pos"]) - int(pos)) < 10:
+                abs(int(gwas.iloc[0]["pos"]) - int(pos)) < 1:
             return
     else: # To avoid warning on single element series
         if len(gwas.loc[(gwas["chrom"].astype(str) == chrom) &\
-                        (gwas["pos"].astype(int) > int(pos) - 10) &\
-                        (gwas["pos"].astype(int) < int(pos) + 10)]) == 0:
+                        (gwas["pos"].astype(int) > int(pos) - 1) &\
+                        (gwas["pos"].astype(int) < int(pos) + 1)]) == 0:
             return
     if len(gwas) == 1:
         effect_size = gwas.iloc[0]["beta"]
     else: # To avoid warning on single element series
         effect_size = gwas.loc[(gwas["chrom"] == chrom) &\
-                        (gwas["pos"] > int(pos) - 10) &\
-                        (gwas["pos"] < int(pos) + 10), 'beta'].item()
+                        (gwas["pos"] > int(pos) - 1) &\
+                        (gwas["pos"] < int(pos) + 1), 'beta'].item()
     plotted_data = data[[genotype, phenotype]].dropna()
     plotted_data = plotted_data.astype(float)
 
+    if downsample:
+        # This is only necessary for the binary phenotypes.
+        # Where usually negative samples are over represented and 
+        # should be sampled
+        # Check the phenotype is binary
+        unique_phenotypes = plotted_data[phenotype].unique()
+        if len(unique_phenotypes) != 2 or \
+                1 not in unique_phenotypes.tolist() or \
+                0 not in unique_phenotypes.tolist():
+            print("Error: Cannot select --downsample if the phenotype is not binary. " + \
+                  "Unique values for the phenotype {}".format(unique_phenotypes.tolist()))
+
+            
+        num_cases = len(plotted_data[plotted_data[phenotype] == 1])
+        num_controls = len(plotted_data[plotted_data[phenotype] == 0])
+        cases = plotted_data[plotted_data[phenotype] == 1]
+        controls_ds = plotted_data[plotted_data[phenotype] == 0].sample(n=num_cases)
+        plotted_data = pd.concat([controls_ds, cases])
+        print("Down sampling {} controls to {} in order to match {} cases".format(
+                    num_controls, len(controls_ds), num_cases))
+
     # Create a joint grid
     plot = sns.JointGrid()
+    if merge_bins:
+        plotted_data[genotype] = plotted_data[genotype].astype(int)
+    counts = plotted_data[genotype].value_counts()
+    print("counts before filtering: ", counts)
+    plotted_data = plotted_data.loc[plotted_data[genotype].isin(counts[counts > min_gt_count].index), :]
+    print("counts after filtering: ", plotted_data[genotype].value_counts())
     # Plot phenotype
     # Plot joint plot in the middle
-    sns.boxplot(
+    if violin:
+        sns.violinplot(
+            data=plotted_data,
+            x=genotype,
+            y=phenotype,
+            ax=plot.ax_joint,
+            orient="v",
+            native_scale=True,
+            )
+    else:
+        sns.boxplot(
             data=plotted_data,
             x=genotype,
             y=phenotype,
@@ -65,9 +105,10 @@ def annotate_points(ax, gwas, annotations):
     for point in annotations:
         chrom, position, label = point
         locus = gwas[(gwas["chrom"] == chrom) & \
-                 (gwas["pos"] < int(position) + 10) &\
-                 (gwas["pos"] > int(position) - 10)]
+                 (gwas["pos"] < int(position) + 1) &\
+                 (gwas["pos"] > int(position) - 1)]
         if len(locus) > 0:
+            print("multiple VNTRs within 1 bp for {}:{}".format(chrom, position))
             x = locus["pos"].values[0]
             y = locus["-log10pvalue"].values[0]
             ax.text(x=x, y=y, s=label, fontsize="medium")
