@@ -46,7 +46,9 @@ def GetCohortPath(cohort):
 	cohort = cohort.replace("ALL", "passing_samples_v7.1")
 	cohort = cohort.replace("AFR","AFR_BLACK")
 	cohort = cohort.replace("EUR","EUR_WHITE")
+	cohort = cohort.replace("AMR","AMR_HISPANIC")
 	cohort = cohort.replace("NOT_AFR","NOT_AFR_BLACK")
+	
 
 	cohorts = [item.strip() for item in cohort.split(',')]
 	for item in cohorts: 
@@ -61,7 +63,7 @@ def main():
 	parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions",type=str, default="gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv")
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	parser.add_argument("--phenotype", help="name of the phenotype, seperated by comma", required=False, type=str)
-	parser.add_argument("--cohort", help="name of the cohort, seperated by comma, options: AFR, EUR, NOT_AFR, ALL", required=False, type=str)
+	parser.add_argument("--cohort", help="name of the cohort, seperated by comma, options: AFR, EUR, AMR, NOT_AFR, ALL", required=False, type=str)
 	parser.add_argument("--logistic", help="Run logistic regression", action="store_true")
 	args = parser.parse_args()
 
