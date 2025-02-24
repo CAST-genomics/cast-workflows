@@ -10,6 +10,7 @@ workflow tr_gwas {
         String GOOGLE_PROJECT = ""
         String GCS_OAUTH_TOKEN = ""
         String WORKSPACE_BUCKET = ""
+        Boolean logistic = false
     }
 
     ### Separate workflow for each phenotype ###
@@ -89,6 +90,7 @@ task run_tr_gwas {
         File samples
         String out_prefix
         Int total = length(pgens)
+        Boolean logistic = false
     }
 
     String sample_name = basename(samples,"_plink.txt")
@@ -115,17 +117,35 @@ task run_tr_gwas {
             pfile=${PFILEARRAY[$c]}
             pfile_outprefix="${pfile%.pgen}"
             chrom_outprefix=$(basename $pfile .pgen)
-            plink2 --pfile ${pfile_outprefix} \
-               --pheno ~{pheno} \
-               --linear \
-               --covar ${covar_file} \
-               --keep ~{samples} \
-               --covar-variance-standardize \
-               --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
-               
-            gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear "
+            if [[ "~{logistic}" == false ]] ; then
+                plink2 --pfile ${pfile_outprefix} \
+                --pheno ~{pheno} \
+                --linear \
+                --covar ${covar_file} \
+                --keep ~{samples} \
+                --covar-variance-standardize \
+                --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
+                
+                gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear "
+            fi
 
+            if [[ "~{logistic}" == true ]] ; then
+                plink2 --pfile ${pfile_outprefix} \
+                --pheno ~{pheno} \
+                --logistic \
+                --covar ${covar_file} \
+                --keep ~{samples} \
+                --1
+                --covar-variance-standardize \
+                --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
+                
+                gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.logistic.hybrid "
+            fi
         done
+        
+
+        if [[ "~{logistic}" == true ]] ; then
+        do 
         
         # Concatenate all results
         head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}_gwas.tab"

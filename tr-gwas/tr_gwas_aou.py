@@ -62,6 +62,7 @@ def main():
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	parser.add_argument("--phenotype", help="name of the phenotype, seperated by comma", required=False, type=str)
 	parser.add_argument("--cohort", help="name of the cohort, seperated by comma, options: AFR, EUR, NOT_AFR, ALL", required=False, type=str)
+	parser.add_argument("--logistic", help="Run logistic regression", action="store_true")
 	args = parser.parse_args()
 
 
@@ -103,6 +104,7 @@ def main():
 	json_dict["tr_gwas.GCS_OAUTH_TOKEN"] = token
 	json_dict["tr_gwas.WORKSPACE_BUCKET"] = gs_prefix
 	json_dict["tr_gwas.phenotypes"] = target_phenotype
+	json_dict["tr_gwas.logistic"] = args.logistic
 	
 
 	# Convert to json and save as a file
