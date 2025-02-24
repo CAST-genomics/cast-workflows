@@ -201,7 +201,8 @@ def parse_phecode_cohort_file(samples, demog, args):
     phecode_df = pd.read_csv(args.phecode_cohort_file)
     
     # Select the concept id of interest
-    phecode_df = phecode_df[phecode_df["phecode"].astype(str).isin(map(str, args.concept_id))]
+    concept_ids = args.concept_id.split(',')
+    phecode_df = phecode_df[phecode_df["phecode"].astype(str).isin(concept_ids)]
     cases = phecode_df[phecode_df["count"].astype(int) >= args.phecode_count]
     
     # Merge cases with sample data
