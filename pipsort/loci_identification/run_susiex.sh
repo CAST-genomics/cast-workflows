@@ -78,7 +78,7 @@ if [ -e "$common/${phen}_phenocovar.csv" ]; then
 else
     gsutil cp "${WORKSPACE_BUCKET}/pipsort/phenotypes/${phen}_phenocovar.csv" $common
 fi
-python $scripts/convert_phen_to_plink_format.py ${phen}_phenocovar.csv ${phen}_plink_format.tab
+python $scripts/convert_phen_to_plink_format.py $common/${phen}_phenocovar.csv ${phen}_plink_format.tab
 
 #3. get gwas data and add rsid to gwas file
 gwas_file_s1_pre=${phen}_hail_${s1_samples}
@@ -103,16 +103,18 @@ python $scripts/add_rsid_col.py ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.ta
 
 
 #3. subset to snps and samples I need
-python $scripts/convert_samples_to_plink_format.py $s1_samples_file plink_${s1_samples_file}
-python $scripts/convert_samples_to_plink_format.py $s2_samples_file plink_${s2_samples_file}
-python $scripts/extract_all_snps.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab union_snps.txt
-
-$plink_loc/plink2 --bfile ${chr}_${from}_${to}_${phen}_plink --chr $chr --keep plink_$s1_samples_file --make-bed --out s1_data --pheno ${phen}_plink_format.tab --prune --extract union_snps.txt
-$plink_loc/plink2 --bfile ${chr}_${from}_${to}_${phen}_plink --chr $chr --keep plink_$s2_samples_file --make-bed --out s2_data --pheno ${phen}_plink_format.tab --prune --extract union_snps.txt
+python $scripts/convert_samples_to_plink_format.py $common/$s1_samples_file plink_${s1_samples_file}
+python $scripts/convert_samples_to_plink_format.py $common/$s2_samples_file plink_${s2_samples_file}
 
 python $scripts/sort_gwas_results.py --infile ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab --pos_col pos --rsid_col rsid
 python $scripts/sort_gwas_results.py --infile ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab --pos_col pos --rsid_col rsid
 
+awk -F'\t' 'NR==1 {for (i=1; i<=NF; i++) if ($i ~ /rsid/) rsid_col=i; next}{print $rsid_col}' ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab > s1_snps.txt
+awk -F'\t' 'NR==1 {for (i=1; i<=NF; i++) if ($i ~ /rsid/) rsid_col=i; next}{print $rsid_col}' ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab > s2_snps.txt
+
+
+$plink_loc/plink2 --bfile ${chr}_${from}_${to}_${phen}_plink --chr $chr --keep plink_$s1_samples_file --make-bed --out s1_data --pheno ${phen}_plink_format.tab --prune --extract s1_snps.txt
+$plink_loc/plink2 --bfile ${chr}_${from}_${to}_${phen}_plink --chr $chr --keep plink_$s2_samples_file --make-bed --out s2_data --pheno ${phen}_plink_format.tab --prune --extract s2_snps.txt
 
 #LD
 $plink_loc/plink2 --bfile s1_data --r-unphased square bin4 ref-based
@@ -120,8 +122,9 @@ mv plink2.unphased.vcor1.bin s1.ld.bin
 $plink_loc/plink2 --bfile s2_data --r-unphased square bin4 ref-based
 mv plink2.unphased.vcor1.bin s2.ld.bin
 
-awk 'BEGIN {OFS="\t"} NR>1 {print $1, $3, 0, $2, $4, $5}' ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab > s1_ref.bim
-awk 'BEGIN {OFS="\t"} NR>1 {print $1, $3, 0, $2, $4, $5}' ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab > s2_ref.bim
+python $scripts/make_ref_for_susiex.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab s1_ref.bim
+python $scripts/make_ref_for_susiex.py ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab s2_ref.bim
+
 
 #AFREQ
 $plink_loc/plink2 --bfile s1_data --freq
@@ -132,7 +135,16 @@ mv plink2.afreq s2.afreq
 python $scripts/sort_afreq.py ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab s2.afreq
 
 
+popsize1=$(awk 'NR==1 {for (i=1; i<=NF; i++) if ($i == "n") col=i} NR==2 {print $col}' ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab)
+popsize2=$(awk 'NR==1 {for (i=1; i<=NF; i++) if ($i == "n") col=i} NR==2 {print $col}' ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab)
 
+python $scripts/get_gwas_in_susiex_style.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
+python $scripts/get_gwas_in_susiex_style.py ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
+
+
+susiex_loc=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/SuSiEx/bin
+nc=3
+$susiex_loc/SuSiEx --n_sig $nc --sst_file=${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab,${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab --n_gwas=$popsize1,$popsize2 --ld_file=s1,s2 --out_dir=./ --out_name=susiex_seed${seed}.cs80 --chr=$chr --bp=$from,$to --chr_col=1,1 --snp_col=2,2 --bp_col=3,3 --a1_col=4,4 --a2_col=5,5 --eff_col=6,6 --se_col=7,7 --pval_col=8,8 --threads=64 --level=0.8 --min_purity=0
 
 exit 0
 #cleanup all files
