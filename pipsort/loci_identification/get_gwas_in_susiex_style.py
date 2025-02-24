@@ -21,6 +21,8 @@ def get_a2(row):
 
 gwas['a1'] = gwas.apply(get_a1, axis=1)
 gwas['a2'] = gwas.apply(get_a2, axis=1)
+chrom = gwas['chrom'].iloc[0][3:]
+gwas['chrom'] = chrom
 
 
-gwas[['chrom', 'rsid', 'pos', 'ref', 'alt', 'beta', 'standard_error', 'p_value']].to_csv(fgwas, index=False, header=False, sep="\t")
+gwas[['chrom', 'rsid', 'pos', 'ref', 'alt', 'beta', 'standard_error', 'p_value']].to_csv(fgwas, index=False, sep="\t")
