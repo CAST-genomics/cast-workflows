@@ -39,6 +39,13 @@ def GetPhenotypePath(phenotype):
 		phenotype_array.append(path)
 	return phenotype_array
 
+def GetCaseControlPhenotypePath(phenotype):
+	phenotype_array = []
+	phenotypes = [item.strip() for item in phenotype.split(',')]
+	for item in phenotypes: 
+		path = os.getenv("WORKSPACE_BUCKET")+"/phenotypes/case/"+item.strip()+"_phenocovar.csv"
+		phenotype_array.append(path)
+	return phenotype_array
 
 def GetCohortPath(cohort):
 	cohort_array = []
@@ -87,6 +94,12 @@ def main():
 		target_phenotype =  GetPhenotypePath(args.phenotype)
 	else: 
 		target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/") if blob.name.endswith('.csv')]
+
+	#return case/control phenotype array 
+	if args.logistic and args.phenotype is not None:
+		target_phenotype =  GetCaseControlPhenotypePath(args.phenotype)
+	else:
+		target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/case/") if blob.name.endswith('.csv')]
 
 
 	#return cohort array if choose targeted cohorts 
