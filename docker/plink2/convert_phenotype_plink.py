@@ -7,9 +7,6 @@ Convert AoU phenotypes to plink friendly format.
 Output cleaned phenotype and comined covariates files
 for the specified phenotype
 
-Usage:
-./convert_phenotype_plink.py --phenotype <phenotype>
-
 """
 
 import os
