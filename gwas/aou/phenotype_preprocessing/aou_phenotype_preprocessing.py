@@ -141,53 +141,6 @@ def my_median(series):
         my_median = sorted(series)[int(len(series)/2)]
         return my_median
 
-def parse_snomed(samples, demog, args):
-
-    # Create the conditions dataframe based on the query
-    ptdata = SQLToDF(aou_queries.ConstructSnomedSQL(args.snomed_ids))
-    MSG("Right after query, have %s data points"%ptdata.shape[0])
-
-    # Merge with sample data
-    data = pd.merge(ptdata, demog, on="person_id", how="right")
-    data = pd.merge(data, samples, on="person_id", how="right")
-    
-    data["age"] = data.apply(lambda row:
-            datetime.date.today().year - row["date_of_birth"].year,
-        axis=1)
-    MSG("After merge with demog and filter samples, have %s data points"%data.shape[0])
-    
-    # Compute the binary phenotype column
-    # Here we remove samples with concept ids indicated in --skip-concepts-in-controls.
-    snomed_ids_int = [int(concept) for concept in args.snomed_ids.split(",")]
-    data = data.fillna(np.nan)
-    data["phenotype"] = data["condition_concept_id"].apply(
-        lambda x: 1 if not pd.isnull(x) and int(x) in snomed_ids_int \
-        else 0)
-        #else -1 if not pd.isnull(x) and int(x) in skip_concepts_in_controls_int \
-
-    # Merge and groupby to remove duplicate/uninformative rows
-    columns = ["person_id", "age", "sex_at_birth_Male", "phenotype"]
-    data = data[columns].groupby(["person_id"]).agg(
-                    {"phenotype": max,
-                    "age": max,
-                    "sex_at_birth_Male": \
-                        lambda series: \
-                        print("Warning: mismatching sex_at_birth in entries of the same person") \
-                        if len(set(series)) > 1 else min(series),
-                    }
-                    ).reset_index()
-    if args.verbose:
-        print("Number of elements after group_by: ", len(data))
-        print("Number of rows with snomed phenotype true: ", len(data[data["phenotype"] == 1]))
-        print("Number of rows with snomed phenotype false: ", len(data[data["phenotype"] == 0]))
-
-    # Store the results in the output file
-    data[['person_id', 'phenotype',
-          "age",
-          "sex_at_birth_Male"]].to_csv(
-                args.phenotype+"_phenocovar.csv",
-                index=False, sep=",")
-
 
 def parse_phecode_cohort_file(samples, demog, args):
     # Create a samples and demog df
@@ -332,9 +285,6 @@ def main():
                                       "as opposed to LOINC. Only physical measurements (e.g. height) " + \
                                       "are in PPI.",
                                       action="store_true", default=False)
-    parser.add_argument("--snomed-ids",
-                        help="The concept id from the SNOMED vocab usually used for diseases or conditions.",
-                        type=str)
     parser.add_argument("--phecode-cohort-file", help="File with phenocodes and counts for each sample." + \
                             "If provided, no queries will be made for phenotype extraction and only the phecode " + \
                             "file is used. --phecode-count should be set to use this file.")
@@ -353,10 +303,6 @@ def main():
                                         type=int, required=False)
 
     args = parser.parse_args()
-    if (args.concept_id is None and args.snomed_ids is None) or \
-        args.concept_id and args.snomed_ids:
-        print("Error: Exactly one of --concept-id and --snomed-id should be set.")
-        exit(1)
     if (args.phecode_count is not None and args.phecode_cohort_file is None) or \
         (args.phecode_count is None and args.phecode_cohort_file is not None):
         print("Error: Both --phecode-cohort-file and --phecode-count should be provided.")
@@ -374,12 +320,6 @@ def main():
             os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
     samples = pd.read_csv(sampfile)
 
-    if args.snomed_ids:
-        parse_snomed(
-                    samples=samples,
-                    demog=demog,
-                    args=args
-                    )
     elif args.concept_id and args.phecode_cohort_file is None:
         parse_lab_measurements(
                     samples=samples,
