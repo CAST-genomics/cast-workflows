@@ -131,4 +131,4 @@ def main():
     sys.stderr.write(f"Done converting {args.phenotype} to plink format.")
 
 if __name__ == "__main__":
-    plink_pheno,data = main()
+    main()
