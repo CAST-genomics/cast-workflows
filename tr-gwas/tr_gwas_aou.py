@@ -88,19 +88,18 @@ def main():
 	gs_prefix = f"gs://{bucket_name}/"
 	pfile = "tr_imputation/enstr-v3/results-250K/"
 
-
 	#return phenotype array if choose targeted phenotypes 
 	if args.phenotype is not None:
-		target_phenotype =  GetPhenotypePath(args.phenotype)
-	else: 
-		target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/") if blob.name.endswith('.csv')]
-
-	#return case/control phenotype array 
-	if args.logistic and args.phenotype is not None:
-		target_phenotype =  GetCaseControlPhenotypePath(args.phenotype)
+		if args.logistic:
+			target_phenotype =  GetCaseControlPhenotypePath(args.phenotype)
+		else:
+			target_phenotype =  GetPhenotypePath(args.phenotype)
+	
 	else:
-		target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/case/") if blob.name.endswith('.csv')]
-
+		if args.logistic:
+			target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/case/") if blob.name.endswith('.csv')]
+		else:
+			target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/") if blob.name.endswith('.csv')]
 
 	#return cohort array if choose targeted cohorts 
 	if args.cohort is not None:
