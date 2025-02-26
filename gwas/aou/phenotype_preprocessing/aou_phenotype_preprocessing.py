@@ -274,9 +274,6 @@ def main():
     parser.add_argument("--samples", help="List of sample IDs,sex to keep", type=str, default=SAMPLEFILE)
     parser.add_argument("--concept-id", help="Concept ID or comma separated IDs for phenotype.",
                         type=str)
-    parser.add_argument("--skip-concepts-in-controls", help="Skip controls with this concept ids." + \
-                        " Only taken into account for binary (snomed) phenotypes.",
-                        type=str)
     parser.add_argument("--drugexposure-covariate-concept-ids",
                         help="Comma-separated list of conceptid:conceptname to use as drug exposure covariates", type=str)
     parser.add_argument("--units", help="Comma-separated list of acceptable units. Accepted shorthands: blood", type=str)
