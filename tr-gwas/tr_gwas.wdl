@@ -22,7 +22,8 @@ workflow tr_gwas {
                 pheno=pheno_file,
                 GOOGLE_PROJECT=GOOGLE_PROJECT,
                 GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN,
-                WORKSPACE_BUCKET=WORKSPACE_BUCKET
+                WORKSPACE_BUCKET=WORKSPACE_BUCKET,
+                logistic=logistic
         }
 
             scatter (cohort in cohorts) {
@@ -35,7 +36,8 @@ workflow tr_gwas {
                         pheno=convert_phenotype.outfile_pheno,
                         covar=convert_phenotype.outfile_covar,
                         samples=cohort,
-                        out_prefix="${convert_phenotype.outpheno_name}"
+                        out_prefix="${convert_phenotype.outpheno_name}",
+                        logistic=logistic
                        
                 }
             }
@@ -71,6 +73,7 @@ task convert_phenotype {
         fi
         if [[ "~{logistic}" == true ]] ; then
             python3 /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno_name} --case-control
+        fi
     >>>
 
     runtime {
@@ -140,7 +143,7 @@ task run_tr_gwas {
                 --logistic \
                 --covar ${covar_file} \
                 --keep ~{samples} \
-                --1
+                --1 \
                 --covar-variance-standardize \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
                 
