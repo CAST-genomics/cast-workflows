@@ -1,6 +1,6 @@
 # Running Phewas
 
-For more information on Phewas see [PheTK toolkit](https://github.com/nhgritctran/PheTK).
+This directory helps run Phewas on a single target locus and all phenotypes given either the genotyped or imputed calls. For more information on Phewas see [PheTK toolkit](https://github.com/nhgritctran/PheTK).
 
 ## Quick start
 
