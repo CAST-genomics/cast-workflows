@@ -61,7 +61,7 @@ def PlotManhattan(df, outpath):
     df_sorted = df_cleaned.sort_values(by=["#CHROM", "POS"])
     df_sorted.reset_index(inplace=True, drop=True)
     # save clean sorted dataframe
-    df_sorted.save_csv(f'{outpath}_ADD.csv',index=False)
+    df_sorted.to_csv(f'{outpath}_ADD.csv', index=False)
     df_sorted['i'] = df_sorted.index
     # Generate Manhattan plot
     plot = sns.relplot(data=df_sorted, x='i', y='-log10p', s=6, aspect=4, linewidth=0,
