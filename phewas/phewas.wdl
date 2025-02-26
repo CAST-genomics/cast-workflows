@@ -22,7 +22,7 @@ workflow phewas {
 
     call merge_outputs {
         input:
-            batch_results=phetk.results
+            batch_results=phetk.results,
             batch_significant_hits=phetk.significant_hits
     }
 
