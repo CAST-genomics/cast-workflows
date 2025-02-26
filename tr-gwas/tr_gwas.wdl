@@ -57,6 +57,7 @@ task convert_phenotype {
         String GOOGLE_PROJECT = ""
         String GCS_OAUTH_TOKEN = ""
         String WORKSPACE_BUCKET = ""
+        Boolean logistic = false
     }
     
     String pheno_name = basename(pheno,"_phenocovar.csv")
@@ -65,7 +66,11 @@ task convert_phenotype {
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         export GCS_REQUESTER_PAYS_PROJECT="~{GOOGLE_PROJECT}"
         export WORKSPACE_BUCKET="~{WORKSPACE_BUCKET}"
-        python3 /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno_name} 
+        if [[ "~{logistic}" == false ]] ; then 
+            python3 /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno_name} 
+        fi
+        if [[ "~{logistic}" == true ]] ; then
+            python3 /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno_name} --case-control
     >>>
 
     runtime {
@@ -142,10 +147,6 @@ task run_tr_gwas {
                 gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.logistic.hybrid "
             fi
         done
-        
-
-        if [[ "~{logistic}" == true ]] ; then
-        do 
         
         # Concatenate all results
         head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}_gwas.tab"

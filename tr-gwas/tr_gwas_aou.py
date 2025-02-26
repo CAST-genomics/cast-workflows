@@ -31,23 +31,36 @@ def DownloadAncestry(filename):
 	output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
 	print(output.decode("utf-8"))
 
-def GetPhenotypePath(phenotype):
+def GetPhenotypePath(phenotype,binary=False):
+	"""
+	Download a GCP path locally
+	Arguments
+	---------
+	phenotype : str
+	   GCP path
+	binary: bool
+	   If True, download case control phenotype
+	"""
 	phenotype_array = []
 	phenotypes = [item.strip() for item in phenotype.split(',')]
 	for item in phenotypes: 
-		path = os.getenv("WORKSPACE_BUCKET")+"/phenotypes/"+item.strip()+"_phenocovar.csv"
-		phenotype_array.append(path)
+		if binary:
+			path = os.getenv("WORKSPACE_BUCKET")+"/phenotypes/case/"+item.strip()+"_phenocovar.csv"
+			phenotype_array.append(path)
+		else:
+			path = os.getenv("WORKSPACE_BUCKET")+"/phenotypes/"+item.strip()+"_phenocovar.csv"
+			phenotype_array.append(path)	
 	return phenotype_array
 
-def GetCaseControlPhenotypePath(phenotype):
-	phenotype_array = []
-	phenotypes = [item.strip() for item in phenotype.split(',')]
-	for item in phenotypes: 
-		path = os.getenv("WORKSPACE_BUCKET")+"/phenotypes/case/"+item.strip()+"_phenocovar.csv"
-		phenotype_array.append(path)
-	return phenotype_array
 
 def GetCohortPath(cohort):
+	"""	
+	Download a GCP path locally
+	Arguments
+	---------
+	cohort : str		
+	   GCP path
+	"""
 	cohort_array = []
 	# Replace 'ALL' with 'passing_samples_v7.1' in cohort input and others
 	cohort = cohort.replace("ALL", "passing_samples_v7.1")
@@ -91,10 +104,9 @@ def main():
 	#return phenotype array if choose targeted phenotypes 
 	if args.phenotype is not None:
 		if args.logistic:
-			target_phenotype =  GetCaseControlPhenotypePath(args.phenotype)
+			target_phenotype =  GetPhenotypePath(args.phenotype,binary=True)
 		else:
-			target_phenotype =  GetPhenotypePath(args.phenotype)
-	
+			target_phenotype =  GetPhenotypePath(args.phenotype,binary=False)
 	else:
 		if args.logistic:
 			target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/case/") if blob.name.endswith('.csv')]

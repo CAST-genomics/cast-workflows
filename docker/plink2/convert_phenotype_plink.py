@@ -27,9 +27,13 @@ bucket = os.getenv("WORKSPACE_BUCKET")
 #print all the environmental variables 
 #print(dict(os.environ))
 
-def GetPTCovarPath(phenotype):
-    return os.path.join(bucket, \
-        "phenotypes", "%s_phenocovar.csv"%phenotype)
+def GetPTCovarPath(phenotype,binary=False):
+    if not binary:
+        return os.path.join(bucket, \
+            "phenotypes", "%s_phenocovar.csv"%phenotype)
+    if binary:
+        return os.path.join(bucket, \
+            "phenotypes", "case", "%s_phenocovar.csv"%phenotype)
 
 def DownloadPT(filename):
     """
@@ -94,15 +98,18 @@ def main():
     parser.add_argument("--ptcovars", help="Comma-separated list of phenotype-specific covariates. Default: age", type=str, default="age")
     parser.add_argument("--sharedcovars", help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male", type=str, default="sex_at_birth_Male")
     parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
+    parser.add_argument("--case-control",help="Use binary phenotype", action="store_true")
     args = parser.parse_args()
 
 
     # Set up paths
     if args.phenotype.endswith(".csv"):
-        ptcovar_path = args.phenotype
+        ptcovar_path = args.phenotype    
     else:
-        ptcovar_path = GetPTCovarPath(args.phenotype)
-
+        if args.case_control:
+            ptcovar_path = GetPTCovarPath(args.phenotype,binary=True)
+        else:
+            ptcovar_path = GetPTCovarPath(args.phenotype,binary=False)
 
     # Get covarlist
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
