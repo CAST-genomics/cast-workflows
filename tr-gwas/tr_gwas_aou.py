@@ -35,7 +35,8 @@ def GetPhenotypePath(phenotype):
 	phenotype_array = []
 	phenotypes = [item.strip() for item in phenotype.split(',')]
 	for item in phenotypes: 
-		path = os.getenv("WORKSPACE_BUCKET")+"/phenotypes/"+item.strip()+"_phenocovar.csv"
+		#path = os.getenv("WORKSPACE_BUCKET")+"/phenotypes/"+item.strip()+"_phenocovar.csv"
+		path = os.getenv("WORKSPACE_BUCKET") + "/saraj/phenotypes/" + item.strip() + "_phenocovar.csv"
 		phenotype_array.append(path)
 	return phenotype_array
 
@@ -76,7 +77,8 @@ def main():
 	bucket = client.bucket(bucket_name)
     # Define the gs prefix
 	gs_prefix = f"gs://{bucket_name}/"
-	pfile = "tr_imputation/enstr-v3/results-250K/"
+	#pfile = "tr_imputation/enstr-v3/results-250K/"
+	pfile = "saraj/imputation_output/"
 
 
 	#return phenotype array if choose targeted phenotypes 
@@ -85,19 +87,20 @@ def main():
 	else: 
 		target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/") if blob.name.endswith('.csv')]
 
+	print("target_phenotype: ", target_phenotype)
+	print("pfile: ", pfile)
 
 	#return cohort array if choose targeted cohorts 
 	if args.cohort is not None:
-		target_cohort =  GetCohortPath(args.cohort )
+		target_cohort =  GetCohortPath(args.cohort)
 	else: 
 		target_cohort = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="samples/") if blob.name.endswith('.txt')]
 	
 	# Set up workflow JSON
 	json_dict = {}
-	json_dict["tr_gwas.pgens"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.pgen')]
-	json_dict["tr_gwas.psams"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.psam')]
-	json_dict["tr_gwas.pvars"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.pvar')]
-	#json_dict["tr_gwas.phenotypes"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/") if blob.name.endswith('.csv')]
+	json_dict["tr_gwas.pgens"] = [gs_prefix + blob.name for blob in client.list_blobs(bucket, prefix=pfile) if blob.name.endswith('.pgen')][:3]
+	json_dict["tr_gwas.psams"] = [gs_prefix + blob.name for blob in client.list_blobs(bucket, prefix=pfile) if blob.name.endswith('.psam')][:3]
+	json_dict["tr_gwas.pvars"] = [gs_prefix + blob.name for blob in client.list_blobs(bucket, prefix=pfile) if blob.name.endswith('.pvars')][:3]
 	json_dict["tr_gwas.cohorts"] = target_cohort
 	json_dict["tr_gwas.GOOGLE_PROJECT"] = project
 	json_dict["tr_gwas.GCS_OAUTH_TOKEN"] = token
