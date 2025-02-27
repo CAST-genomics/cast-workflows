@@ -65,6 +65,7 @@ task convert_phenotype {
     String pheno_name = basename(pheno,"_phenocovar.csv")
 
     command <<<
+        set -e
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         export GCS_REQUESTER_PAYS_PROJECT="~{GOOGLE_PROJECT}"
         export WORKSPACE_BUCKET="~{WORKSPACE_BUCKET}"
@@ -104,9 +105,8 @@ task run_tr_gwas {
     String sample_name = basename(samples,"_plink.txt")
 
     command <<<
-
         #check if cohort is EUR or non_AFR, exclude PC6
-        
+        touch log.txt
         echo ~{sample_name} | grep -q -E "EUR|NOT_AFR"
         if [ $? -eq 0 ]; then
             cut --complement -f 10 ~{covar} > "~{sample_name}_~{out_prefix}_covar.txt"
@@ -117,9 +117,12 @@ task run_tr_gwas {
         fi
 
         # Run GWAS on each chrom
+        echo "pgens $pgens" >> log.txt
         PFILEARRAY=(~{sep=" " pgens})
-        gwas_outfiles=""
+        gwas_outfiles=()
         # bash array are 0-indexed 
+        echo "total: ~{total}" >> log.txt
+        echo "total: ~{total}"
         for (( c = 0; c < ~{total}; c++ ))
         do
             pfile=${PFILEARRAY[$c]}
@@ -146,16 +149,22 @@ task run_tr_gwas {
                 --1 \
                 --covar-variance-standardize \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
+                ls -lth >> log.txt
+                ls -lth
                 
                 gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.logistic.hybrid "
             fi
-        done
-        
-        # Concatenate all results
-        head -n 1 ${gwas_outfiles} > "~{out_prefix}_~{sample_name}_gwas.tab"
 
-        for file in ${gwas_outfiles}
+        echo "gwas outfiles ${gwas_outfiles}" >> log.txt
+        echo "gwas outfiles ${gwas_outfiles}"
+
+        # Concatenate all results
+        head -n 1 ${gwas_outfiles[0]} > "~{out_prefix}_~{sample_name}_gwas.tab"
+
+        for file in ${gwas_outfiles[@]}
         do
+            echo "file: $file" >> log.txt
+            echo "file: $file"
             tail -n +2 "$file" >> "~{out_prefix}_~{sample_name}_gwas.tab"
         done
     >>>
@@ -167,6 +176,7 @@ task run_tr_gwas {
     }
 
     output {
+       File outfile_log = "log.txt"
        File outfile = "${out_prefix}_~{sample_name}_gwas.tab"
     }
 }
