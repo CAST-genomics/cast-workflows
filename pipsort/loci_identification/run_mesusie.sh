@@ -1,12 +1,11 @@
 chr=$1
 from=$2
 to=$3
-num_sig_snps_in_loci=$4
-s1_samples_file=$5
+s1_samples_file=$4
 s1_samples="${s1_samples_file%.*}"
-s2_samples_file=$6
+s2_samples_file=$5
 s2_samples="${s2_samples_file%.*}"
-phen=$7 #e.g. ldl_cholesterol
+phen=$6 #e.g. ldl_cholesterol
 
 maf=0.01
 plink_file_prefix=gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/exome/plink_bed/acaf_threshold.chr${chr}
@@ -120,7 +119,7 @@ mv plink2.unphased.vcor1 s2.ld
 
 ancestry_weight="c(3,3,1)"
 nc=3
-Rscript $scripts/run_mesusie.R ./mesusieoutput $nc $ancestry_weight
+Rscript $scripts/run_mesusie.R ./mesusieoutput $nc $ancestry_weight ./mesusiecsinfo
 
 exit 0
 #cleanup all files

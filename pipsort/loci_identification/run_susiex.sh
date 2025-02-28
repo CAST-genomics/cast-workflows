@@ -1,12 +1,11 @@
 chr=$1
 from=$2
 to=$3
-num_sig_snps_in_loci=$4
-s1_samples_file=$5
+s1_samples_file=$4
 s1_samples="${s1_samples_file%.*}"
-s2_samples_file=$6
+s2_samples_file=$5
 s2_samples="${s2_samples_file%.*}"
-phen=$7 #e.g. ldl_cholesterol
+phen=$6 #e.g. ldl_cholesterol
 
 max_num_cr=15
 fsl_s1=0.001
@@ -101,6 +100,11 @@ python $scripts/subset_gwas_to_loci.py $chr $from $to $common/${gwas_file_s2_pre
 python $scripts/add_rsid_col.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
 python $scripts/add_rsid_col.py ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
 
+popsize1=$(awk -F'\t' 'NR==1 {for (i=1; i<=NF; i++) if ($i == "n") col=i} NR==2 {print $col}' ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab)
+echo $popsize1
+popsize2=$(awk -F'\t' 'NR==1 {for (i=1; i<=NF; i++) if ($i == "n") col=i} NR==2 {print $col}' ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab)
+echo $popsize2
+
 
 #3. subset to snps and samples I need
 python $scripts/convert_samples_to_plink_format.py $common/$s1_samples_file plink_${s1_samples_file}
@@ -135,8 +139,6 @@ mv plink2.afreq s2.afreq
 python $scripts/sort_afreq.py ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab s2.afreq
 
 
-popsize1=$(awk 'NR==1 {for (i=1; i<=NF; i++) if ($i == "n") col=i} NR==2 {print $col}' ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab)
-popsize2=$(awk 'NR==1 {for (i=1; i<=NF; i++) if ($i == "n") col=i} NR==2 {print $col}' ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab)
 
 python $scripts/get_gwas_in_susiex_style.py ${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab
 python $scripts/get_gwas_in_susiex_style.py ${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab
@@ -144,20 +146,18 @@ python $scripts/get_gwas_in_susiex_style.py ${gwas_file_s2_pre}_${chr}_${from}_$
 
 susiex_loc=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/SuSiEx/bin
 nc=3
-$susiex_loc/SuSiEx --n_sig $nc --sst_file=${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab,${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab --n_gwas=$popsize1,$popsize2 --ld_file=s1,s2 --out_dir=./ --out_name=susiex_seed${seed}.cs80 --chr=$chr --bp=$from,$to --chr_col=1,1 --snp_col=2,2 --bp_col=3,3 --a1_col=4,4 --a2_col=5,5 --eff_col=6,6 --se_col=7,7 --pval_col=8,8 --threads=64 --level=0.8 --min_purity=0
+$susiex_loc/SuSiEx --n_sig $nc --sst_file=${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab,${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab --n_gwas=$popsize1,$popsize2 --ld_file=s1,s2 --out_dir=./ --out_name=susiex_nc${nc}.cs80 --chr=$chr --bp=$from,$to --chr_col=1,1 --snp_col=2,2 --bp_col=3,3 --a1_col=4,4 --a2_col=5,5 --eff_col=6,6 --se_col=7,7 --pval_col=8,8 --threads=64 --level=0.8 --min_purity=0
+nc=2
+$susiex_loc/SuSiEx --n_sig $nc --sst_file=${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab,${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab --n_gwas=$popsize1,$popsize2 --ld_file=s1,s2 --out_dir=./ --out_name=susiex_nc${nc}.cs80 --chr=$chr --bp=$from,$to --chr_col=1,1 --snp_col=2,2 --bp_col=3,3 --a1_col=4,4 --a2_col=5,5 --eff_col=6,6 --se_col=7,7 --pval_col=8,8 --threads=64 --level=0.8 --min_purity=0
+nc=1
+$susiex_loc/SuSiEx --n_sig $nc --sst_file=${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab,${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab --n_gwas=$popsize1,$popsize2 --ld_file=s1,s2 --out_dir=./ --out_name=susiex_nc${nc}.cs80 --chr=$chr --bp=$from,$to --chr_col=1,1 --snp_col=2,2 --bp_col=3,3 --a1_col=4,4 --a2_col=5,5 --eff_col=6,6 --se_col=7,7 --pval_col=8,8 --threads=64 --level=0.8 --min_purity=0
 
-exit 0
+
 #cleanup all files
-rm f_s1.txt
-rm f_s2.txt
 rm *.tab
 rm $s1_samples_file
 rm $s2_samples_file
 rm *.bed
 rm *.fam
 rm *.bim
-#rm snp_map
-rm processedfiles.txt
 rm plink*
-rm *.log
-rm ${phen}_phenocovar.csv

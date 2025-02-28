@@ -6,6 +6,7 @@ args <- commandArgs(trailingOnly = TRUE)
 outfile <- args[1]
 nc <- args[2]
 aw <- eval(parse(text=args[3]))
+csfile <- args[4]
 
 gwas1 <- read.table("s1_gwas_temp.txt", sep = "\t", header = TRUE, check.names = FALSE, comment.char = "")
 gwas2 <- read.table("s2_gwas_temp.txt", sep = "\t", header = TRUE, check.names = FALSE, comment.char = "")
@@ -33,7 +34,9 @@ rownames(ld2) = gwas2$SNP
 LDlist <- list(eur = ld1, afr = ld2)
 gwaslist <- list(eur = gwas1, afr = gwas2)
 
+sink(csfile)
 MESuSiE_res<-meSuSie_core(LDlist,gwaslist,L=nc,ancestry_weight=aw)
+sink()
 sink(outfile)
 MESuSiE_res$pip_config
 sink()
