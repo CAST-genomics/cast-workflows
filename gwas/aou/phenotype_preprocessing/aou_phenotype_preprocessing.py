@@ -163,10 +163,10 @@ def parse_phecode_cohort_file(samples, demog, args):
     case_data = case_data[['person_id', 'phenotype', "age", "sex_at_birth"]]
 
     # Gather controls
-    if args.no_phecode_controls:
-        excluded_from_controls = phecode_df["person_id"]
-    else:
-        excluded_from_controls = cases["person_id"]
+    # For controls we exclude all sample that have any phecode count in the phecode_count file.
+    # This means the phecode_count for all control samples and this phenotype is zero.
+    # This is consistent with how PheTK defines controls.
+    excluded_from_controls = phecode_df["person_id"]
     controls = all_samples_data[~all_samples_data["person_id"].isin(excluded_from_controls)]
     controls["phenotype"] = 0
     control_data = controls[['person_id', 'phenotype', "age", "sex_at_birth"]]
@@ -288,12 +288,6 @@ def main():
     parser.add_argument("--phecode-count", help="Used only in the case that --phecode-cohort-file is present." + \
                             "Minimum number of phecode counts present for each sample to be considered a case.",
                         type=int)
-    parser.add_argument("--no-phecode-controls", help="Used only in the case that --phecode-count is present." + \
-                            "Build the controls based on samples that have no phecode count in the " + \
-                            "phecode cohort file. If not set, any sample that is not in cases, will be used " + \
-                            "as controls including samples with phecode counts less than the " + \
-                            "--phecode-count threshold.",
-                        action="store_true")
     parser.add_argument("--verbose", help="Adjust verbosity.",
                                       action="store_true", default=False)
     parser.add_argument("--outlier-sd", help="filter samples with phenotype values exceeding this number of SDs",
@@ -317,7 +311,7 @@ def main():
             os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
     samples = pd.read_csv(sampfile)
 
-    elif args.concept_id and args.phecode_cohort_file is None:
+    if args.concept_id and args.phecode_cohort_file is None:
         parse_lab_measurements(
                     samples=samples,
                     demog=demog,
