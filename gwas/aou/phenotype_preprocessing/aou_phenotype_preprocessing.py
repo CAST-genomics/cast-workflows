@@ -177,15 +177,12 @@ def parse_phecode_cohort_file(samples, demog, args):
         print("Num controls: ", len(control_data))
         print("Num samples: ", len(samples))
         print("Num samples with phecode data: ", len(phecode_df))
-    if args.verbose:
-        print("cases head: ", case_data.head())
-        print("controls head: ", control_data.head())
 
     # Rename and infer columns.
     data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
     
-    filename = args.phenotype + "_phenocovar.csv"
-    return data[['person_id', 'phenotype',
+    filename = os.path.join(args.outdir, args.phenotype + "_phenocovar.csv")
+    data[['person_id', 'phenotype',
           "age",
           "sex_at_birth_Male"]].to_csv(
         filename,
@@ -265,7 +262,8 @@ def parse_lab_measurements(samples, demog, args):
     # Output final phenotype value
     MSG("Final file has %s data points"%filtered.shape[0])
     filtered.rename({"value_as_number": "phenotype"}, inplace=True, axis=1)
-    filtered[["person_id", "phenotype", "age", "sex_at_birth_Male"]+covar_cols].to_csv(args.phenotype+"_phenocovar.csv", index=False)
+    filename = os.path.join(args.outdir, args.phenotype + "_phenocovar.csv")
+    filtered[["person_id", "phenotype", "age", "sex_at_birth_Male"]+covar_cols].to_csv(filename, index=False)
 
 
 def main():
@@ -292,8 +290,13 @@ def main():
                                       action="store_true", default=False)
     parser.add_argument("--outlier-sd", help="filter samples with phenotype values exceeding this number of SDs",
                                         type=int, required=False)
+    parser.add_argument("--outdir", help="Path to where the pheno_covar file is saved.", type=str)
 
     args = parser.parse_args()
+    
+    if not os.path.exists(args.outdir):
+        os.mkdir(args.outdir)
+
     if (args.phecode_count is not None and args.phecode_cohort_file is None) or \
         (args.phecode_count is None and args.phecode_cohort_file is not None):
         print("Error: Both --phecode-cohort-file and --phecode-count should be provided.")
@@ -315,13 +318,13 @@ def main():
         parse_lab_measurements(
                     samples=samples,
                     demog=demog,
-                    args=args
+                    args=args,
                     )
     elif args.concept_id and args.phecode_cohort_file:
         parse_phecode_cohort_file(
                     samples=samples,
                     demog=demog,
-                    args=args
+                    args=args,
                     )
 
 if __name__ == "__main__":
