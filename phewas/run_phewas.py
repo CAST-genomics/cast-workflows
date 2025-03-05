@@ -102,7 +102,7 @@ def create_covars(cohort_filename, output_filename):
         )
         
     
-def run_phewas(locus, cohort_filename, out_filename, min_phecode_count, n_threads):
+def run_phewas(locus, cohort_filename, out_filename, min_phecode_count, n_threads, min_cases, verbose):
     covars = ["sex_at_birth",
               "age_at_last_event",
               "pc0", "pc1", "pc2", "pc3", "pc4",
@@ -118,8 +118,9 @@ def run_phewas(locus, cohort_filename, out_filename, min_phecode_count, n_thread
         covariate_cols=covars,
         min_phecode_count=min_phecode_count,
         independent_variable_of_interest=genotype_colname,
-        min_cases=50,
+        min_cases=min_cases,
         output_file_name=out_filename,
+        verbose=verbose,
     )
     phewas.run(n_threads=n_threads)
 
@@ -154,10 +155,15 @@ def parse_arguments():
                         help="Path to the desired output directory.")
     parser.add_argument("--significance-threshold", type=float, default=5,
                         help="Significance threshold only considered for printing significant hits.")
+    parser.add_argument("--min-cases", type=int, default=50,
+                        help="Minimum number of cases and controls that should be available " + \
+                             "for a phenotype to be included in the phewas.")
     parser.add_argument("--no-plot", action="store_true",
                         help="Skip the phewas manhattan plot.")
     parser.add_argument("--print-significant-hits", action="store_true",
                         help="Print significant hits.")
+    parser.add_argument("--verbose", action="store_true", default=False,
+                        help="Set verbosity to true.")
 
     args = parser.parse_args()
     return args
@@ -210,7 +216,9 @@ def main():
                min_phecode_count=args.min_phecode_count,
                cohort_filename=cohort_genotype_covars_filename,
                out_filename=phewas_output_filename,
-                n_threads=args.n_threads)
+               n_threads=args.n_threads,
+               verbose=args.verbose,
+               min_cases=args.min_cases)
 
     # Print significant hits.
     if args.print_significant_hits:
