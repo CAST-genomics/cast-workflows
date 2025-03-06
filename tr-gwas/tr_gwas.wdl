@@ -2,9 +2,9 @@ version 1.0
 
 workflow tr_gwas {
     input {
-        Array[File] pgens = [] 
-        Array[File] psams = [] 
-        Array[File] pvars = [] 
+        Array[String] pgens = [] 
+        Array[String] psams = [] 
+        Array[String] pvars = [] 
         Array[File] phenotypes = []
         Array[File] cohorts = []
         String GOOGLE_PROJECT = ""
@@ -106,7 +106,6 @@ task run_tr_gwas {
 
     command <<<
         #check if cohort is EUR or non_AFR, exclude PC6
-        touch log.txt
         echo ~{sample_name} | grep -q -E "EUR|NOT_AFR"
         if [ $? -eq 0 ]; then
             cut --complement -f 10 ~{covar} > "~{sample_name}_~{out_prefix}_covar.txt"
@@ -117,17 +116,16 @@ task run_tr_gwas {
         fi
 
         # Run GWAS on each chrom
-        echo "pgens $pgens" >> log.txt
         PFILEARRAY=(~{sep=" " pgens})
         gwas_outfiles=()
         # bash array are 0-indexed 
-        echo "total: ~{total}" >> log.txt
-        echo "total: ~{total}"
         for (( c = 0; c < ~{total}; c++ ))
         do
             pfile=${PFILEARRAY[$c]}
             pfile_outprefix="${pfile%.pgen}"
             chrom_outprefix=$(basename $pfile .pgen)
+
+
             if [[ "~{logistic}" == false ]] ; then
                 plink2 --pfile ${pfile_outprefix} \
                 --pheno ~{pheno} \
@@ -149,13 +147,12 @@ task run_tr_gwas {
                 --1 \
                 --covar-variance-standardize \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
-                ls -lth >> log.txt
-                ls -lth
                 
                 gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.logistic.hybrid "
             fi
 
-        echo "gwas outfiles ${gwas_outfiles}" >> log.txt
+        done
+
         echo "gwas outfiles ${gwas_outfiles}"
 
         # Concatenate all results
@@ -163,8 +160,6 @@ task run_tr_gwas {
 
         for file in ${gwas_outfiles[@]}
         do
-            echo "file: $file" >> log.txt
-            echo "file: $file"
             tail -n +2 "$file" >> "~{out_prefix}_~{sample_name}_gwas.tab"
         done
     >>>
@@ -172,11 +167,10 @@ task run_tr_gwas {
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/plink2:latest"
         memory: "6G"
-        disks: "local-disk 400 SSD"
+        disks: "local-disk 40 SSD"
     }
 
     output {
-       File outfile_log = "log.txt"
        File outfile = "${out_prefix}_~{sample_name}_gwas.tab"
     }
 }
