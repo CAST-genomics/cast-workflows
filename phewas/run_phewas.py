@@ -151,6 +151,8 @@ def parse_arguments():
                         help="Minimum count of a single phecode present for each sample to be considered a case.")
     parser.add_argument("--tr-vcf", type=str, required=True,
                         help="Path to the tr-VCF (imputed) input file.")
+    parser.add_argument("--phecode-filename", type=str, default="my_phecode_counts.csv",
+                        help="Path to the phecode counts file.")
     parser.add_argument("--outdir", type=str, default="outputs",
                         help="Path to the desired output directory.")
     parser.add_argument("--significance-threshold", type=float, default=5,
@@ -178,7 +180,7 @@ def main():
 
     # The call_count_phecodes only needs to be called once.
     # The phecode_counts csv file is generated for all 250k individuals.
-    phecodes_filename = "my_phecode_counts.csv"
+    phecodes_filename = args.phecode_filename
     if not os.path.exists(phecodes_filename):
         call_count_phecodes()
 

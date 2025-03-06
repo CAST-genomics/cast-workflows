@@ -71,7 +71,7 @@ task phetk {
     String locus_name = "~{chrom}_~{start}"
 
     command <<<
-        python run_phewas.py --locus ~{locus_name} \
+        python3 run_phewas.py --locus ~{locus_name} \
                      --chrom ~{chrom} \
                      --start ~{start} \
                      --n-threads ~{cpu} \
