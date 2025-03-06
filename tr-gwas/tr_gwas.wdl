@@ -116,9 +116,12 @@ task run_tr_gwas {
         fi
 
         # Run GWAS on each chrom
+        echo "pgens $pgens" >> log.txt
         PFILEARRAY=(~{sep=" " pgens})
         gwas_outfiles=()
         # bash array are 0-indexed 
+        echo "total: ~{total}" >> log.txt
+        echo "total: ~{total}"
         for (( c = 0; c < ~{total}; c++ ))
         do
             pfile=${PFILEARRAY[$c]}
@@ -160,6 +163,8 @@ task run_tr_gwas {
 
         for file in ${gwas_outfiles[@]}
         do
+            echo "file: $file" >> log.txt
+            echo "file: $file"
             tail -n +2 "$file" >> "~{out_prefix}_~{sample_name}_gwas.tab"
         done
     >>>
@@ -171,6 +176,7 @@ task run_tr_gwas {
     }
 
     output {
+       File outfile_log = "log.txt"
        File outfile = "${out_prefix}_~{sample_name}_gwas.tab"
     }
 }
