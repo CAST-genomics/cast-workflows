@@ -25,13 +25,23 @@ cd cast-workflows/tr-gwas
 
 ## Run TR-Gwas on targeted phenotype and cohorts
 
-Example test to run tr-gwas :
+Example test to run tr-gwas on quantative phenotype :
 
 ```
 ./tr_gwas_aou.py \
---name test \
+--name test_quantative_trait \
 --phenotype platelet_count \
---cohort EUR,AFR 
+--cohort EUR,AFR,AMR 
+```
+
+Example test to run tr-gwas on case/control phenotype :
+
+```
+./tr_gwas_aou.py \
+--name test_binary_trait \
+--phenotype platelet_count \
+--cohort ALL
+--logistic
 ```
 
 This will print out a friendly turtle with the job ID if successful. Use the following to check the status of your job. It will take around 10-20 minutes to run. If successful the status will eventually change to "Succeeded".
