@@ -87,19 +87,26 @@ def run_workflow(args):
     project = os.getenv("GOOGLE_PROJECT")
     output_bucket = bucket + "/" + args.name
     output_path = os.path.join(bucket, "workflows", "cromwell-executions", "sara_phewas")
+    phecode_file = os.path.join(bucket, "samples", "my_phecode_counts.csv")
 
-    chrom_list, start_list, tr_vcf_list = [], [], []
+    chrom_list, start_list, tr_vcf_list, tr_vcf_index_list = [], [], [], []
     for locus in args.loci.split(","):
         chrom, start = locus.split(":")
         chrom_list.append(chrom)
         start_list.append(start)    
-        tr_vcf_list.append(args.tr_vcf_template.replace("#", chrom))
+        tr_vcf = args.tr_vcf_template.replace("#", chrom)
+        tr_vcf_list.append(tr_vcf)
+        tr_vcf_index_list.append(tr_vcf + ".tbi")
 
     # Set up workflow JSON
     json_dict = {}
     json_dict[wdl_workflow + ".chrom"] = chrom_list
     json_dict[wdl_workflow + ".start"] = start_list
     json_dict[wdl_workflow + ".tr_vcf"] = tr_vcf_list
+    json_dict[wdl_workflow + ".tr_vcf_index"] = tr_vcf_index_list
+    json_dict[wdl_workflow + ".phecode_file"] = phecode_file
+    json_dict[wdl_workflow + ".GOOGLE_PROJECT"] = project
+    json_dict[wdl_workflow + ".WORKSPACE_BUCKET"] = bucket
     json_dict[wdl_workflow + ".cpu"] = args.cpus
     json_dict[wdl_workflow + ".mem"] = args.mem
 

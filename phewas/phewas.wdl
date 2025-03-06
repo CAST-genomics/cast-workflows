@@ -5,6 +5,10 @@ workflow phewas {
         Array[String] chrom
         Array[Int] start
         Array[String] tr_vcf
+        Array[String] tr_vcf_index
+        File phecode_file
+        String GOOGLE_PROJECT
+        String WORKSPACE_BUCKET
         Int? mem
         Int? cpu
     }
@@ -15,6 +19,10 @@ workflow phewas {
             chrom=chrom[i],
             start=start[i],
             tr_vcf=tr_vcf[i],
+            tr_vcf_index=tr_vcf_index[i],
+            phecode_file=phecode_file,
+            GOOGLE_PROJECT=GOOGLE_PROJECT,
+            WORKSPACE_BUCKET=WORKSPACE_BUCKET,
             mem=mem,
             cpu=cpu,
         }
@@ -64,6 +72,10 @@ task phetk {
         String chrom
         Int start
         File tr_vcf
+        File tr_vcf_index
+        File phecode_file
+        String GOOGLE_PROJECT
+        String WORKSPACE_BUCKET
         Int? mem
         Int? cpu
     }
@@ -71,6 +83,11 @@ task phetk {
     String locus_name = "~{chrom}_~{start}"
 
     command <<<
+        export GCS_REQUESTER_PAYS_PROJECT="~{GOOGLE_PROJECT}"
+        export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
+        export WORKSPACE_BUCKET="~{WORKSPACE_BUCKET}"
+
+        cd /cast-workflows/phewas
         python3 run_phewas.py --locus ~{locus_name} \
                      --chrom ~{chrom} \
                      --start ~{start} \
@@ -78,10 +95,11 @@ task phetk {
                      --no-plot \
                      --tr-vcf ~{tr_vcf} \
                      --outdir . \
+                     --phecode-filename ~{phecode_file} \
                      --print-significant-hits > significant_hits.txt
     >>>
     runtime {
-        docker:"gcr.io/ucsd-medicine-cast/phewas"
+        docker:"sarajava/phewas:v1.1"
         memory:  "~{mem} GB"
         cpu: "~{cpu}"
         disks: "local-disk ~{mem} SSD"
