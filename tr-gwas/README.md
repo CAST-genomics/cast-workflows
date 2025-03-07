@@ -78,7 +78,8 @@ Required arguments:
 Optional arguments:
 
 * `--phenotype <STR>`: name of targeted phenotype, seperated by comma. Default: None, run all 
-* `--cohort <STR>`: name of targeted cohort, seperated by comma.  Options: AFR, EUR, NOT_AFR, ALL . Default: None, run all 
+* `--cohort <SAMPLE>`: name of targeted cohort, seperated by comma.  Options: AFR, EUR, AMR, ALL . Default: None, run all 
+* `--logistic`: run logistic regression. Default:  run linear regression
 
 Warning: This script manually filters PC6 for EUR and NOT_AFR cohorts
 
@@ -97,6 +98,13 @@ TR-gwas results
 ```
 <phenotype>_<cohort>_gwas.tab
 ```
+
+## Plotting Manhattan plots 
+
+Example to plot manhattan and qq plots:
+
+```
+python plot_gwas.py --gwas platelet_count_gwas.tab
 
 ## TODO
 
