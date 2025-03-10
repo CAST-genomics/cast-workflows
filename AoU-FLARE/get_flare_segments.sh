@@ -8,8 +8,8 @@
 #!/bin/bash
 
 # Define input and output files
-VCF="/home/jupyter/flare_chr_segments_weighted_ancestry_proportions/flare_output.6-ancestry-acaf-unrelated-all.chr21.chunk_9.anc.vcf.gz"
-OUTPUT="chr21_chunk_9_testing_msp.tsv"
+VCF="path_to_file/flare_output.6-ancestry-acaf-unrelated-all.chr21.chunk_9.anc.vcf.gz"
+OUTPUT="chr21_chunk_9_msp.tsv"
 
 # Step 1: Generate the header row
 {
@@ -23,9 +23,25 @@ OUTPUT="chr21_chunk_9_testing_msp.tsv"
   echo ""
 } > "$OUTPUT"
 
-# Step 2: Extract data, filter rows with missing ancestry data, and sort by POS
+# Step 2: Extract data, filter rows with missing or invalid ancestry data, and sort by POS
 bcftools query -f "%CHROM\t%POS[\t%AN1\t%AN2]\n" "$VCF" |
-  awk '!/\t\.\t|\t\.$/' |  # Remove rows with missing ancestry data (denoted by ".")
+  awk '
+    # Remove rows with missing ancestry data (denoted by ".")
+    !/\t\.\t|\t\.$/ {
+      # Check if columns 3 and beyond are valid integers
+      valid = 1
+      for (i = 3; i <= NF; i++) {
+        if ($i !~ /^-?[0-9]+$/) {
+          valid = 0
+          break
+        }
+      }
+      # Print the row only if all columns are valid
+      if (valid) {
+        print
+      }
+    }
+  ' |
   sort -k2,2n -S 32G --parallel=8 >> "$OUTPUT"  # Sort by the second column (POS) numerically
 
 # Step 3: running process_segments.py to get segments\t labels\t lengths\t 
