@@ -43,6 +43,8 @@ bcftools query -f "%CHROM\t%POS[\t%AN1\t%AN2]\n" "$VCF" |
     }
   ' |
   sort -k2,2n -S 32G --parallel=8 >> "$OUTPUT"  # Sort by the second column (POS) numerically
+  
+# Found some rows with invalid data... removing this on step 2
 
 # Step 3: running process_segments.py to get segments\t labels\t lengths\t 
 # Will try process_segments.py before uploading to github
