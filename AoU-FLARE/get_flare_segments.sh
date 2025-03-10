@@ -28,4 +28,70 @@ bcftools query -f "%CHROM\t%POS[\t%AN1\t%AN2]\n" "$VCF" |
   awk '!/\t\.\t|\t\.$/' |  # Remove rows with missing ancestry data (denoted by ".")
   sort -k2,2n -S 32G --parallel=8 >> "$OUTPUT"  # Sort by the second column (POS) numerically
 
-# Testing if this code works... 
+# Step 3: running process_segments.py to get segments\t labels\t lengths\t 
+# Will try process_segments.py before uploading to github
+
+./process_segments.py chr21_chunk_9_testing_msp.tsv chr21_chunk_9_testing_segments.tsv
+
+# Step 4: getting the ancestry proportions by weights
+
+import pandas as pd
+import numpy as np
+from collections import defaultdict
+
+# Load DataFrame
+df = pd.read_csv("/home/jupyter/flare_chr_segments_weighted_ancestry_proportions/chr21_chunk_9_segments.tsv", sep="\t")
+
+# Convert "Lengths" column to lists of integers
+df["Lengths"] = df["Lengths"].apply(lambda x: list(map(int, x.split(","))) if isinstance(x, str) else [int(x)])
+
+# Initialize dictionary
+samp_to_segments = defaultdict(lambda: [[], []])
+
+# Populate dictionary
+for _, row in df.iterrows():
+    sample = row["Sample"]
+    labels = row["Labels"].split(",") if isinstance(row["Labels"], str) else [row["Labels"]]
+    lengths = row["Lengths"]
+
+    samp_to_segments[sample][0].extend(labels)   # Append labels as list
+    samp_to_segments[sample][1].extend(lengths)  # Append lengths as list
+
+# Mapping of numeric ancestry codes to population labels
+num_to_pop = {0: "MIDDLE_EAST", 1: "AMERICA", 2: "EUR", 3: "EAS", 4: "SAS", 5: "AFR"} #THIS CAN CHANGE, NO PARSE
+
+# Prepare output file
+output_file = "/home/jupyter/flare_chr_segments_weighted_ancestry_proportions/flare-summstats_chunk_9_chr21.tab"
+with open(output_file, "w") as f:
+    # Prepare the header
+    header = ["SAMPLE"]
+    for num in num_to_pop:
+        pop = num_to_pop[num]
+        for metric in ["perc", "len_mean", "len_median", "num_segments"]:
+            header.append(f"{pop}-{metric}")
+    f.write("\t".join(header) + "\n")
+
+    # Compute stats for each sample
+    for sample in samp_to_segments.keys():
+        outitems = [sample]
+        labels = samp_to_segments[sample][0]
+        lengths = samp_to_segments[sample][1]
+        total_len = sum(lengths)
+        
+        for num in num_to_pop:
+            popidx = [i for i in range(len(labels)) if labels[i] == str(num)]  # Ensure labels are strings
+            if len(popidx) == 0:
+                outitems.extend([0, "NA", "NA", 0])
+                continue
+            
+            popsegs = [lengths[i] for i in popidx]
+            perc = sum(popsegs) / total_len
+            len_mean = np.mean(popsegs)
+            len_median = np.median(popsegs)
+            num_segments = len(popsegs)
+            
+            outitems.extend([perc, len_mean, len_median, num_segments])
+        
+        f.write("\t".join(map(str, outitems)) + "\n")
+
+print(f"File saved: {output_file}")
