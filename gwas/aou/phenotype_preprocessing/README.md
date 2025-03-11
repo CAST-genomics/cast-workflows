@@ -58,3 +58,17 @@ The file `quantitative_phenotypes.csv` is a csv file with named columns:
 * `drugcovars`
 
 The script above will run phenotype preprocessing on each one, store results of each one at `${WORKSPACE_BUCKET}/phenotypes/${phenotype}_phenocovar.csv`, and output the file `quantitative_phenotypes.manifest.csv` which can be used to update the master manifest file in the above directory.
+
+## Case control phenotypes supported by AOU All by All
+
+Usage example:
+
+```
+./aou_case_control_phenotype_preprocessing.py \
+   --phecodeX RE_475 
+```
+Required arguments: 
+
+* `--phecodeX <STR>`: phecodeX for the desired phenotype
+
+The output file is a csv file named `${phecodeX}_phenocovar.csv` with columns: "person_id", "phenotype", "age", and "sex_at_birth_Male". The phenotype values have already been processed by the AOU All by All team (workspace url:  `https://workbench.researchallofus.org/workspaces/aou-rw-2e6e1444/allbyallphecodexphenotypescuration/data`). This script extracts the already processed phenotype values for downstream use by our scripts.
