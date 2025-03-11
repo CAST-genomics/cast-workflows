@@ -40,6 +40,7 @@ Required arguments:
 Optional arguments:
 
 * `--method <STR>`: Which GWAS method to use. Default: hail
+* `--isbinary <boolean>`: Boolean set to True if phenotype is binary. Default: False
 * `--samples <FILE>`: csv file with list of samples to restrict to. Needs columns "person_id" and "sex_at_birth_Male". Typically this would a list of samples that passed upstream sample-level QC info. Defaults to `${WORKSPACE_BUCKET}/samples/passing_samples_v7.1.csv`.
 * `--ancestry-pred-path <FILE>`: Path to file with PC info. Defaults to the AoU v7 ancestry predictions.
 * `--region <STR>`: Region to restrict to (chrom:start-endd)
