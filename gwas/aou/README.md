@@ -53,7 +53,7 @@ Optional arguments:
 * `--sample-call-rate`: Apply min sample call rate QC. Default: 0.9
 * `--variant-call-rate`: Apply min sample call rate QC. Default: 0.9 
 * `--MAF`: Apply minor allele frequency QC. Default=0.01
-* `--HWE`: Apply HWE p-value cutoff QC. Default=1e-15
+* `--HWE`: Apply HWE p-value cutoff QC. Default=1e-100
 * `--GQ`: Apply minimun genotype score QC. Default=20
 
 
