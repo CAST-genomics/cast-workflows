@@ -17,7 +17,7 @@ do
  #bash run_pipsort.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} NOT_AFR_BLACK.csv AFR_BLACK.csv platelet_count
  #bash run_pipsort.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} NOT_AFR_BLACK.csv AFR_BLACK.csv egfr_ckdepi
  #bash run_pipsort.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} NOT_AFR_BLACK.csv AFR_BLACK.csv white_blood_cell_count
- #bash run_mesusie.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} ${myArray[4]} ${myArray[5]}
- bash run_susiex.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} ${myArray[4]} ${myArray[5]}
+ bash run_mesusie.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} NOT_AFR_BLACK.csv AFR_BLACK.csv ${myArray[3]}
+ bash run_susiex.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} NOT_AFR_BLACK.csv AFR_BLACK.csv ${myArray[3]}
 
 done < $infile
