@@ -22,7 +22,7 @@ def read_tab_file(name):
                 # Skip the header line
                 continue
             phecode = line.split(",")[0]
-            category = line.split(",")[-1].strip()
+            category = line.split(",")[-1].strip().replace("/", "_").replace(" ", "_")
             # There might be commas in the middle of the names.
             # In that case, there are likely inside a (['".
             comma_counter = 0
@@ -61,8 +61,9 @@ def read_tab_file(name):
             string = string.replace("'", "_").replace('"', "_").\
                         replace('(', '_').replace(")", "_").\
                         replace('[', '_').replace("]", "_").\
+                        replace('/', '_').replace(" ", "_").\
                         replace(',', '_').replace('*', '_')
-            print("string: ", string)
+            #print("category: {} \t string: {}".format(category, string))
             phenotypes.append((phecode, string, category))
     return phenotypes
 
