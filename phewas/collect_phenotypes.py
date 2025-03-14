@@ -22,6 +22,8 @@ def read_tab_file(name):
                 # Skip the header line
                 continue
             phecode = line.split(",")[0]
+            cases = line.split(",")[1]
+            controls = line.split(",")[2]
             category = line.split(",")[-1].strip().replace("/", "_").replace(" ", "_")
             # There might be commas in the middle of the names.
             # In that case, there are likely inside a (['".
@@ -64,12 +66,12 @@ def read_tab_file(name):
                         replace('/', '_').replace(" ", "_").\
                         replace(',', '_').replace('*', '_')
             #print("category: {} \t string: {}".format(category, string))
-            phenotypes.append((phecode, string, category))
+            phenotypes.append((phecode, cases, controls, string, category))
     return phenotypes
 
 def write_phenotypes(phenotypes, filename):
     with open(filename, "w") as out_file:
-        out_file.write("phecode,phecode_string,phecode_category\n")
+        out_file.write("phecode,cases,controls,phecode_string,phecode_category\n")
         for pheno_line in phenotypes:
             out_file.write(",".join(pheno_line) + "\n")
             
