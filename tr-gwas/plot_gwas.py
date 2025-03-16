@@ -11,6 +11,7 @@ import pandas as pd
 import seaborn as sns
 import argparse
 import os
+from qmplot import manhattanplot
 
 #download summary stats file from workspace bucket
 # gsutil cp {WORKSPACE_BUCKET}/tr-gwas_result/
@@ -47,7 +48,7 @@ def read_file(file_path):
     return df
 
 
-def PlotManhattan(df, outpath):
+def PlotManhattan(df, outpath, sig_p, LD_block_size):
     #drop na values
     df = df[df['TEST'] == 'ADD']
     df['P'] = df['P'].replace('NA', np.nan)
@@ -64,15 +65,34 @@ def PlotManhattan(df, outpath):
     df_sorted.to_csv(f'{outpath}_ADD.csv', index=False)
     df_sorted['i'] = df_sorted.index
     # Generate Manhattan plot
-    plot = sns.relplot(data=df_sorted, x='i', y='-log10p', s=6, aspect=4, linewidth=0,
-                       hue='#CHROM', palette="tab10", legend=None)
+    f, ax = plt.subplots(figsize=(12, 4), facecolor='w', edgecolor='k')
     chrom_df = df_sorted.groupby('#CHROM')['i'].median()
-    plot.ax.set_xlabel('Chromosomes')
-    plot.ax.set_xticks(chrom_df)
-    plot.ax.set_xticklabels(chrom_df.index)
-    plot.fig.suptitle(f'Manhattan plot of STR genome-wide association on AllofUs {outpath}')
-    plot.ax.axhline(8, linestyle='--', linewidth=1)
-    plot.savefig(f'{outpath}.manhattan.png', dpi=700)
+    manhattanplot(data=df_sorted,
+                marker=".",
+                sign_marker_p=1e-6,  # Genome wide significant p-value
+                sign_marker_color="r",
+                snp="ID",
+                title=f'Manhattan plot of STR genome-wide association on AllofUs {outpath}',
+                xtick_label_set=chrom_df.index,
+                xlabel="Chromosome",
+                ylabel=r"$-log_{10}{(P)}$",
+                #sign_line_cols=["#D62728", "#2CA02C"],
+                hline_kws={"linestyle": "--", "lw": 1.3},
+                is_annotate_topsnp=True,
+                ld_block_size=20000,  
+                text_kws={"fontsize": 10,  
+                        "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)},
+                ax=ax)
+    plt.savefig(f'{outpath}.manhattan.png', dpi=700)
+    #plot = sns.relplot(data=df_sorted, x='i', y='-log10p', s=6, aspect=4, linewidth=0,
+    #                   hue='#CHROM', palette="tab10", legend=None)
+    #chrom_df = df_sorted.groupby('#CHROM')['i'].median()
+    #plot.ax.set_xlabel('Chromosomes')
+    #plot.ax.set_xticks(chrom_df)
+    #plot.ax.set_xticklabels(chrom_df.index)
+    #plot.fig.suptitle(f'Manhattan plot of STR genome-wide association on AllofUs {outpath}')
+    #plot.ax.axhline(8, linestyle='--', linewidth=1)
+    #plot.savefig(f'{outpath}.manhattan.png', dpi=700)
 
 def ppoints(n, a=None):
     """ numpy analogue of `R`'s `ppoints` function """
@@ -119,6 +139,8 @@ def PlotQQ(df, outpath):
 def main():
     parser = argparse.ArgumentParser(description="Generate Manhattan and QQ plots for GWAS data.")
     parser.add_argument("--gwas", help="GWAS summary stats file path", type=str, required=True)
+    parser.add_argument("--P", help="number of significant -l0g10P values ", type=int, required=True, default=6)
+    parser.add_argument("--LD", help="number of LD block size for manhanttan plot ", type=int, required=True, default=20000)
     args = parser.parse_args()
 
 
@@ -132,7 +154,7 @@ def main():
     gwas_df = read_file(args.gwas)  
     filename = GetOutPath(args.gwas)
     outpath = f'{outdir}/{filename}'
-    PlotManhattan(gwas_df, outpath)
+    PlotManhattan(gwas_df, outpath,args.P, args.LD)
     PlotQQ(gwas_df, outpath)
 
 if __name__ == "__main__":
