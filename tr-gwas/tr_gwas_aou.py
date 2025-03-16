@@ -14,6 +14,7 @@ import os
 import subprocess
 import sys
 from google.cloud import storage
+import pandas as pd
 
 sys.path.append("../utils")
 import aou_utils
@@ -31,7 +32,7 @@ def DownloadAncestry(filename):
 	output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
 	print(output.decode("utf-8"))
 
-def GetPhenotypePath(phenotype,binary=False):
+def GetPhenotypePath(phenotype, pheno_prefix, binary=False):
 	"""
 	Download a GCP path locally
 	Arguments
@@ -45,13 +46,11 @@ def GetPhenotypePath(phenotype,binary=False):
 	phenotypes = [item.strip() for item in phenotype.split(',')]
 	for item in phenotypes: 
 		if binary:
-			path = os.getenv("WORKSPACE_BUCKET")+"/phenotypes/case/"+item.strip()+"_phenocovar.csv"
+			path = os.getenv("WORKSPACE_BUCKET")+"/phenotypes/case/"+pheno_prefix+item.strip()+"_phenocovar.csv"
 			phenotype_array.append(path)
 		else:
-			path = os.getenv("WORKSPACE_BUCKET")+"/phenotypes/"+item.strip()+"_phenocovar.csv"
+			path = os.getenv("WORKSPACE_BUCKET")+"/phenotypes/"+pheno_prefix+item.strip()+"_phenocovar.csv"
 			phenotype_array.append(path)	
-		#path = os.getenv("WORKSPACE_BUCKET") + "/saraj/phenotypes/" + item.strip() + "_phenocovar.csv"
-		phenotype_array.append(path)
 	return phenotype_array
 
 
@@ -78,13 +77,20 @@ def GetCohortPath(cohort):
 		cohort_array.append(path)
 	return cohort_array
 
+def phenotypes_from_file(filename):
+    pheno_df = pd.read_csv(filename)
+    phenotypes = list(pheno_df["phecode_string"])
+    return phenotypes
+
 
 def main():
 	parser = argparse.ArgumentParser(__doc__)
 	parser.add_argument("--name", help="name of the run", required=True, type=str)
 	parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions",type=str, default="gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv")
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
+	parser.add_argument("--pheno-file", help="The phenotype file to extract phenotypes from.", type=str)
 	parser.add_argument("--phenotype", help="name of the phenotype, seperated by comma", required=False, type=str)
+	parser.add_argument("--pheno-prefix", help="prefix of the phenocovar files if present", required=False, default="")
 	parser.add_argument("--cohort", help="name of the cohort, seperated by comma, options: AFR, EUR, AMR, NOT_AFR, ALL", required=False, type=str)
 	parser.add_argument("--logistic", help="Run logistic regression", action="store_true")
 	args = parser.parse_args()
@@ -106,19 +112,31 @@ def main():
 
 	#return phenotype array if choose targeted phenotypes 
 	if args.phenotype is not None:
-		if args.logistic:
-			target_phenotype =  GetPhenotypePath(args.phenotype,binary=True)
-		else:
-			target_phenotype =  GetPhenotypePath(args.phenotype,binary=False)
+			target_phenotype =  GetPhenotypePath(args.phenotype,
+                                                binary=args.logistic,
+                                                pheno_prefix=args.pheno_prefix)
+	elif args.pheno_file:
+		phenotypes = phenotypes_from_file(args.pheno_file)
+		#print("len phenotypes extracted: ", len(set(phenotypes)))
+		target_phenotype = []
+		for phenotype in phenotypes:
+			target_phenotype.extend(GetPhenotypePath(phenotype,
+                                                     binary=args.logistic,
+                                                     pheno_prefix=args.pheno_prefix))
 	else:
 		if args.logistic:
-			target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/case/") if blob.name.endswith('.csv') and "sara_" in blob.name]
+			target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/case/") if blob.name.endswith('.csv')]
 		else:
 			target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/") if blob.name.endswith('.csv')]
+		if len(args.pheno_prefix) > 0:
+			target_phenotype = [pheno for pheno in target_phenotype if args.pheno_prefix in pheno]
 
-	print("target_phenotype: ", target_phenotype)
+            
+
+	#target_phenotype = target_phenotype[500:]
+	print("len of target_phenotype: ", len(target_phenotype))
+	#print("head of target_phenotype: ", target_phenotype)
 	print("pfile: ", pfile)
-
 	#return cohort array if choose targeted cohorts 
 	if args.cohort is not None:
 		target_cohort =  GetCohortPath(args.cohort)
