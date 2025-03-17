@@ -3,7 +3,7 @@ Make Manhattan and QQ plots
 QQ plot code copied from:
 https://github.com/satchellhong/qqman/
 """
-
+!pip install qmplot
 import matplotlib.pyplot as plt
 import numbers
 import numpy as np
