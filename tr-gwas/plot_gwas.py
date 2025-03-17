@@ -2,8 +2,11 @@
 Make Manhattan and QQ plots
 QQ plot code copied from:
 https://github.com/satchellhong/qqman/
+
+Need to install qmplot for manhattan plot
+pip install qmplot
 """
-!pip install qmplot
+
 import matplotlib.pyplot as plt
 import numbers
 import numpy as np
@@ -69,7 +72,7 @@ def PlotManhattan(df, outpath, sig_p, LD_block_size):
     chrom_df = df_sorted.groupby('#CHROM')['i'].median()
     manhattanplot(data=df_sorted,
                 marker=".",
-                sign_marker_p=1e-6,  # Genome wide significant p-value
+                sign_marker_p=10**(-sig_p),  # Genome wide significant p-value
                 sign_marker_color="r",
                 snp="ID",
                 title=f'Manhattan plot of STR genome-wide association on AllofUs {outpath}',
@@ -77,11 +80,11 @@ def PlotManhattan(df, outpath, sig_p, LD_block_size):
                 xlabel="Chromosome",
                 ylabel=r"$-log_{10}{(P)}$",
                 #sign_line_cols=["#D62728", "#2CA02C"],
-                hline_kws={"linestyle": "--", "lw": 1.3},
+                hline_kws={"linestyle": "--", "lw": 1},
                 is_annotate_topsnp=True,
-                ld_block_size=20000,  
-                text_kws={"fontsize": 10,  
-                        "arrowprops": dict(arrowstyle="-", color="k", alpha=0.6)},
+                ld_block_size=LD_block_size,  
+                text_kws={"fontsize": 5,  
+                        "arrowprops": dict(arrowstyle="->", color="k", alpha=0.6)},
                 ax=ax)
     plt.savefig(f'{outpath}.manhattan.png', dpi=700)
     #plot = sns.relplot(data=df_sorted, x='i', y='-log10p', s=6, aspect=4, linewidth=0,
