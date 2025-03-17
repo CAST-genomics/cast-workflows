@@ -75,11 +75,10 @@ def PlotManhattan(df, outpath, sig_p, LD_block_size):
                 sign_marker_p=10**(-sig_p),  # Genome wide significant p-value
                 sign_marker_color="r",
                 snp="ID",
-                title=f'Manhattan plot of STR genome-wide association on AllofUs {outpath}',
                 xtick_label_set=chrom_df.index,
+                title=f'Manhattan plot of STR genome-wide association on AllofUs {outpath}',
                 xlabel="Chromosome",
                 ylabel=r"$-log_{10}{(P)}$",
-                #sign_line_cols=["#D62728", "#2CA02C"],
                 hline_kws={"linestyle": "--", "lw": 1},
                 is_annotate_topsnp=True,
                 ld_block_size=LD_block_size,  
@@ -87,15 +86,6 @@ def PlotManhattan(df, outpath, sig_p, LD_block_size):
                         "arrowprops": dict(arrowstyle="->", color="k", alpha=0.6)},
                 ax=ax)
     plt.savefig(f'{outpath}.manhattan.png', dpi=700)
-    #plot = sns.relplot(data=df_sorted, x='i', y='-log10p', s=6, aspect=4, linewidth=0,
-    #                   hue='#CHROM', palette="tab10", legend=None)
-    #chrom_df = df_sorted.groupby('#CHROM')['i'].median()
-    #plot.ax.set_xlabel('Chromosomes')
-    #plot.ax.set_xticks(chrom_df)
-    #plot.ax.set_xticklabels(chrom_df.index)
-    #plot.fig.suptitle(f'Manhattan plot of STR genome-wide association on AllofUs {outpath}')
-    #plot.ax.axhline(8, linestyle='--', linewidth=1)
-    #plot.savefig(f'{outpath}.manhattan.png', dpi=700)
 
 def ppoints(n, a=None):
     """ numpy analogue of `R`'s `ppoints` function """
@@ -142,7 +132,7 @@ def PlotQQ(df, outpath):
 def main():
     parser = argparse.ArgumentParser(description="Generate Manhattan and QQ plots for GWAS data.")
     parser.add_argument("--gwas", help="GWAS summary stats file path", type=str, required=True)
-    parser.add_argument("--P", help="number of significant -l0g10P values ", type=int, default=7)
+    parser.add_argument("--P", help="number of significant -l0g10P values ", type=float, default=7)
     parser.add_argument("--LD", help="number of LD block size for manhanttan plot ", type=int, default=20000)
     args = parser.parse_args()
 
