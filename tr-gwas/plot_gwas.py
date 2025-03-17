@@ -142,8 +142,8 @@ def PlotQQ(df, outpath):
 def main():
     parser = argparse.ArgumentParser(description="Generate Manhattan and QQ plots for GWAS data.")
     parser.add_argument("--gwas", help="GWAS summary stats file path", type=str, required=True)
-    parser.add_argument("--P", help="number of significant -l0g10P values ", type=int, required=True, default=6)
-    parser.add_argument("--LD", help="number of LD block size for manhanttan plot ", type=int, required=True, default=20000)
+    parser.add_argument("--P", help="number of significant -l0g10P values ", type=int, default=7)
+    parser.add_argument("--LD", help="number of LD block size for manhanttan plot ", type=int, default=20000)
     args = parser.parse_args()
 
 
