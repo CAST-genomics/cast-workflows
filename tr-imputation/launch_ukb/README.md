@@ -13,7 +13,7 @@ This is a tutorial on how to impute TRs using EnsembleTR reference panel. For de
 We will need to first get files required for imputation ready: 1) SNP VCFs, 2) SNP-TR reference files, 3) Genetic maps.
 
 * We used the [EnsembleTR reference panel version IV](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_4_readme.txt). 
-Use this command to download the reference panel and upload to DNANexus: 'wget -O - https://<s3-bucket-url>/<file-name> | dx upload - --destination /project-folder/<file-name>'
+Use this command to download the reference panel and upload to DNANexus: 'wget -O - https://\<s3-bucket-url\>/\<file-name\> | dx upload - --destination /project-folder/\<file-name\>'
 * Downlaod the [genetic maps](https://bochet.gcc.biostat.washington.edu/beagle/genetic_maps/plink.GRCh38.map.zip) from Beagle website. Note, the SNP-TR reference panel are use "chr${num}", while the genetic map use "${num}". Make sure add a "chr" prefix to chromosome numbers.
 
 ## 2.1 Prepare VCF files
@@ -40,4 +40,4 @@ The `trim_vcf` will remove tags in pvcf files to reduce the file size and then c
 
 ### 2.1.2 Convert bgen files to vcf
 
-
+### 2.1.3 Split VCF files by samples 
