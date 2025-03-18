@@ -13,9 +13,10 @@ SMALLNUM = 10e-400
 class HailRunner:
 
     import hail as hl
-    def __init__(self, ptcovar, region=None, covars=[], sample_call_rate=None, variant_call_rate=None, MAF=None, HWE=None, GQ=None):
+    def __init__(self, ptcovar, isbinary=False, region=None, covars=[], sample_call_rate=None, variant_call_rate=None, MAF=None, HWE=None, GQ=None):
 
         self.ptcovar = ptcovar
+        self.isbinary = isbinary
         self.region = region
         self.covars = covars 
         self.sample_call_rate = sample_call_rate
@@ -66,13 +67,22 @@ class HailRunner:
         self.data = data
 
     def RunGWAS(self):
-        linear_r = hl.linear_regression_rows(
-            y= self.data.ptcovar.phenotype,
-            x= self.data.GT.n_alt_alleles(),
-            covariates = [1.0] + [self.data.ptcovar[item] \
-            	for item in self.covars]
-        )
-        gwas = linear_r.annotate(p_value_str= hl.str(linear_r.p_value)).to_pandas()
+        if self.isbinary:
+            reg = hl.logistic_regression_rows(
+                test = 'wald',
+                y= self.data.ptcovar.phenotype,
+                x= self.data.GT.n_alt_alleles(),
+                covariates = [1.0] + [self.data.ptcovar[item] \
+            	    for item in self.covars]
+            )
+        else:
+            reg = hl.linear_regression_rows(
+                y= self.data.ptcovar.phenotype,
+                x= self.data.GT.n_alt_alleles(),
+                covariates = [1.0] + [self.data.ptcovar[item] \
+            	    for item in self.covars]
+            )
+        gwas = reg.annotate(p_value_str= hl.str(reg.p_value)).to_pandas()
         gwas["chrom"] = gwas["locus"].apply(lambda x: str(x).split(":")[0])
         gwas["pos"] = gwas["locus"].apply(lambda x: int(str(x).split(":")[1]))
         gwas["p_value"] = gwas.apply(lambda x: float(x["p_value_str"])+SMALLNUM, 1)
