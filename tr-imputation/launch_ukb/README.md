@@ -30,6 +30,9 @@ The size of pVCF files are very large, so we need to extract useful field first 
 To use this workflow, first run [./compile_wdl.sh](./compile_wdl.sh) to compile the workflow.
 
 The `trim_vcf` will remove tags in pvcf files to reduce the file size and then combine the processed vcfs. It process by chromosomes. Examples are below:
+
+Low quality variatns are removed using `bcftools -i INFO/AAscore>=0.5` which assigned by GraphTyper.
+
 ```bash
 # run a test
 ./vcfTrimmer_launcher_ukb.py --chrom chr21  --batch-size 2 --batch-num 2
@@ -40,4 +43,9 @@ The `trim_vcf` will remove tags in pvcf files to reduce the file size and then c
 
 ### 2.1.2 Convert bgen files to vcf
 
-### 2.1.3 Split VCF files by samples 
+Bgen files is located at `Bulk/Genotype Results/Genotype calls`. Need to check any of those variants need to be filtered.
+
+
+### 2.1.3 Split VCF files by samples
+
+To reduce the memory, the VCF files combined by chromosomes are furhter split by samples. Each batch contains 1k samples.
