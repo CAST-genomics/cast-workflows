@@ -135,7 +135,7 @@ def main():
 	# 	"Format of each line: vcf-file-id", type=str, required=False, default="ukb_pVCF_list.txt")
 	# parser.add_argument("--genome-id", help="File id of ref genome", type=str, default="file-GGJ1z28JbVqbpqB93YbPqbzz")
 	# parser.add_argument("--genome-idx-id", help="File id of ref genome index", type=str, default="file-GGJ94JQJv7BGFYq8BGp62xPV")
-	parser.add_argument("--workflow-id", help="DNA Nexus workflow ID", required=False, default="workflow-GzGJ610JX3JVvkP66qX6v9Kz")
+	parser.add_argument("--workflow-id", help="DNA Nexus workflow ID", required=False, default="workflow-GzGv6qQJX3JX371q98yJ61fG")
 	# Options for multi-batches
 	parser.add_argument("--concat-workflow-id", help="DNA Nexus workflow ID for merging", required=False, default="workflow-GzGJ6b8JX3JjYZVZ3ZY83P4z")
 	parser.add_argument("--max-batches-per-workflow", help="Maximum number of batches to launch at once. -1 means all", required=False, default=10, type=int)

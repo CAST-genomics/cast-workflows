@@ -57,10 +57,10 @@ task run_batch {
         vcf_list_str=(~{sep=" " vcf_list})
         if [[ "~{tags_to_rm}" != "NA" ]] && [[ "~{qc_inputs}" != "NA" ]]
         then
-          for pvcf in ${vcf_list_str} ; do
-            echo "processing ${pvcf}"
+          for pvcf in ${vcf_list_str[@]}; do
+            echo "processing id_${file_idx} ${pvcf} filtering both"
             trimmed_vcf=~{out_prefix}_${file_idx}_trimmed.vcf.gz
-            bcftools annotate -x ~{tags_to_rm} ${pvcf} | bcftools norm -m - | bcftools filter -i ~{qc_inputs} -Oz -o ${trimmed_vcf} --threads ~{n_threads}
+            bcftools annotate -x "~{tags_to_rm}" ${pvcf} | bcftools norm -m - | bcftools filter -i "~{qc_inputs}" -Oz -o ${trimmed_vcf} --threads ~{n_threads}
             
             sorted_vcf=~{out_prefix}_${file_idx}_trimmed_sorted.vcf.gz
             bcftools sort -Oz -o ${sorted_vcf} ${trimmed_vcf}
@@ -70,10 +70,10 @@ task run_batch {
           done
         elif [[ "~{tags_to_rm}" != "NA" ]] && [[ "~{qc_inputs}" == "NA" ]]
         then
-          for pvcf in ${vcf_list_str}; do
+          for pvcf in ${vcf_list_str[@]}; do
             echo "processing ${pvcf}"
             trimmed_vcf=~{out_prefix}_${file_idx}_trimmed.vcf.gz
-            bcftools annotate -x ~{tags_to_rm} ${pvcf} | bcftools norm -m - -Oz -o ${trimmed_vcf} --threads ~{n_threads}
+            bcftools annotate -x "~{tags_to_rm}" ${pvcf} | bcftools norm -m - -Oz -o ${trimmed_vcf} --threads ~{n_threads}
 
             sorted_vcf=~{out_prefix}_${file_idx}_trimmed_sorted.vcf.gz
             bcftools sort -Oz -o ${sorted_vcf} ${trimmed_vcf}
@@ -82,10 +82,10 @@ task run_batch {
             rm ${trimmed_vcf}
           done
         else
-          for pvcf in ${vcf_list_str}; do
+          for pvcf in ${vcf_list_str[@]}; do
             echo "processing ${pvcf}"
             trimmed_vcf=~{out_prefix}_${file_idx}_trimmed.vcf.gz
-            bcftools norm -m - ${pvcf} | bcftools filter -i ~{qc_inputs} -Oz -o ${trimmed_vcf} --threads ~{n_threads}
+            bcftools norm -m - ${pvcf} | bcftools filter -i "~{qc_inputs}" -Oz -o ${trimmed_vcf} --threads ~{n_threads}
 
             sorted_vcf=~{out_prefix}_${file_idx}_trimmed_sorted.vcf.gz
             bcftools sort -Oz -o ${sorted_vcf} ${trimmed_vcf}
@@ -95,7 +95,7 @@ task run_batch {
           done
         fi
         echo "start combine"
-        ls
+        ls ./*_sorted.vcf.gz
         echo "-------------\n"
         bcftools concat -a  ./*_sorted.vcf.gz -Oz -o ~{out_prefix}.vcf.gz
         echo "sort and index"
