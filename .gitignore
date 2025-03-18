@@ -6,3 +6,5 @@ chr21.fa*
 ukb_cram_files_long.txt
 ukb_cram_and_index_files.txt
 hg38.hipstr_reference.bed
+*pvcf_file_ids.txt
+logs/
