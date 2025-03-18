@@ -121,7 +121,6 @@ ancestry_weight="c(3,3,1)"
 nc=3
 Rscript $scripts/run_mesusie.R ./mesusieoutput $nc $ancestry_weight ./mesusiecsinfo
 
-exit 0
 #cleanup all files
 rm f_s1.txt
 rm f_s2.txt
@@ -130,7 +129,7 @@ rm $s1_samples_file
 rm $s2_samples_file
 rm *.bed
 rm *.fam
-rm *.bim
+#rm *.bim
 #rm snp_map
 rm processedfiles.txt
 rm plink*
