@@ -106,6 +106,8 @@ task run_batch {
     runtime {
         docker: "gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
         memory: mem + "GB"
+        cpu: 8
+        disks: "local-disk 200 SSD"
         maxRetries: 3
     }
 
@@ -140,6 +142,8 @@ task concat_vcf {
     runtime {
         docker: "gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
         memory: mem + "GB"
+        cpu: 8
+        disk: "local-disk 200 SSD"
         maxRetries: 3
     }
 

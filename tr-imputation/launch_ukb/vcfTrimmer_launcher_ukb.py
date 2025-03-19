@@ -125,24 +125,24 @@ def main():
 	parser = argparse.ArgumentParser(__doc__)
 #	parser.add_argument("--tr-bed", help="BED file with TR regions to genotype", required=True, type=str)
 	parser.add_argument("--chrom", help="chromosome of current pVCFs e.g. chr1", required=True, type=str)
-	parser.add_argument("--batch-size", help="trimed vcf batch size", type=int, default=200)
+	parser.add_argument("--batch-size", help="trimed vcf batch size", type=int, default=50)
 	parser.add_argument("--batch-num", help="Number of batches. Default: -1 (all)", required=False, default=-1, type=int)
 	parser.add_argument("--qc-thresholds", help="threshold for qc", type=str, required=False, default="INFO/AAScore>=0.5")
 	parser.add_argument("--rm-tags", help="tags to remove", required=False, default="FORMAT/FT,FORMAT/AD,FORMAT/MD,FORMAT/DP,FORMAT/RA,FORMAT/PP,FORMAT/GQ", type=str)
-	parser.add_argument("--threads-num", help="num of threads for bcftools", required=False, default=1, type=int)
+	parser.add_argument("--threads-num", help="num of threads for bcftools", required=False, default=2, type=int)
 
 	# parser.add_argument("--file-list", help="List of vcfs to process"
 	# 	"Format of each line: vcf-file-id", type=str, required=False, default="ukb_pVCF_list.txt")
 	# parser.add_argument("--genome-id", help="File id of ref genome", type=str, default="file-GGJ1z28JbVqbpqB93YbPqbzz")
 	# parser.add_argument("--genome-idx-id", help="File id of ref genome index", type=str, default="file-GGJ94JQJv7BGFYq8BGp62xPV")
-	parser.add_argument("--workflow-id", help="DNA Nexus workflow ID", required=False, default="workflow-GzGv6qQJX3JX371q98yJ61fG")
+	parser.add_argument("--workflow-id", help="DNA Nexus workflow ID", required=False, default="workflow-GzJJX30JX3JY6qZ5Fx1gYJV5")
 	# Options for multi-batches
-	parser.add_argument("--concat-workflow-id", help="DNA Nexus workflow ID for merging", required=False, default="workflow-GzGJ6b8JX3JjYZVZ3ZY83P4z")
-	parser.add_argument("--max-batches-per-workflow", help="Maximum number of batches to launch at once. -1 means all", required=False, default=10, type=int)
+	parser.add_argument("--concat-workflow-id", help="DNA Nexus workflow ID for merging", required=False, default="workflow-GzJJX90JX3JjpqyPpgFYqB70")
+	parser.add_argument("--max-batches-per-workflow", help="Maximum number of batches to launch at once. -1 means all", required=False, default=4, type=int)
 	parser.add_argument("--concurrent", help="Launch all batches at once", action="store_true")
-	parser.add_argument("--bcftools-mem", help="Bcftools run memory, modify if run smaller sample size, default=16G", required=False, type=int, default=16)
+	parser.add_argument("--bcftools-mem", help="Bcftools run memory, modify if run smaller sample size, default=32G", required=False, type=int, default=32)
 	parser.add_argument("--bcftools-threads", help="Bcftools threads, more threads requires large memory", required=False, type=int, default=1)
-	parser.add_argument("--concat-mem", help="Merge hipstr run memory, modify if run smaller sample size, default=4G", required=False, type=int, default=16)
+	parser.add_argument("--concat-mem", help="Merge hipstr run memory, modify if run smaller sample size, default=32G", required=False, type=int, default=32)
 	args = parser.parse_args()
 
 	# Set up workflow JSON
