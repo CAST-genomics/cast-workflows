@@ -75,7 +75,7 @@ def PlotManhattan(df, outpath, sig_p, LD_block_size):
                 sign_marker_p=10**(-sig_p),  # Genome wide significant p-value
                 sign_marker_color="r",
                 snp="ID",
-                xtick_label_set=chrom_df.index,
+                xtick_label_set=set(chrom_df.index),
                 title=f'Manhattan plot of STR genome-wide association on AllofUs {outpath}',
                 xlabel="Chromosome",
                 ylabel=r"$-log_{10}{(P)}$",
