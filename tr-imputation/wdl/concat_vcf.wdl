@@ -34,7 +34,7 @@ task concat_vcf {
     command <<<
         echo "start concat all files..."
         # vcf_files_str=~{sep=" " vcf_files}
-        bcftools concat -a -Oz -o ~{merged_prefix}.vcf.gz ~{sep=" " vcf_files}
+        bcftools concat -a -Oz -o ~{merged_prefix}.vcf.gz ~{sep=" " vcf_files} 
         bcftools sort -Oz -o ~{merged_prefix}_sorted.vcf.gz ~{merged_prefix}.vcf.gz
         ls
         tabix -p vcf ~{merged_prefix}_sorted.vcf.gz
@@ -43,8 +43,7 @@ task concat_vcf {
     runtime {
         docker: "gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
         memory: mem + "GB"
-        cpu: 8
-        disk: "local-disk 200 SSD"
+        disk: "local-disk 150 SSD"
         maxRetries: 3
     }
 

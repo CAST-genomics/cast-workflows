@@ -3,20 +3,19 @@
 ## This section is used to extract pvcf_file_ids
 path_prefix="/Bulk/GATK and GraphTyper WGS/GraphTyper population level WGS variants, pVCF format [500k release]"
 
-
-
 for chrom in $(seq 1 22);
 do
-  dx ls -l "${path_prefix}/chr${chrom}/*gz" | sort -t "_" -k3,3V | sed -n 's/.*(\(.*\)).*/\1/p' > ./chr${chrom}_pvcf_file_ids.txt
+  echo ${chrom}
+  dx ls -l "${path_prefix}/chr${chrom}/*gz" | awk '$5=="GB"' | sort -t "_" -k3,3V | sed -n 's/.*(\(.*\)).*/\1/p' > ./chr${chrom}_pvcf_file_ids.txt
 done
 
 
 
 # This section is trim vcf using the https://github.com/drarwood/vcf_trimmer/tree/master?tab=readme-ov-file
-
 #chrom=21
 #out_path="/yal084/tr_imputation/trimmed_vcfs"
 #applet_name="applet-GzF40ZQJX3JzyJgXyj0j5bjJ"
+#path_prefix="/Bulk/GATK and GraphTyper WGS/GraphTyper population level WGS variants, pVCF format [500k release]"
 
 #dx rm -r ${out_path}/chr${chrom}/
 #dx mkdir -p ${out_path}/chr${chrom}/batched_vcf_list/

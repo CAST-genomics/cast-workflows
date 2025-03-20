@@ -125,24 +125,25 @@ def main():
 	parser = argparse.ArgumentParser(__doc__)
 #	parser.add_argument("--tr-bed", help="BED file with TR regions to genotype", required=True, type=str)
 	parser.add_argument("--chrom", help="chromosome of current pVCFs e.g. chr1", required=True, type=str)
-	parser.add_argument("--batch-size", help="trimed vcf batch size", type=int, default=50)
+	parser.add_argument("--batch-size", help="trimed vcf batch size", type=int, default=100)
 	parser.add_argument("--batch-num", help="Number of batches. Default: -1 (all)", required=False, default=-1, type=int)
 	parser.add_argument("--qc-thresholds", help="threshold for qc", type=str, required=False, default="INFO/AAScore>=0.5")
-	parser.add_argument("--rm-tags", help="tags to remove", required=False, default="FORMAT/FT,FORMAT/AD,FORMAT/MD,FORMAT/DP,FORMAT/RA,FORMAT/PP,FORMAT/GQ", type=str)
+#	parser.add_argument("--rm-tags", help="tags to remove", required=False, default="FORMAT/FT,FORMAT/AD,FORMAT/MD,FORMAT/DP,FORMAT/RA,FORMAT/PP,FORMAT/GQ", type=str)
+	parser.add_argument("--rm-tags", help="tags to remove", required=False, default="^INFO/AAScore,INFO/AC,INFO/AF,^FORMAT/GT, FORMAT/PL", type=str)
 	parser.add_argument("--threads-num", help="num of threads for bcftools", required=False, default=2, type=int)
 
 	# parser.add_argument("--file-list", help="List of vcfs to process"
 	# 	"Format of each line: vcf-file-id", type=str, required=False, default="ukb_pVCF_list.txt")
 	# parser.add_argument("--genome-id", help="File id of ref genome", type=str, default="file-GGJ1z28JbVqbpqB93YbPqbzz")
 	# parser.add_argument("--genome-idx-id", help="File id of ref genome index", type=str, default="file-GGJ94JQJv7BGFYq8BGp62xPV")
-	parser.add_argument("--workflow-id", help="DNA Nexus workflow ID", required=False, default="workflow-GzJJX30JX3JY6qZ5Fx1gYJV5")
+	parser.add_argument("--workflow-id", help="DNA Nexus workflow ID", required=False, default="workflow-GzK6548JX3JfgXYG89G1667B")
 	# Options for multi-batches
-	parser.add_argument("--concat-workflow-id", help="DNA Nexus workflow ID for merging", required=False, default="workflow-GzJJX90JX3JjpqyPpgFYqB70")
-	parser.add_argument("--max-batches-per-workflow", help="Maximum number of batches to launch at once. -1 means all", required=False, default=4, type=int)
+	parser.add_argument("--concat-workflow-id", help="DNA Nexus workflow ID for merging", required=False, default="workflow-GzK556jJX3Jgbqx5b5z46XBx")
+	parser.add_argument("--max-batches-per-workflow", help="Maximum number of batches to launch at once. -1 means all", required=False, default=8, type=int)
 	parser.add_argument("--concurrent", help="Launch all batches at once", action="store_true")
-	parser.add_argument("--bcftools-mem", help="Bcftools run memory, modify if run smaller sample size, default=32G", required=False, type=int, default=32)
-	parser.add_argument("--bcftools-threads", help="Bcftools threads, more threads requires large memory", required=False, type=int, default=1)
-	parser.add_argument("--concat-mem", help="Merge hipstr run memory, modify if run smaller sample size, default=32G", required=False, type=int, default=32)
+	parser.add_argument("--bcftools-mem", help="Bcftools run memory, modify if run smaller sample size, default=16G", required=False, type=int, default=16)
+#	parser.add_argument("--bcftools-threads", help="Bcftools threads, more threads requires large memory", required=False, type=int, default=2)
+	parser.add_argument("--concat-mem", help="Merge hipstr run memory, modify if run smaller sample size, default=16G", required=False, type=int, default=32)
 	args = parser.parse_args()
 
 	# Set up workflow JSON
@@ -169,6 +170,7 @@ def main():
 	# Set up batches of files
 	sys.stderr.write("Setting up batches...\n")
 	vcf_batches = GetFileBatches(f"{args.chrom}_pvcf_file_ids.txt", args.batch_size, args.batch_num)
+#	print(f"{len(vcf_batches)}, {vcf_batches}", flush=True)
 
 	# Run batches
 	# final_vcf = None
@@ -181,44 +183,53 @@ def main():
 	else:
 		# Run in chunks across multiple workflows
 		depends = []
-		batch_num = 0
+#		batch_num = 0
 		curr_idx = 0
-		curr_vcf_batches = []
-#		curr_idx_batches = []
+		# curr_vcf_batches = []
+		# curr_idx_batches = []
 		while curr_idx < len(vcf_batches):
-			if len(curr_vcf_batches) == args.max_batches_per_workflow:
-				batch_name = args.chrom + "-CHUNK%s"%batch_num
-				batch_dict = json_dict.copy()
-				batch_dict["stage-common.outprefix"] = batch_name
-				batch_dict["stage-common.pvcf_batches"] = curr_vcf_batches
-#				batch_dict["stage-common.cram_index_batches"] = curr_idx_batches
-				if args.concurrent:
-					use_dep = []
-				else: use_dep = depends
-				analysis = RunWorkflow(batch_dict, args.workflow_id, \
-					args.chrom + "/" + args.chrom+"_%s"%batch_num, depends=use_dep)
-				depends.append(analysis)
-				saveJson(f"./logs/{args.chrom}_{batch_num}.json", batch_dict)
-				batch_num += 1
-				curr_vcf_batches = []
-#				curr_idx_batches = []
-			curr_vcf_batches.append(vcf_batches[curr_idx])
-#			curr_idx_batches.append(cram_idx_batches[curr_idx])
-			curr_idx += 1
-		# Run last batch if any are left
-		if len(curr_vcf_batches) > 0:
-			batch_name = args.chrom + "-CHUNK%s"%batch_num
+			batch_name = args.chrom + "-CHUNK%s"%curr_idx
 			batch_dict = json_dict.copy()
 			batch_dict["stage-common.outprefix"] = batch_name
-			batch_dict["stage-common.pvcf_batches"] = curr_vcf_batches
-#			batch_dict["stage-common.cram_index_batches"] = curr_idx_batches
-			if args.concurrent:
-				use_dep = []
-			else: use_dep = depends
-			analysis = RunWorkflow(batch_dict, args.workflow_id, \
-				args.chrom + "/" + args.chrom+"_%s"%batch_num, depends=use_dep)
+			batch_dict["stage-common.pvcf_batches"] = vcf_batches[curr_idx]
+			analysis = RunWorkflow(batch_dict, args.workflow_id, args.chrom + "/" + args.chrom + "_%s"%curr_idx, depends=[])
+			saveJson(f"./logs/{args.chrom}_{curr_idx}.json", batch_dict)
 			depends.append(analysis)
-			saveJson(f"./logs/{args.chrom}_{batch_num}.json", batch_dict)
+			curr_idx += 1
+
+# 			if len(curr_vcf_batches) == args.max_batches_per_workflow:
+# 				batch_name = args.chrom + "-CHUNK%s"%curr_idx
+# 				batch_dict = json_dict.copy()
+# 				batch_dict["stage-common.outprefix"] = batch_name
+# 				batch_dict["stage-common.pvcf_batches"] = curr_vcf_batches
+# #				batch_dict["stage-common.cram_index_batches"] = curr_idx_batches
+# 				if args.concurrent:
+# 					use_dep = []
+# 				else: use_dep = depends
+# 				analysis = RunWorkflow(batch_dict, args.workflow_id, \
+# 					args.chrom + "/" + args.chrom+"_%s"%batch_num, depends=use_dep)
+# 				depends.append(analysis)
+# 				saveJson(f"./logs/{args.chrom}_{batch_num}.json", batch_dict)
+# 				batch_num += 1
+# 				curr_vcf_batches = []
+# #				curr_idx_batches = []
+# 			curr_vcf_batches.append(vcf_batches[curr_idx])
+# #			curr_idx_batches.append(cram_idx_batches[curr_idx])
+# 			curr_idx += 1
+# 		# Run last batch if any are left
+# 		if len(curr_vcf_batches) > 0:
+# 			batch_name = args.chrom + "-CHUNK%s"%batch_num
+# 			batch_dict = json_dict.copy()
+# 			batch_dict["stage-common.outprefix"] = batch_name
+# 			batch_dict["stage-common.pvcf_batches"] = curr_vcf_batches
+# #			batch_dict["stage-common.cram_index_batches"] = curr_idx_batches
+# 			if args.concurrent:
+			# 	use_dep = []
+			# else: use_dep = depends
+			# analysis = RunWorkflow(batch_dict, args.workflow_id, \
+			# 	args.chrom + "/" + args.chrom+"_%s"%batch_num, depends=use_dep)
+			# depends.append(analysis)
+			# saveJson(f"./logs/{args.chrom}_{batch_num}.json", batch_dict)
 
 		# Run a final job to merge all the meta-batches
 		merge_vcfs = []
