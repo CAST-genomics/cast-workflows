@@ -114,6 +114,9 @@ def main():
     # Get covarlist
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
     shared_covars = [item for item in args.sharedcovars.split(",") if item != ""]
+    #case/control phenotype need to take ancestry into account
+    if args.case_control:
+        shared_covars.append("ancestry_pred_other")
     pt_covars = [item for item in args.ptcovars.split(",") if item != ""]
     covars = pt_covars + shared_covars
 

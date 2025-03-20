@@ -13,6 +13,7 @@ RUN apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get install -qqy \
 # Install Python dependencies
 RUN pip3 install pandas
 
+
 # Copy python script 
 COPY convert_phenotype_plink.py /usr/bin/
 RUN chmod +x /usr/bin/convert_phenotype_plink.py
@@ -26,11 +27,11 @@ RUN mkdir -p /usr/local/gcloud \
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
 
 # Download and install PLINK2
-RUN wget https://s3.amazonaws.com/plink2-assets/alpha6/plink2_linux_x86_64_20241124.zip \
-    && unzip plink2_linux_x86_64_20241124.zip\
+RUN wget https://s3.amazonaws.com/plink2-assets/alpha6/plink2_linux_x86_64_20250129.zip \
+    && unzip plink2_linux_x86_64_20250129.zip\
     && mv plink2 /usr/bin/ \
     && chmod +x /usr/bin/plink2 \
-    && rm plink2_linux_x86_64_20241124.zip
+    && rm plink2_linux_x86_64_20250129.zip
 
 
 
