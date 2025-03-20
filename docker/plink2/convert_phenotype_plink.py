@@ -87,7 +87,6 @@ def convert_csv_to_plink (ptfile):
     df.insert(0, 'FID', 0)
     df.rename(columns={"person_id": "IID"}, inplace=True)
     df['IID'] = df['IID'].astype(str)
-
     return df
 
 def main():
@@ -114,9 +113,6 @@ def main():
     # Get covarlist
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
     shared_covars = [item for item in args.sharedcovars.split(",") if item != ""]
-    #case/control phenotype need to take ancestry into account
-    if args.case_control:
-        shared_covars.append("ancestry_pred_other")
     pt_covars = [item for item in args.ptcovars.split(",") if item != ""]
     covars = pt_covars + shared_covars
 
@@ -125,8 +121,12 @@ def main():
     plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
 
     # Extract phenotype and covars only
-    data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols],on=["IID"],how="inner")
     plink_pheno = plink[["FID","IID","phenotype"]]
+    #case/control phenotype need to take ancestry into account for all samples mega analysis
+    if args.case_control:
+        data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols+["ancestry_pred"]],on=["IID"],how="inner")
+    else:
+        data = pd.merge(plink[["FID","IID"]+covars], ancestry[["IID"]+pcols],on=["IID"],how="inner")
 
     # Output files
     pheno_file_path = f"{args.phenotype}_pheno_plink.txt"
