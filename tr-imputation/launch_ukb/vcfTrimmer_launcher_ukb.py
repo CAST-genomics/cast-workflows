@@ -125,7 +125,7 @@ def main():
 	parser = argparse.ArgumentParser(__doc__)
 #	parser.add_argument("--tr-bed", help="BED file with TR regions to genotype", required=True, type=str)
 	parser.add_argument("--chrom", help="chromosome of current pVCFs e.g. chr1", required=True, type=str)
-	parser.add_argument("--batch-size", help="trimed vcf batch size", type=int, default=100)
+	parser.add_argument("--batch-size", help="trimed vcf batch size", type=int, default=25)
 	parser.add_argument("--batch-num", help="Number of batches. Default: -1 (all)", required=False, default=-1, type=int)
 	parser.add_argument("--qc-thresholds", help="threshold for qc", type=str, required=False, default="INFO/AAScore>=0.5")
 #	parser.add_argument("--rm-tags", help="tags to remove", required=False, default="FORMAT/FT,FORMAT/AD,FORMAT/MD,FORMAT/DP,FORMAT/RA,FORMAT/PP,FORMAT/GQ", type=str)
