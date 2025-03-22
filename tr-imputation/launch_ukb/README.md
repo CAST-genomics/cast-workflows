@@ -41,10 +41,11 @@ Low quality variatns are removed using `bcftools -i INFO/AAscore>=0.5` which ass
 ./vcfTrimmer_launcher_ukb.py --chrom chr21  --concurrent
 ```
 
-### 2.1.2 Convert bgen files to vcf
+### 2.1.2 Convert bgen/bfiles files to vcf
 
 Bgen files is located at `Bulk/Genotype Results/Genotype calls`. Need to check any of those variants need to be filtered. The [bgen files](https://github.com/dnanexus/UKB_RAP/blob/main/end_to_end_gwas_phewas/bgens_qc/bgens_qc.wdl) as well as the resultsing [SNPs need QC](https://github.com/dnanexus/UKB_RAP/blob/main/end_to_end_gwas_phewas/run_array_qc.sh) and it is on [b37 coordinates](https://github.com/dnanexus/UKB_RAP/tree/main/end_to_end_gwas_phewas/liftover_plink_beds_tmp). 
 
+Bgen files from UKB are ["ref-first"](https://biobank.ndph.ox.ac.uk/showcase/label.cgi?id=100319)
 
 ### 2.1.3 Split VCF files by samples
 

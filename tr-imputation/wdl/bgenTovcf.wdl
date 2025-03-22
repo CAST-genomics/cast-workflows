@@ -1,25 +1,25 @@
 version 1.0
 
-workflow bfileTovcf {
+workflow bgenTovcf {
     input {
-        File bed
-        File bim
-        File fam
-        File ref_genome
+        File bgen_file
+        File sample_file
+#        File ref_genome
         Int batch_size
         Int split_mem 
         String chrom
+        String bgen_qc
     }
 
     call convert_split {
         input :
-            bed = bed,
-            bim = bim,
-            fam = fam,
-            ref_genome = ref_genome,
+            input_file = bgen_file,
+            input_sample = sample_file,
+#            ref_genome = ref_genome,
             outprefix = chrom,
             sample_size = batch_size, 
-            mem = split_mem
+            mem = split_mem,
+            qc_option = bgen_qc
     }
 
     output {
@@ -33,13 +33,13 @@ workflow bfileTovcf {
 task convert_split {
 
     input {
-        File bed
-        File bim
-        File fam
-        File ref_genome
+        File input_file
+        File input_sample
+#        File ref_genome
         String outprefix
         Int sample_size
         Int mem
+        String qc_option
     }
 
     command <<<
@@ -47,12 +47,9 @@ task convert_split {
         echo "start conversion"
         
         mkdir -p bgenToVCF
-        plink2 --bed ~{bed} \
-            --bim ~{bim} \
-            --fam ~{fam} \
+        plink2 --bgen ~{input_file} "ref-first"\
+            --sample ~{input_sample} ~{qc_option} \
             --export vcf id-paste=iid bgz \
-            --fa ~{ref_genome} \
-            --ref-from-fa \
             --out "bgenToVCF/~{outprefix}"
         
         echo "Adding information"
@@ -74,10 +71,13 @@ task convert_split {
        
         echo "start splitting into $(ls batch_files/*.txt | wc -l) batches"
         mkdir ./split_by_samples_hg19
+        idx=1 
         for batch in batch_files/*.txt; do
             batch_name=$(basename ${batch} | cut -d "." -f 1)
+            echo "processing ${idx} ${batch}"
             bcftools view -S ${batch} ./bgenToVCF/~{outprefix}_extra_tags_added_hg19.vcf.gz -Oz -o ./split_by_samples_hg19/~{outprefix}_${batch_name}_hg19.vcf.gz
             tabix -p vcf ./split_by_samples_hg19/~{outprefix}_${batch_name}_hg19.vcf.gz
+            ((idx++))
         done
     >>>
 
