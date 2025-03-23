@@ -23,7 +23,8 @@ token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', '
 token = str.strip(token_fetch_command.stdout)
 project = os.getenv("GCS_REQUESTER_PAYS_PROJECT")
 bucket = os.getenv("WORKSPACE_BUCKET")
-#print(f"Workspace Bucket: {bucket}")
+print(f"Workspace Bucket: {bucket}")
+print(f"Project: {project}")
 #print all the environmental variables 
 #print(dict(os.environ))
 
@@ -58,7 +59,7 @@ def GetFloatFromPC(x):
 
 def LoadAncestry(ancestry_pred_path,project):
     """
-	Download ancestry_pred.tsv locally
+	Download ancestry_preds.tsv locally
 
 	Arguments
 	---------
