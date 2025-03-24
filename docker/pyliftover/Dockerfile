@@ -27,7 +27,7 @@ COPY ./hg19ToHg38.over.chain.gz /resources/
 RUN pip3 install --upgrade pip
 RUN pip3 install pandas==2.0.3
 RUN pip3 install pyliftover==0.4.1
-
+RUN pip3 install bgzip
 # Install htslib 1.20
 WORKDIR /sources
 RUN wget -O htslib-1.20.tar.bz2 https://github.com/samtools/htslib/releases/download/1.20/htslib-1.20.tar.bz2
