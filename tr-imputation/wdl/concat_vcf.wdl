@@ -32,10 +32,15 @@ task concat_vcf {
     }
     # String vcf_files_str = sep(", ", vcf_files) 
     command <<<
+        ulimit -n 800000
+        ulimit -c unlimited
         echo "start concat all files..."
-        # vcf_files_str=~{sep=" " vcf_files}
         bcftools concat -a -Oz -o ~{merged_prefix}.vcf.gz ~{sep=" " vcf_files} 
-        bcftools sort -Oz -o ~{merged_prefix}_sorted.vcf.gz ~{merged_prefix}.vcf.gz
+        
+        mkdir ./sort_temp
+        max_mem=$((~{mem}-5))
+        # ls
+        bcftools sort -Oz -T ./sort_temp -m "${max_mem}G" -o ~{merged_prefix}_sorted.vcf.gz ~{merged_prefix}.vcf.gz
         ls
         tabix -p vcf ~{merged_prefix}_sorted.vcf.gz
     >>>
@@ -44,7 +49,7 @@ task concat_vcf {
         docker: "gcr.io/ucsd-medicine-cast/bcftools-gcs:latest"
         memory: mem + "GB"
         disk: "local-disk 150 SSD"
-        maxRetries: 3
+        maxRetries: 1 
     }
 
     output {
