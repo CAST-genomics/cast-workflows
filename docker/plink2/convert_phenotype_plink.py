@@ -99,6 +99,7 @@ def main():
     parser.add_argument("--sharedcovars", help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male", type=str, default="sex_at_birth_Male")
     parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
     parser.add_argument("--case-control",help="Use binary phenotype", action="store_true")
+    parser.add_argument("--ancestry-pc", help="Use precomputed ancestry specific PCs", action="store_true")
     args = parser.parse_args()
 
 
@@ -118,8 +119,14 @@ def main():
     covars = pt_covars + shared_covars
 
     # Set up data frame with phenotype and covars
-    ancestry = LoadAncestry(args.ancestry_pred_path,project)
     plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
+    if args.ancestry_pc:
+        subprocess.run([f"gsutil", "cp", "f{bucket}/ancestry_pc/afr_eur_pca.tsv", "."], check=True)
+        ancestry = pd.read_csv("afr_eur_pca.tsv", sep="\t")
+        pcols = ["PC%s"%i for i in range(1, 11)]
+    else:
+        ancestry = LoadAncestry(args.ancestry_pred_path,project)
+    
 
     # Extract phenotype and covars only
     plink_pheno = plink[["FID","IID","phenotype"]]

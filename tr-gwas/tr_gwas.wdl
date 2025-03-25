@@ -11,6 +11,7 @@ workflow tr_gwas {
         String GCS_OAUTH_TOKEN = ""
         String WORKSPACE_BUCKET = ""
         Boolean logistic = false
+        Boolean ancestry_pc = false
     }
 
     ### Separate workflow for each phenotype ###
@@ -23,7 +24,8 @@ workflow tr_gwas {
                 GOOGLE_PROJECT=GOOGLE_PROJECT,
                 GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN,
                 WORKSPACE_BUCKET=WORKSPACE_BUCKET,
-                logistic=logistic
+                logistic=logistic,
+                ancestry_pc=ancestry_pc
         }
 
             scatter (cohort in cohorts) {
@@ -60,6 +62,7 @@ task convert_phenotype {
         String GCS_OAUTH_TOKEN = ""
         String WORKSPACE_BUCKET = ""
         Boolean logistic = false
+        Boolean ancestry_pc = false
     }
     
     String pheno_name = basename(pheno,"_phenocovar.csv")
@@ -68,12 +71,16 @@ task convert_phenotype {
         export GCS_OAUTH_TOKEN=$(gcloud auth application-default print-access-token)
         export GCS_REQUESTER_PAYS_PROJECT="~{GOOGLE_PROJECT}"
         export WORKSPACE_BUCKET="~{WORKSPACE_BUCKET}"
-        if [[ "~{logistic}" == false ]] ; then 
+        if [[ "~{logistic}" == false ]] && [[ "~{ancestry_pc}" == false ]]; then 
             python3 /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno_name} 
         fi
         if [[ "~{logistic}" == true ]] ; then
             python3 /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno_name} --case-control
         fi
+        if [[ "~{ancestry_pc}" == true ]] ; then
+            python3 /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno_name} --ancestry-pc 
+        fi 
+
     >>>
 
     runtime {
