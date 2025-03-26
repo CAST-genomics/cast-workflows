@@ -28,6 +28,7 @@ RUN pip3 install --upgrade pip
 RUN pip3 install pandas==2.0.3
 RUN pip3 install pyliftover==0.4.1
 RUN pip3 install bgzip
+
 # Install htslib 1.20
 WORKDIR /sources
 RUN wget -O htslib-1.20.tar.bz2 https://github.com/samtools/htslib/releases/download/1.20/htslib-1.20.tar.bz2
@@ -37,7 +38,14 @@ RUN ./configure
 RUN make
 RUN make install
 
-
+# Install bcftools 1.20
+WORKDIR /sources
+RUN wget -O bcftools-1.20.tar.bz2 https://github.com/samtools/bcftools/releases/download/1.20/bcftools-1.20.tar.bz2
+RUN tar -xjvf bcftools-1.20.tar.bz2
+WORKDIR bcftools-1.20
+RUN ./configure --enable-gcs --enable-libcurl --enable-s3
+RUN make
+RUN make install
 #RUN pip3 install trtools==6.0.2
 # RUN git clone https://github.com/gymrek-lab/TRTools
 # WORKDIR TRTools

@@ -37,10 +37,11 @@ def main():
     parser.add_argument("--bfile-path", help="the folder of bfile on DNANexus", required=False, default="/Bulk/Imputation/UKB imputation from genotype", type=str)
 #    parser.add_argument("--ref-genome", help="reference genome for check REF/ALT in bfile", required=False, default="file-GzKvKp8JX3JvVjg9Qp4pzqgv", type=str)
     parser.add_argument("--batch-size", help="number of samples per batch", required=False, default=1000, type=int)
-    parser.add_argument("--split-mem", help="memory of instance used for plist", required=False, default=64, type=int)
+    parser.add_argument("--split-mem", help="memory of instance used for plist", required=False, default=32, type=int)
     parser.add_argument("--bgen-qc", help="qc for bgen file, default from UKB recommended", required=False, default="--mac 10 --maf 0.0001 --hwe 1e-15 --mind 0.1 --geno 0.1", type=str)
-    parser.add_argument("--workflow-id", help="id of workflow", required=False, default="workflow-GzKzzY8JX3Jx5pV583Kv984Y", type=str)
- 
+#    parser.add_argument("--workflow-id", help="id of workflow", required=False, default="workflow-GzKzzY8JX3Jx5pV583Kv984Y", type=str)
+    parser.add_argument("--workflow-id", help="id of workflow", required=False, default="workflow-GzQ56qQJX3JYXKZkvF65z6qq", type=str)
+
     args = parser.parse_args()
     bgen_id, sample_id = getbfileID(args.bfile_path, args.chrom)    
 

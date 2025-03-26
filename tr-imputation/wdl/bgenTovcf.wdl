@@ -11,7 +11,7 @@ workflow bgenTovcf {
         String bgen_qc
     }
 
-    call convert_split {
+    call convert {
         input :
             input_file = bgen_file,
             input_sample = sample_file,
@@ -22,15 +22,24 @@ workflow bgenTovcf {
             qc_option = bgen_qc
     }
 
+    call split {
+
+        input :
+            combined_vcf = convert.combined_vcf,
+            mem = split_mem  
+            sample_size = batch_size,
+            outprefix = chrom
+    }
+
     output {
-        File sample_list = convert_split.sample_list
-        File converted_vcf = convert_split.combined_vcf
-        Array[File] batched_vcf = convert_split.batched_vcfs 
-        Array[File] batched_idxs = convert_split.batched_vcf_idxs
+        File sample_list = split.sample_list
+        File converted_vcf = convert.combined_vcf
+        Array[File] batched_vcf = split.batched_vcfs 
+        Array[File] batched_idxs = split.batched_vcf_idxs
     }
 }
 
-task convert_split {
+task convert {
 
     input {
         File input_file
@@ -44,6 +53,7 @@ task convert_split {
 
     command <<<
         set -e
+        ulimit -n 800000 
         echo "start conversion"
         
         mkdir -p bgenToVCF
@@ -58,27 +68,27 @@ task convert_split {
         bcftools +fill-tags "bgenToVCF/~{outprefix}.vcf.gz" -Oz -o "bgenToVCF/~{outprefix}_extra_tags_added_hg19.vcf.gz" -- -t AF,AN,AC
         ls -lht ./bgenToVCF 
         echo "finish converting, start splitting..." 
-        rm ./bgenToVCF/~{outprefix}.vcf.gz
+#        rm ./bgenToVCF/~{outprefix}.vcf.gz
         
-        echo "extract samples first" 
-        # split by batches
-        bcftools query -l ./bgenToVCF/~{outprefix}_extra_tags_added_hg19.vcf.gz | \
-            awk -v group_size=~{sample_size} 'BEGIN {FS=OFS="\t"} {print $1,"batch"int(NR / group_size)+1}' > sample_list.txt
-        
-        echo "extract samples first"
-        mkdir batch_files/ 
-        awk -v outdir="batch_files/" 'BEGIN {FS=OFS="\t"} {print $1 > outdir$2".txt"}' sample_list.txt
-       
-        echo "start splitting into $(ls batch_files/*.txt | wc -l) batches"
-        mkdir ./split_by_samples_hg19
-        idx=1 
-        for batch in batch_files/*.txt; do
-            batch_name=$(basename ${batch} | cut -d "." -f 1)
-            echo "processing ${idx} ${batch}"
-            bcftools view -S ${batch} ./bgenToVCF/~{outprefix}_extra_tags_added_hg19.vcf.gz -Oz -o ./split_by_samples_hg19/~{outprefix}_${batch_name}_hg19.vcf.gz
-            tabix -p vcf ./split_by_samples_hg19/~{outprefix}_${batch_name}_hg19.vcf.gz
-            ((idx++))
-        done
+#        echo "extract samples first" 
+#        # split by batches
+#        bcftools query -l ./bgenToVCF/~{outprefix}_extra_tags_added_hg19.vcf.gz | \
+#            awk -v group_size=~{sample_size} 'BEGIN {FS=OFS="\t"} {print $1,"batch"int(NR / group_size)+1}' > sample_list.txt
+#        
+#        echo "extract samples first"
+#        mkdir batch_files/ 
+#        awk -v outdir="batch_files/" 'BEGIN {FS=OFS="\t"} {print $1 > outdir$2".txt"}' sample_list.txt
+#       
+#        echo "start splitting into $(ls batch_files/*.txt | wc -l) batches"
+#        mkdir ./split_by_samples_hg19
+#        idx=1 
+#        for batch in batch_files/*.txt; do
+#            batch_name=$(basename ${batch} | cut -d "." -f 1)
+#            echo "processing ${idx} ${batch}"
+#            bcftools view -S ${batch} ./bgenToVCF/~{outprefix}_extra_tags_added_hg19.vcf.gz -Oz -o ./split_by_samples_hg19/~{outprefix}_${batch_name}_hg19.vcf.gz
+#            tabix -p vcf ./split_by_samples_hg19/~{outprefix}_${batch_name}_hg19.vcf.gz
+#            ((idx++))
+#        done
     >>>
 
     runtime {
@@ -89,10 +99,45 @@ task convert_split {
 
     output {
         File combined_vcf = "bgenToVCF/~{outprefix}_extra_tags_added_hg19.vcf.gz"
-        Array[File] batched_vcfs = glob("./split_by_samples_hg19/*.gz")
-        Array[File] batched_vcf_idxs = glob("./split_by_samples_hg19/*.tbi")
-        File sample_list = "sample_list.txt"
+#        Array[File] batched_vcfs = glob("./split_by_samples_hg19/*.gz")
+#        Array[File] batched_vcf_idxs = glob("./split_by_samples_hg19/*.tbi")
+#        File sample_list = "sample_list.txt"
     }
+}
+
+task split {
+    input {
+        File combined_vcf
+        Int mem
+        Int sample_size
+        String outprefix
+    }
+
+    command <<<
+    set -e
+    ulimit -n 800000
+    echo "extract samples first" 
+    # split by batches
+    bcftools query -l ~{combined_vcf} | \
+      awk -v group_size=~{sample_size} -v prefix=~{outprefix} 'BEGIN {FS=OFS="\t"} {print $1,"-",prefix_"batch"int(NR / group_size)+1}' > sample_list.txt
+    mkdir ./split_by_samples_hg19 
+    bcftools plugin split ~{combined_vcf} -G sample_list.txt -Oz -o ./split_by_samples_hg19/
+    for f in ./split_by_samples_hg19/*.vcf.gz; do tabix -p vcf $f; done
+    >>> 
+    
+    runtime {
+        docker: "gcr.io/ucsd-medicine-cast/bcftools-plink2:latest"
+        memory: mem+"GB"
+        disk:"local-disk 200 SSD"
+        maxRetries: 1 
+    }
+
+    output {
+      File sample_list = "sample_list.txt"
+      Array[File] batched_vcfs = glob("./split_by_samples_hg19/*.vcf.gz")
+      Array[File] batched_vcf_idxs = glob("./split_by_samples_hg19/*.vcf.gz.tbi")
+    }
+
 }
 
 #task liftover {

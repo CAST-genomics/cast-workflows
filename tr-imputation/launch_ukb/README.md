@@ -38,7 +38,7 @@ Low quality variatns are removed using `bcftools -i INFO/AAscore>=0.5` which ass
 ./vcfTrimmer_launcher_ukb.py --chrom chr21  --batch-size 2 --batch-num 2
 
 # run all chromosomes
-./vcfTrimmer_launcher_ukb.py --chrom chr21  --concurrent
+./vcfTrimmer_launcher_ukb.py --chrom chr21
 ```
 
 ### 2.1.2 Convert bgen/bfiles files to vcf
@@ -47,6 +47,11 @@ Bgen files is located at `Bulk/Genotype Results/Genotype calls`. Need to check a
 
 Bgen files from UKB are ["ref-first"](https://biobank.ndph.ox.ac.uk/showcase/label.cgi?id=100319)
 
-### 2.1.3 Split VCF files by samples
+### 2.1.3 LiftOver and/or split VCF files by samples
 
 To reduce the memory, the VCF files combined by chromosomes are furhter split by samples. Each batch contains 1k samples.
+
+
+## 2.2 Start imputation
+
+

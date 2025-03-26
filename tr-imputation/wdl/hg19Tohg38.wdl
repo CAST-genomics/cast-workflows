@@ -11,10 +11,10 @@ workflow hg19Tohg38 {
             mem = liftover_mem 
     } 
     output {
-        Array[File] hg38_vcf = liftover.hg38_vcfs
-        Array[File] hg38_idx = liftover.hg38_idxs
-        Array[File] unlifted_vcf = liftover.unlifted_vcfs
-        Array[File] logs = liftover.liftover_logs
+        File hg38_vcf = liftover.hg38_vcfs
+        File hg38_idx = liftover.hg38_idxs
+        File unlifted_vcf = liftover.unlifted_vcfs
+        File logs = liftover.liftover_logs
     }
 }
 
@@ -30,7 +30,10 @@ task liftover {
 
           liftover.py "~{input_vcf}" .
           ls -lht
-          tabix -p vcf ./~{vcf_prefix}_hg38.vcf.gz
+          mkdir ./sort_temp
+          max_mem=$((~{mem}-4))
+          bcftools sort -Oz -T ./sort_temp -m "${max_mem}G" -o ./~{vcf_prefix}_hg38_sorted.vcf.gz ./~{vcf_prefix}_hg38.vcf.gz
+          tabix -p vcf ./~{vcf_prefix}_hg38_sorted.vcf.gz
       >>>
 
       runtime {
@@ -40,10 +43,10 @@ task liftover {
       }
 
       output {
-          Array[File] hg38_vcfs=glob("./*hg38.vcf.gz")
-          Array[File] hg38_idxs=glob("./*hg38.vcf.gz.tbi")
-          Array[File] unlifted_vcfs=glob("./*unlifted.vcf.gz")
-          Array[File] liftover_logs=glob("./*liftOver.log")
+          File hg38_vcfs="./${vcf_prefix}_hg38_sorted.vcf.gz"
+          File hg38_idxs="./${vcf_prefix}_hg38_sorted.vcf.gz.tbi"
+          File unlifted_vcfs="./${vcf_prefix}_unlifted.vcf.gz"
+          File liftover_logs="./${vcf_prefix}_liftOver.log"
       }
 
 }

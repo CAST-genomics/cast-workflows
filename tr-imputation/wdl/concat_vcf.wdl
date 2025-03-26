@@ -33,15 +33,11 @@ task concat_vcf {
     # String vcf_files_str = sep(", ", vcf_files) 
     command <<<
         ulimit -n 800000
-        ulimit -c unlimited
+        vcf_array=(~{sep=" " vcf_files})
+        sorted_vcf_array=($(printf "%s\n" "${vcf_array[@]}" | sort -V))
         echo "start concat all files..."
-        bcftools concat -a -Oz -o ~{merged_prefix}.vcf.gz ~{sep=" " vcf_files} 
-        
-        mkdir ./sort_temp
-        max_mem=$((~{mem}-5))
-        # ls
-        bcftools sort -Oz -T ./sort_temp -m "${max_mem}G" -o ~{merged_prefix}_sorted.vcf.gz ~{merged_prefix}.vcf.gz
-        ls
+        cpu_n=$(nproc)
+        bcftools concat --threads ${cpu_n} -Oz -o ~{merged_prefix}_sorted.vcf.gz "${sorted_vcf_array[@]}"  
         tabix -p vcf ~{merged_prefix}_sorted.vcf.gz
     >>>
 

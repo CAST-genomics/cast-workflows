@@ -34,13 +34,10 @@ task run_batch {
         Int n_threads
         Int mem
     }
-
     command <<<
         set -e
-        ulimit -n 800000 
+        ulimit -n 800000
         echo "start job"
-        # cd ~/
-        # pwd
         file_idx=1 
         vcf_list_str=(~{sep=" " vcf_list})
         if [[ "~{tags_to_rm}" != "NA" ]] && [[ "~{qc_inputs}" != "NA" ]]
@@ -75,20 +72,10 @@ task run_batch {
 
         echo "start combine"
         ls -lh ./*_trimmed.vcf.gz
+        file_list=($(ls -d ./*_trimmed.vcf.gz | sort -V))
         echo "-------------"
-        bcftools concat -a ./*_trimmed.vcf.gz -Oz -o ~{out_prefix}.vcf.gz 
-        rm -rf ./*_trimmed.vcf.gz
-        
-        echo "sort and index"
-        mkdir ./bcftools_temp
-        max_mem=$((~{mem}-5))
-        bcftools sort -Oz -T ./bcftools_temp -m "${max_mem}G" -o ~{out_prefix}_trimmed.vcf.gz ~{out_prefix}.vcf.gz
-        ls -lh ~{out_prefix}_trimmed.vcf.gz
-        rm -rf ./bcftools_temp
-        
-        echo "start indexing..." 
-        tabix -p vcf ~{out_prefix}_trimmed.vcf.gz
-        echo "Done!"
+        bcftools concat --threads ~{n_threads} "${file_list[@]}" -Oz -o ~{out_prefix}_trimmed.vcf.gz  
+        tabix -p vcf ~{out_prefix}_trimmed.vcf.gz        
     >>>
 
     runtime {
