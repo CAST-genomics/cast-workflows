@@ -64,7 +64,7 @@ def PlotManhattan(df, outpath):
     df_sorted.to_csv(f'{outpath}_ADD.csv', index=False)
     df_sorted['i'] = df_sorted.index
     # Generate Manhattan plot
-    plot = sns.relplot(data=df_sorted, x='i', y='-log10p', s=6, aspect=4, linewidth=0,
+    plot = sns.relplot(data=df_sorted, x='i', y='-log10p', aspect=4, linewidth=0,
                        hue='#CHROM', palette="tab10", legend=None)
     chrom_df = df_sorted.groupby('#CHROM')['i'].median()
     plot.ax.set_xlabel('Chromosomes')
@@ -85,11 +85,13 @@ def ppoints(n, a=None):
     return (np.arange(n) + 1 - a) / (n + 1 - 2 * a)
 
 def PlotQQ(df, outpath):
+    df = df[df['TEST'] == 'ADD']
     df['P'] = df['P'].replace('NA', np.nan)
     df = df.dropna(subset=['P'])
     df['P'] = df['P'].astype(float)
     df['-log10p'] = -np.log10(df.P)
-    p_vals = df["-log10p"].dropna().apply(lambda x: 10**-x)
+    #p_vals = df["-log10p"].dropna().apply(lambda x: 10**-x)
+    p_vals = df["P"]
     p_vals = p_vals[(0 < p_vals) & (p_vals < 1)]
     observed = -np.log10(np.sort(np.array(p_vals)))
     expected = -np.log10(ppoints(len(p_vals)))
