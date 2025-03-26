@@ -121,7 +121,7 @@ def main():
     # Set up data frame with phenotype and covars
     plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
     if args.ancestry_pc:
-        subprocess.run(["gsutil", "cp", f"{bucket}/ancestry_pc/afr_eur_pca.tsv", "."], check=True)
+        subprocess.run(["gsutil", "cp", f"{bucket}ancestry_pc/afr_eur_pca.tsv", "."], check=True)
         ancestry = pd.read_csv("afr_eur_pca.tsv", sep="\t")
         pcols = ["PC%s"%i for i in range(1, 11)]
     else:
