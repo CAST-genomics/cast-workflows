@@ -65,7 +65,9 @@ def main():
     parser.add_argument("--trimvcf-mem", help="memory for trim vcf", required=False, default=16, type=int) 
     parser.add_argument("--trimvcf-id", help="workflow-id to trim vcfs", required=False, default="workflow-GzVZz8jJX3Jyk8jjzkpBgyqK", type=str)
 
-    parser.add_argument("--concat-id", help="workflow-id to concat vcfs", required=False, default="workflow-GzVY5B0JX3JpX6bB8JPJqP5g", type=str)
+#    parser.add_argument("--concat-id", help="workflow-id to concat vcfs", required=False, default="workflow-GzVY5B0JX3JpX6bB8JPJqP5g", type=str)
+    parser.add_argument("--concat-id", help="workflow-id to concat vcfs", required=False, default="workflow-GzXFpXjJX3Jb334BVYgZGygg", type=str)
+
     parser.add_argument("--concat-mem", help="memory for concat vcfs", required=False, default=64, type=int)
 
     parser.add_argument("--splitvcf-id", help="workflow-id to split vcfs", required=False, default="workflow-GzQybp0JX3JQjX2j6VzfbzKx", type=str)
@@ -98,33 +100,33 @@ def main():
         curr_idx += 1
 
 
-    merge_vcfs = []
-    merge_vcfs_idx = []
+    concat_vcfs = []
+    concat_vcfs_idx = []
     for trim_job in depends:
         vcf = GetJBOR(trim_job, "stage-outputs.final_vcf")
         vcf_idx = GetJBOR(trim_job, "stage-outputs.final_vcf_indx")
-        merge_vcfs.append(vcf)
-        merge_vcfs_idx.append(vcf_idx)
+        concat_vcfs.append(vcf)
+        concat_vcfs_idx.append(vcf_idx)
 
-    sys.stderr.write("Setting up merge from all-batches...\n")
-    merge_dict = {}
-    merge_dict["stage-common.merged_prefix"] = args.chrom
-    merge_dict["stage-common.vcf_files"] = merge_vcfs
-    merge_dict["stage-common.vcf_indexs"] = merge_vcfs_idx
-    merge_dict["stage-common.mem"] = args.concat_mem
+    sys.stderr.write("Setting up concat from all-batches...\n")
+    concat_dict = {}
+    concat_dict["stage-common.merged_prefix"] = args.chrom
+    concat_dict["stage-common.vcf_files"] = concat_vcfs
+    concat_dict["stage-common.vcf_indexs"] = concat_vcfs_idx
+    concat_dict["stage-common.mem"] = args.concat_mem
     
-    merge_job = RunWorkflow(merge_dict, args.concat_id, args.chrom, depends=depends, run_priority="high")
-    saveJson(f"{log_dir}/concat_{args.chrom}.json", merge_dict)
+    concat_job = RunWorkflow(concat_dict, args.concat_id, args.chrom, depends=depends, run_priority="high")
+    saveJson(f"{log_dir}/concat_{args.chrom}.json", concat_dict)
 
 
     split_dict = {}
-    combined_vcf = GetJBOR(merge_job, "stage-outputs.final_vcf")
+    combined_vcf = GetJBOR(concat_job, "stage-outputs.final_vcf")
     split_dict["stage-common.vcf_file"] = combined_vcf
     split_dict["stage-common.chromosome"] = args.chrom
     split_dict["stage-common.sample_size"] = args.sample_size
     split_dict["stage-common.split_mem"] = args.splitvcf_mem
 
-    RunWorkflow(split_dict, args.splitvcf_id, f"{args.chrom}/splitted_by_samples/", depends=[merge_job], run_priority="high")
+    RunWorkflow(split_dict, args.splitvcf_id, f"{args.chrom}/splitted_by_samples/", depends=[concat_job], run_priority="high")
     saveJson(f"{log_dir}/splitVCF_{args.chrom}.json", split_dict)
 
 if __name__ == "__main__":

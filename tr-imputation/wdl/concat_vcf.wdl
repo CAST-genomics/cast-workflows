@@ -18,7 +18,7 @@ workflow run_concat{
 
     output {
         File final_vcf = concat_vcf.concated_vcf
-        File final_vcf_index = concat_vcf.concated_vcf_index
+#        File final_vcf_index = concat_vcf.concated_vcf_index
     }
 
 }
@@ -38,7 +38,7 @@ task concat_vcf {
         echo "start concat all files..."
         cpu_n=$(nproc)
         bcftools concat --threads ${cpu_n} -Oz -o ~{merged_prefix}_sorted.vcf.gz "${sorted_vcf_array[@]}"  
-        tabix -p vcf ~{merged_prefix}_sorted.vcf.gz
+        # tabix -p vcf ~{merged_prefix}_sorted.vcf.gz
     >>>
 
     runtime {
@@ -50,7 +50,7 @@ task concat_vcf {
 
     output {
         File concated_vcf = "${merged_prefix}_sorted.vcf.gz"
-        File concated_vcf_index = "${merged_prefix}_sorted.vcf.gz.tbi"
+#        File concated_vcf_index = "${merged_prefix}_sorted.vcf.gz.tbi"
     }
 
 }
