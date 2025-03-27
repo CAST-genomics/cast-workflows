@@ -10,7 +10,7 @@ This is a tutorial on how to impute TRs using EnsembleTR reference panel. For de
 
 # 2.Imputation 
 
-First get files that required for imputation: 1) SNP VCFs, 2) SNP-TR reference files, 3) Genetic maps.
+First get files that required for imputation: 1) SNP VCFs, 2) SNP-TR reference files (both the bref3 and VCF version), 3) Genetic maps.
 
 * Here, we used the [EnsembleTR reference panel version IV](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_4_readme.txt). 
 Use this command to download the reference panel and upload to DNANexus: 'wget -O - https://\<s3-bucket-url\>/\<file-name\> | dx upload - --destination /project-folder/\<file-name\>'
@@ -18,7 +18,7 @@ Use this command to download the reference panel and upload to DNANexus: 'wget -
 
 ## 2.1 Prepare VCF files
 
-Imputation requires VCF files but UK Biobank only have pVCF (for WGS) or bgen files (for array data). Need tofirst convert those files to VCFs. For pVCFs, there are two version DRAGEN or Graphtyper. One post mention DRAGEN may need further quality control but no details protocol available. 
+Imputation requires VCF files but UK Biobank only have pVCF (for WGS) or bgen files (for array data). Need to convert those files to VCFs. For pVCFs, there are two version DRAGEN or Graphtyper. One post mention DRAGEN may need further quality control but no details protocol available. 
 
 Here we going to generate VCF from pVCF (graphtyper verson) and bgen files (array data) on chromosome 21 and compare the imputation results.
 
@@ -55,7 +55,7 @@ Bfiles is located at `Bulk/Genotype Results/Genotype calls`. Need to check any o
 
 * Imputed bgen files
 
-The [bgen files](https://github.com/dnanexus/UKB_RAP/blob/main/end_to_end_gwas_phewas/bgens_qc/bgens_qc.wdl) as well as the resultsing [SNPs need QC](https://github.com/dnanexus/UKB_RAP/blob/main/end_to_end_gwas_phewas/run_array_qc.sh) and it is on [b37 coordinates](https://github.com/dnanexus/UKB_RAP/tree/main/end_to_end_gwas_phewas/liftover_plink_beds_tmp). 
+The [bgen files](https://github.com/dnanexus/UKB_RAP/blob/main/end_to_end_gwas_phewas/bgens_qc/bgens_qc.wdl) and converted [SNPs need QC](https://github.com/dnanexus/UKB_RAP/blob/main/end_to_end_gwas_phewas/run_array_qc.sh) and it is on [b37 coordinates](https://github.com/dnanexus/UKB_RAP/tree/main/end_to_end_gwas_phewas/liftover_plink_beds_tmp). 
 
 Bgen files from UKB are ["ref-first"](https://biobank.ndph.ox.ac.uk/showcase/label.cgi?id=100319)
 
@@ -64,5 +64,34 @@ Bgen files from UKB are ["ref-first"](https://biobank.ndph.ox.ac.uk/showcase/lab
 To reduce the memory, the VCF files combined by chromosomes are furhter split by samples. Each batch contains 1k samples. This step is integrated in the VCF file preprations. 
 
 ## 2.2 Imputation
+
+The imputation is performed using beagle on each batch of 1,000 samples. Run the following command to submit the imputation jobs.
+
+The current [workflow](../wdl/batch_imputation_bref3.wdl) run batched jobs using `scatter`, which concurrently run all jobs in the same batch using multiple instance. Scatter job finish faster will still be charge till all of scatter jobs is done. It might be very expensive use a large `--batch-size` as it required more concurrent instance.
+
+Mofidy the `./imputation_launcher_ukb.py` to change the output folders.
+```bash
+# for test
+./imputation_launcher_ukb.py --chrom 21 --batch-size 10 --batch-num 2
+
+# for all batches
+./imputation_launcher_ukb.py --chrom 21 --batch-size 10 
+
+```
+
+This workflow will output the following files:
+
+```
+# Imputed and annotated TRs in the annotated_TRs/chr{chrom}/ folder
+chr${chrom}_annotated.vcf.gz
+chr${chrom}_annotated.vcf.gz.tbi
+chr${chrom}_annotated.pgen
+chr${chrom}_annotated.psam
+chr${chrom}_annotated.pvar
+
+# Phased SNP+TR calls in the ./raw_imputed_files/chr{chrom} folder
+chr${chrom}_batch_{batch_num}.vcf.gz
+chr${chrom}_batch_{batch_num}.vcf.gz.tbi
+```
 
 
