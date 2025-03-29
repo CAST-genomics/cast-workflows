@@ -54,7 +54,7 @@ RUN make install
 #RUN tar -xzvf score_1.20-20240505.tar.gz
 RUN wget -P plugins https://raw.githubusercontent.com/freeseek/score/master/liftover.c
 RUN make
-ENV BCFTOOLS_PLUGINS /sources/bcftools-1.20/plugins
+ENV BCFTOOLS_PLUGINS="/sources/bcftools-1.20/plugins"
 
 
 

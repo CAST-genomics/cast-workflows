@@ -67,7 +67,7 @@ To reduce the memory, the VCF files combined by chromosomes are furhter split by
 
 The imputation is performed using beagle on each batch of 1,000 samples. Run the following command to submit the imputation jobs.
 
-The current [workflow](../wdl/batch_imputation_bref3.wdl) run batched jobs using `scatter`, which concurrently run all jobs in the same batch using multiple instance. Scatter job finish faster will still be charge till all of scatter jobs is done. It might be very expensive use a large `--batch-size` as it required more concurrent instance.
+The current [workflow](../wdl/batch_imputation_bref3.wdl) run batched jobs using `scatter`, which concurrently run all jobs in the same batch using multiple instance. Scatter job finish faster will still be charging till all of the rest scatter jobs is finished. It might be very expensive use a large `--batch-size` as it required more concurrent instance.
 
 Mofidy the `./imputation_launcher_ukb.py` to change the output folders.
 ```bash
