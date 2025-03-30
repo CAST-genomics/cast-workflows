@@ -137,6 +137,7 @@ task run_tr_gwas {
                 --pheno ~{pheno} \
                 --linear \
                 --covar ${covar_file} \
+                --hide-covar \
                 --keep ~{samples} \
                 --covar-variance-standardize \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
@@ -149,6 +150,7 @@ task run_tr_gwas {
                 --pheno ~{pheno} \
                 --logistic \
                 --covar ${covar_file} \
+                --hide-covar \
                 --keep ~{samples} \
                 --1 \
                 --covar-variance-standardize \
