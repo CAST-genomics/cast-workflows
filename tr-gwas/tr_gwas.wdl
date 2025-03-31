@@ -135,9 +135,8 @@ task run_tr_gwas {
             if [[ "~{logistic}" == false ]] ; then
                 plink2 --pfile ${pfile_outprefix} \
                 --pheno ~{pheno} \
-                --linear \
+                --linear hide-covar \
                 --covar ${covar_file} \
-                --hide-covar \
                 --keep ~{samples} \
                 --covar-variance-standardize \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
@@ -148,9 +147,8 @@ task run_tr_gwas {
             if [[ "~{logistic}" == true ]] ; then
                 plink2 --pfile ${pfile_outprefix} \
                 --pheno ~{pheno} \
-                --logistic \
+                --logistic hide-covar\
                 --covar ${covar_file} \
-                --hide-covar \
                 --keep ~{samples} \
                 --1 \
                 --covar-variance-standardize \
