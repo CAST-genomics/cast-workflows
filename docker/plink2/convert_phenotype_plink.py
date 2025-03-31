@@ -125,6 +125,7 @@ def main():
         subprocess.run(["gsutil", "cp", f"{bucket}ancestry_pc/filtered_ancestry_pc.tsv", "."], check=True)
         #ancestry = pd.read_csv("afr_eur_pca.tsv", sep="\t")
         ancestry = pd.read_csv("filtered_ancestry_pc.tsv", sep="\t")
+        ancestry["IID"] = ancestry["IID"].astype(str)
         pcols = ["PC%s"%i for i in range(1, 11)]
     else:
         ancestry = LoadAncestry(args.ancestry_pred_path,project)
