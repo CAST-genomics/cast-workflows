@@ -21,9 +21,6 @@ RUN mkdir -p /usr/local/gcloud \
   && /usr/local/gcloud/google-cloud-sdk/install.sh
 ENV PATH=$PATH:/usr/local/gcloud/google-cloud-sdk/bin
 
-# Copy python script 
-COPY convert_phenotype_plink.py /usr/bin/
-RUN chmod +x /usr/bin/convert_phenotype_plink.py
 
 # Download and install PLINK2
 RUN wget https://s3.amazonaws.com/plink2-assets/alpha6/plink2_linux_x86_64_20250129.zip \
@@ -32,7 +29,9 @@ RUN wget https://s3.amazonaws.com/plink2-assets/alpha6/plink2_linux_x86_64_20250
     && chmod +x /usr/bin/plink2 \
     && rm plink2_linux_x86_64_20250129.zip
 
-
+# Copy python script 
+COPY convert_phenotype_plink.py /usr/bin/
+RUN chmod +x /usr/bin/convert_phenotype_plink.py
 
 
 
