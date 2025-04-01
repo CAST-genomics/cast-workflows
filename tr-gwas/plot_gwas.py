@@ -80,10 +80,11 @@ def PlotManhattan(df, outpath, sig_p, LD_block_size):
                 xlabel="Chromosome",
                 ylabel=r"$-log_{10}{(P)}$",
                 hline_kws={"linestyle": "--", "lw": 1},
+                xticklabel_kws={"rotation": "vertical"},
                 is_annotate_topsnp=True,
-                ld_block_size=LD_block_size,  
-                text_kws={"fontsize": 5,  
-                        "arrowprops": dict(arrowstyle="->", color="k", alpha=0.6)},
+                #ld_block_size=LD_block_size,  
+                #text_kws={"fontsize": 5,  
+                #        "arrowprops": dict(arrowstyle="->", color="k", alpha=0.6)},
                 ax=ax)
     plt.savefig(f'{outpath}.manhattan.png', dpi=700)
 
