@@ -102,7 +102,7 @@ def main():
 
     bucket_name = os.getenv("WORKSPACE_BUCKET")
     # Create output directory if it does not exist
-    outdir = "gwas/outputs"
+    outdir = "outputs"
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
