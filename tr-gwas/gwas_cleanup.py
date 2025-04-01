@@ -81,10 +81,10 @@ def Cleanupfile(file_path,outdir):
                     data.append(line.split())  # Split the line by whitespace or tab
     df = pd.DataFrame(data, columns=columns)
     df = df[df['TEST'] == 'ADD']
-    phenoname = file_path.replace("_gwas.tab", "")
-    df.to_csv(f"{outdir}/{phenoname}_tsv", sep='\t', index=False)
+    phenoname = file_path.replace("_gwas.tab", "_gwas.tsv")
+    df.to_csv(f"{outdir}/{phenoname}", sep='\t', index=False)
     
-    return (f"{phenoname}.tsv")
+    return phenoname
 
 def CompressIndex(file,outdir):  
     cmd = f"bgzip {outdir}/{file}"
