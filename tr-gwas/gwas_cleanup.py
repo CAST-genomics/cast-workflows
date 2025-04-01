@@ -3,7 +3,8 @@
 Script to clean up GWAS summary statistics
  
 
-./gwas_cleanup.py 
+./gwas_cleanup.py \
+--phenotype hdl_cholesterol_AMR_HISPANIC_gwas.tab
 
 """
 
@@ -14,9 +15,6 @@ import subprocess
 import sys
 import pandas as pd
 from google.cloud import storage
-
-sys.path.append("../utils")
-import aou_utils
 
 def GetGWASPath(phenotype):
 	"""
@@ -30,7 +28,7 @@ def GetGWASPath(phenotype):
 	phenotype_array = []
 	phenotypes = [item.strip() for item in phenotype.split(',')]
 	for item in phenotypes: 
-		path = os.getenv("WORKSPACE_BUCKET")+"/tr-gwas_result/"+item.strip()+"_gwas.tab"
+		path = os.getenv("WORKSPACE_BUCKET")+"/tr-gwas_result/"+item.strip()
 		phenotype_array.append(path)	
 	return phenotype_array
 
@@ -83,10 +81,10 @@ def Cleanupfile(file_path,outdir):
                     data.append(line.split())  # Split the line by whitespace or tab
     df = pd.DataFrame(data, columns=columns)
     df = df[df['TEST'] == 'ADD']
-    phenoname = file_path.split(".")[0]
+    phenoname = file_path.replace(".gwas.tab", "")
     df.to_csv(f"{outdir}/{phenoname}_tsv", sep='\t', index=False)
     
-    return (f"{phenoname}_tsv")
+    return (f"{phenoname}.tsv")
 
 def CompressIndex(file,outdir):  
     cmd = f"bgzip {outdir}/{file}"
@@ -114,13 +112,13 @@ def main():
     else:
         phenotype_list  = [blob.name for blob in bucket_name.list_blobs(prefix="tr-gwas_result/") if blob.name.endswith('.tab')]
     for phenotype in phenotype_list:
-        if not os.path.exists(phenotype):
-            DownloadGWAS(phenotype)
-            phenotype = phenotype.split("/")[-1]
+        pheno_name = phenotype.split("/")[-1]
+        if os.path.exists(pheno_name):
+             sys.stdout.write(f"{pheno_name} already exists locally")
         else:
-            print(f"{phenotype} already exists locally")
-        
-        tsv_file = Cleanupfile(phenotype,outdir)
+            DownloadGWAS(phenotype)
+           
+        tsv_file = Cleanupfile(pheno_name,outdir)
     # Compress and index   
         CompressIndex(tsv_file,outdir)
 
