@@ -48,7 +48,7 @@ def DownloadGWAS(file_path):
     print(output.decode("utf-8"))   
     
 
-def Cleanupfile(file_path):  
+def Cleanupfile(file_path,outdir):  
     """
 	Read GWAS summary statistics file and remove extra header
 	Arguments
@@ -83,14 +83,14 @@ def Cleanupfile(file_path):
                     data.append(line.split())  # Split the line by whitespace or tab
     df = pd.DataFrame(data, columns=columns)
     df = df[df['TEST'] == 'ADD']
-    df.to_csv(f"{file_path}_tsv", sep='\t', index=False)
+    df.to_csv(f"{outdir}/{file_path}_tsv", sep='\t', index=False)
     return (f"{file_path}_tsv")
 
-def CompressIndex(file):  
-    cmd = f"bgzip {file}"
+def CompressIndex(file,outdir):  
+    cmd = f"bgzip {outdir}/{file}"
     output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
     print(output.decode("utf-8"))
-    cmd = f"tabix -p vcf{file}.gz"
+    cmd = f"tabix -p vcf {outdir}/{file}.gz"
     output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
     print(output.decode("utf-8"))
               
@@ -110,15 +110,15 @@ def main():
     if args.phenotype is not None:
         phenotype_list = GetGWASPath(args.phenotype)
     else:
-        phenotype_list  = [bucket_name + blob.name for blob in bucket_name.list_blobs(prefix="tr-gwas_result/") if blob.name.endswith('.tab')]
+        phenotype_list  = [blob.name for blob in bucket_name.list_blobs(prefix="tr-gwas_result/") if blob.name.endswith('.tab')]
     for phenotype in phenotype_list:
         if not os.path.exists(phenotype):
             DownloadGWAS(phenotype)
             phenotype = phenotype.split("/")[-1]
-
-        tsv_file = Cleanupfile(phenotype)
-    # Compress and index    
-        CompressIndex(tsv_file)
+        
+        tsv_file = Cleanupfile(phenotype,outdir)
+    # Compress and index   
+        CompressIndex(tsv_file,outdir)
 
 if __name__ == "__main__":
     main()
