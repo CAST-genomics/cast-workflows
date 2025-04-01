@@ -83,8 +83,10 @@ def Cleanupfile(file_path,outdir):
                     data.append(line.split())  # Split the line by whitespace or tab
     df = pd.DataFrame(data, columns=columns)
     df = df[df['TEST'] == 'ADD']
-    df.to_csv(f"{outdir}/{file_path}_tsv", sep='\t', index=False)
-    return (f"{file_path}_tsv")
+    phenoname = file_path.split(".")[0]
+    df.to_csv(f"{outdir}/{phenoname}_tsv", sep='\t', index=False)
+    
+    return (f"{phenoname}_tsv")
 
 def CompressIndex(file,outdir):  
     cmd = f"bgzip {outdir}/{file}"
@@ -115,6 +117,8 @@ def main():
         if not os.path.exists(phenotype):
             DownloadGWAS(phenotype)
             phenotype = phenotype.split("/")[-1]
+        else:
+            print(f"{phenotype} already exists locally")
         
         tsv_file = Cleanupfile(phenotype,outdir)
     # Compress and index   
