@@ -84,6 +84,7 @@ def Cleanupfile(file_path):
     df = pd.DataFrame(data, columns=columns)
     df = df[df['TEST'] == 'ADD']
     df.to_csv(f"{file_path}_tsv", sep='\t', index=False)
+    return (f"{file_path}_tsv")
 
 def CompressIndex(file):  
     cmd = f"bgzip {file}"
@@ -109,13 +110,15 @@ def main():
     if args.phenotype is not None:
         phenotype_list = GetGWASPath(args.phenotype)
     else:
-        phenotype_list  = [bucket_name + blob.name for blob in bucket.list_blobs(prefix="tr-gwas_result/") if blob.name.endswith('.tab')]
+        phenotype_list  = [bucket_name + blob.name for blob in bucket_name.list_blobs(prefix="tr-gwas_result/") if blob.name.endswith('.tab')]
     for phenotype in phenotype_list:
-        DownloadGWAS(phenotype)
-        phenotype_name = phenotype.split("/")[-1]
-        Cleanupfile(phenotype_name)
+        if not os.path.exists(phenotype):
+            DownloadGWAS(phenotype)
+            phenotype = phenotype.split("/")[-1]
+
+        tsv_file = Cleanupfile(phenotype)
     # Compress and index    
-        CompressIndex(phenotype_name)
+        CompressIndex(tsv_file)
 
 if __name__ == "__main__":
     main()
