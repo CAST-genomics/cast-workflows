@@ -17,7 +17,7 @@ def plot_histogram(data, xlabel, outpath):
     plt.clf()
 
 def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
-                            phenotype_label, outpath, downsample, violin,
+                            phenotype_label, outpath, binary, violin,
                             merge_bins,
                             min_gt_count=10):
     if len(gwas) == 1:
@@ -38,27 +38,36 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
     plotted_data = data[[genotype, phenotype]].dropna()
     plotted_data = plotted_data.astype(float)
 
-    if downsample:
+    if binary:
         # This is only necessary for the binary phenotypes.
-        # Where usually negative samples are over represented and 
-        # should be sampled
+        # Where usually negative samples are over represented
         # Check the phenotype is binary
         unique_phenotypes = plotted_data[phenotype].unique()
         if len(unique_phenotypes) != 2 or \
                 1 not in unique_phenotypes.tolist() or \
                 0 not in unique_phenotypes.tolist():
-            print("Error: Cannot select --downsample if the phenotype is not binary. " + \
+            print("Error: Cannot select --binary if the phenotype is not binary. " + \
                   "Unique values for the phenotype {}".format(unique_phenotypes.tolist()))
 
             
-        num_cases = len(plotted_data[plotted_data[phenotype] == 1])
-        num_controls = len(plotted_data[plotted_data[phenotype] == 0])
-        cases = plotted_data[plotted_data[phenotype] == 1]
-        controls_ds = plotted_data[plotted_data[phenotype] == 0].sample(n=num_cases)
-        plotted_data = pd.concat([controls_ds, cases])
-        print("Down sampling {} controls to {} in order to match {} cases".format(
-                    num_controls, len(controls_ds), num_cases))
-
+        plotted_data["odds_ratio"] = None
+        odds_ratio = {}
+        uniq_alleles = plotted_data[genotype].unique()
+        for uniq_allele in uniq_alleles:
+            num_cases_g = len(plotted_data[(plotted_data[genotype] == uniq_allele) & (plotted_data[phenotype] == 1)])
+            num_controls_g = len(plotted_data[(plotted_data[genotype] == uniq_allele) & (plotted_data[phenotype] == 0)])
+            num_cases_no_g = len(plotted_data[(plotted_data[genotype] != uniq_allele) & (plotted_data[phenotype] == 1)])
+            num_controls_no_g = len(plotted_data[(plotted_data[genotype] != uniq_allele) & (plotted_data[phenotype] == 0)])
+            #print("num_cases_g: {} num_cases_no_g: {} num_controls_g: {}, num_controls_no_g: {}".format(
+            #      num_cases_g, num_cases_no_g, num_controls_g, num_controls_no_g))
+            odds_ratio[uniq_allele] = (num_cases_g/num_cases_no_g) / (num_controls_g/num_controls_no_g)
+        sns.lineplot(x=odds_ratio.keys(),
+                     y=odds_ratio.values())
+        plt.xlabel(genotype)
+        plt.ylabel(phenotype +" odds ratio")
+        plt.savefig(outpath, bbox_inches="tight")
+        plt.clf()
+        return
     # Create a joint grid
     plot = sns.JointGrid()
     if merge_bins:

@@ -220,8 +220,7 @@ def main():
     parser.add_argument("--samples", help="List of sample IDs, sex to keep", type=str, default=SAMPLEFILE)
     parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions", default=ANCESTRY_PRED_PATH)
     parser.add_argument("--region", help="chr:start-end to restrict to. Default is genome-wide", type=str)
-    parser.add_argument("--downsample", help="Down sample the controls to match the number of cases." + \
-                            "This is only valid for binary phenotypes.", action="store_true")
+    parser.add_argument("--binary", help="Plot the genotype-phenotype for binary phenotypes", action="store_true")
     parser.add_argument("--num-pcs", help="Number of PCs to use as covariates", type=int, default=10)
     parser.add_argument("--ptcovars", help="Comma-separated list of phenotype-specific covariates. Default: age",
                             type=str, default="age")
@@ -265,9 +264,9 @@ def main():
         ptcovar_path = GetPTCovarPath(args.phenotype)
 
     if args.violin and args.plot_genotype_phenotype is False:
-        Error("--violin must be used when --plot-genotype-phenotype is set.")
+        ERROR("--violin must be used when --plot-genotype-phenotype is set.")
     if args.merge_bins and args.plot_genotype_phenotype is False:
-        Error("--merge-bins must be used when --plot-genotype-phenotype is set.")
+        ERROR("--merge-bins must be used when --plot-genotype-phenotype is set.")
     if args.plot_genotype_phenotype and args.annotations is None:
         ERROR("--annotations must be provided when --plot-genotype-phenotype is set.")
         
@@ -391,7 +390,7 @@ def main():
                         pos=pos,
                         phenotype="phenotype",
                         phenotype_label=args.phenotype,
-                        downsample=args.downsample,
+                        binary=args.binary,
                         violin=args.violin,
                         merge_bins=args.merge_bins,
                         outpath=os.path.join(args.outdir,
