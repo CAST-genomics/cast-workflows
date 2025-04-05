@@ -100,6 +100,7 @@ def main():
     parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
     parser.add_argument("--case-control",help="Use binary phenotype", action="store_true")
     parser.add_argument("--ancestry-pc", help="Use precomputed ancestry specific PCs", action="store_true")
+    parser.add_argument("--ancestry-pc-path", help="File name to plink2 computed ancestry predictions",type=str, default="afr_eur_pca.tsv")
     args = parser.parse_args()
 
 
@@ -122,9 +123,9 @@ def main():
     plink = convert_csv_to_plink(DownloadPT(ptcovar_path))
     if args.ancestry_pc:
         #subprocess.run(["gsutil", "cp", f"{bucket}ancestry_pc/afr_eur_pca.tsv", "."], check=True)
-        subprocess.run(["gsutil", "cp", f"{bucket}ancestry_pc/filtered_ancestry_pc.tsv", "."], check=True)
+        subprocess.run(["gsutil", "cp", f"{bucket}ancestry_pc/{args.ancestry_pc_path}", "."], check=True)
         #ancestry = pd.read_csv("afr_eur_pca.tsv", sep="\t")
-        ancestry = pd.read_csv("filtered_ancestry_pc.tsv", sep="\t")
+        ancestry = pd.read_csv(args.ancestry_pc_path, sep="\t")
         ancestry["IID"] = ancestry["IID"].astype(str)
         pcols = ["PC%s"%i for i in range(1, 11)]
     else:
