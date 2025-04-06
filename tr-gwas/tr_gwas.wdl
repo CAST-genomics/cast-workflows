@@ -12,6 +12,7 @@ workflow tr_gwas {
         String WORKSPACE_BUCKET = ""
         Boolean logistic = false
         Boolean ancestry_pc = false
+        String ancestry_pc_path = ""
     }
 
     ### Separate workflow for each phenotype ###
@@ -25,7 +26,8 @@ workflow tr_gwas {
                 GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN,
                 WORKSPACE_BUCKET=WORKSPACE_BUCKET,
                 logistic=logistic,
-                ancestry_pc=ancestry_pc
+                ancestry_pc=ancestry_pc,
+                ancestry_pc_path=ancestry_pc_path
         }
 
             scatter (cohort in cohorts) {
@@ -63,6 +65,7 @@ task convert_phenotype {
         String WORKSPACE_BUCKET = ""
         Boolean logistic = false
         Boolean ancestry_pc = false
+        String ancestry_pc_path = ""
     }
     
     String pheno_name = basename(pheno,"_phenocovar.csv")
@@ -78,7 +81,7 @@ task convert_phenotype {
             python3 /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno_name} --case-control
         fi
         if [[ "~{ancestry_pc}" == true ]] ; then
-            python3 /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno_name} --ancestry-pc 
+            python3 /usr/bin/convert_phenotype_plink.py --phenotype ~{pheno_name} --ancestry-pc --ancestry-pc-path ~{ancestry_pc_path}
         fi 
 
     >>>

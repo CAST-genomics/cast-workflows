@@ -86,6 +86,7 @@ def main():
 	parser.add_argument("--cohort", help="name of the cohort, seperated by comma, options: AFR, EUR, AMR, NOT_AFR, ALL", required=False, type=str)
 	parser.add_argument("--logistic", help="Run logistic regression", action="store_true")
 	parser.add_argument("--ancestry-pc", help="Use precomputed ancestry specific PCs", action="store_true")
+	parser.add_argument("--ancestry-pc-path", help="name of ancestry PC specific file", required=False, type=str)
 	args = parser.parse_args()
 
 
@@ -133,6 +134,7 @@ def main():
 	json_dict["tr_gwas.phenotypes"] = target_phenotype
 	json_dict["tr_gwas.logistic"] = args.logistic
 	json_dict["tr_gwas.ancestry_pc"] = args.ancestry_pc
+	json_dict["tr_gwas.ancestry_pc_path"] = args.ancestry_pc_path
 	
 
 	# Convert to json and save as a file
