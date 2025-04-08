@@ -36,12 +36,12 @@ def GetJBOR(analysis, filename):
     }
 
 
-def RunWorkflow(json_dict, workflow_id, chrom, depends=[]):
+def RunWorkflow(json_dict, workflow_id, chrom, depends=[], job_priority="high"):
     workflow = dxpy.dxworkflow.DXWorkflow(dxid=workflow_id)
     analysis = workflow.run(json_dict, 
                             depends_on=[item.get_id() for item in depends],
                             folder=f"/yal084/vcf_from_genotype_bfile/chr{chrom}",
-                            priority="high")
+                            priority=job_priority)
     sys.stderr.write(f"Submitted {analysis.get_id()} for chr{chrom}...\n") 
     return analysis
 
@@ -59,8 +59,9 @@ def main():
     
     # input for split by samples
     parser.add_argument("--split-mem", help="memory of instance used for plist", required=False, default=32, type=int)
-    parser.add_argument("--splitVCF-id", help="workflow id for liftOvr", required=False, default="workflow-GzQybp0JX3JQjX2j6VzfbzKx", type=str)
+    parser.add_argument("--splitVCF-id", help="workflow id for liftOvr", required=False, default="workflow-GzpbYx0JX3JXF743Jj3pbfgz", type=str)
     parser.add_argument("--sample-size", help="number of samples per batch", required=False, default=1000, type=int)
+    parser.add_argument("--batch-num", help="number of scatter jobs", required=False, default=30, type=int)
 
     args = parser.parse_args()
     log_dir = "./logs/bfileToVCF"
@@ -92,9 +93,11 @@ def main():
     split_dict["stage-common.vcf_file"] = hg38_vcf
     split_dict["stage-common.chromosome"] = f"chr{args.chrom}"
     split_dict["stage-common.sample_size"] = args.sample_size 
-    split_dict["stage-common.split_mem"] = args.split_mem 
+    split_dict["stage-common.split_mem"] = args.split_mem
+    split_dict["stage-common.batch_num"] = args.batch_num 
+
     # split_dict["priority"] = "high"
-    RunWorkflow(split_dict, args.splitVCF_id, f"{args.chrom}/liftOver_VCFs/splitted_by_samples/", depends=[liftover])
+    RunWorkflow(split_dict, args.splitVCF_id, f"{args.chrom}/liftOver_VCFs/splitted_by_samples/", depends=[liftover], job_priority="normal")
     saveJson(f"{log_dir}/chr{args.chrom}_splitVCF.json", split_dict)
 
 if __name__ == "__main__":
