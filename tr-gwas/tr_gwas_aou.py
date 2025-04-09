@@ -136,7 +136,7 @@ def main():
 	json_dict["tr_gwas.logistic"] = args.logistic
 	json_dict["tr_gwas.ancestry_pc"] = args.ancestry_pc
 	json_dict["tr_gwas.ancestry_pc_path"] = args.ancestry_pc_path
-	json_dict["tr_gwas.covar.name"] = args.covar_name
+	json_dict["tr_gwas.covar_name"] = args.covar_name
 
 	# Convert to json and save as a file
 	json_file = args.name+".aou.json"
