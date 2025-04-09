@@ -87,6 +87,7 @@ def main():
 	parser.add_argument("--logistic", help="Run logistic regression", action="store_true")
 	parser.add_argument("--ancestry-pc", help="Use precomputed ancestry specific PCs", action="store_true")
 	parser.add_argument("--ancestry-pc-path", help="name of ancestry PC specific file", required=False, type=str)
+	parser.add_argument("--covar-name", help="Name of the covariate", type=str, default="age,sex_at_birth_Male,PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10")
 	args = parser.parse_args()
 
 
@@ -135,7 +136,7 @@ def main():
 	json_dict["tr_gwas.logistic"] = args.logistic
 	json_dict["tr_gwas.ancestry_pc"] = args.ancestry_pc
 	json_dict["tr_gwas.ancestry_pc_path"] = args.ancestry_pc_path
-	
+	json_dict["tr_gwas.covar.name"] = args.covar_name
 
 	# Convert to json and save as a file
 	json_file = args.name+".aou.json"

@@ -13,6 +13,7 @@ workflow tr_gwas {
         Boolean logistic = false
         Boolean ancestry_pc = false
         String ancestry_pc_path = ""
+        String covar_name = ""
     }
 
     ### Separate workflow for each phenotype ###
@@ -41,7 +42,8 @@ workflow tr_gwas {
                         covar=convert_phenotype.outfile_covar,
                         samples=cohort,
                         out_prefix="${convert_phenotype.outpheno_name}",
-                        logistic=logistic
+                        logistic=logistic,
+                        covar_name=covar_name
                        
                 }
             }
@@ -109,6 +111,7 @@ task run_tr_gwas {
         String out_prefix
         Int total = length(pgens)
         Boolean logistic = false
+        String covar_name = ""
     }
 
     String sample_name = basename(samples,"_plink.txt")
@@ -140,6 +143,7 @@ task run_tr_gwas {
                 --pheno ~{pheno} \
                 --linear hide-covar \
                 --covar ${covar_file} \
+                --covar-name ${covar_name} \
                 --keep ~{samples} \
                 --covar-variance-standardize \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
@@ -152,6 +156,7 @@ task run_tr_gwas {
                 --pheno ~{pheno} \
                 --logistic hide-covar\
                 --covar ${covar_file} \
+                --covar-name ${covar_name} \
                 --keep ~{samples} \
                 --1 \
                 --covar-variance-standardize \

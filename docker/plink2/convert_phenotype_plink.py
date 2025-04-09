@@ -101,6 +101,7 @@ def main():
     parser.add_argument("--case-control",help="Use binary phenotype", action="store_true")
     parser.add_argument("--ancestry-pc", help="Use precomputed ancestry specific PCs", action="store_true")
     parser.add_argument("--ancestry-pc-path", help="File name to plink2 computed ancestry predictions",type=str, default="afr_eur_pca.tsv")
+    parser.add_argument("--covar-name", help="Name of the covariate", type=str, default="age,sex_at_birth_Male,PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10")
     args = parser.parse_args()
 
 
