@@ -14,6 +14,7 @@ workflow tr_gwas {
         Boolean ancestry_pc = false
         String ancestry_pc_path = ""
         String covar_name = ""
+        
     }
 
     ### Separate workflow for each phenotype ###
@@ -141,6 +142,7 @@ task run_tr_gwas {
             if [[ "~{logistic}" == false ]] ; then
                 plink2 --pfile ${pfile_outprefix} \
                 --pheno ~{pheno} \
+                --pheno-quantile-normalize \
                 --linear hide-covar \
                 --covar ${covar_file} \
                 --covar-name ~{covar_name} \
@@ -154,6 +156,7 @@ task run_tr_gwas {
             if [[ "~{logistic}" == true ]] ; then
                 plink2 --pfile ${pfile_outprefix} \
                 --pheno ~{pheno} \
+                --pheno-quantile-normalize \
                 --logistic hide-covar\
                 --covar ${covar_file} \
                 --covar-name ~{covar_name} \
