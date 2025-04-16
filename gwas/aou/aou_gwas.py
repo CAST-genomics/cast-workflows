@@ -133,25 +133,50 @@ def get_rc_from_allele(allele, ref_allele, alt_alleles, ru_len):
         #print("call {} allele {}".format(allele, rc))
         return rc
 
-def set_genotypes(data, annotations, cohort, samples, phenotype, tr_vcf, outdir):
+def set_genotypes(data, annotations, cohort, samples, tr_vcf, outdir):
     print("Reading genotypes from the vcf file")
     # Extract the chrom from the tr_vcf file
     words = re.split("_|\.", tr_vcf)
     vcf_chrom = [word for word in words if word.startswith("chr")][0]
-    # Plot phenotype histogram
-    plot_histogram(data["phenotype"], phenotype,
-                    os.path.join(outdir,
-                        "{}_histogram_after_norm.png".format(phenotype)))
     samples_str = [str(sample) for sample in samples]
     vcf = VCF(tr_vcf, samples = samples_str)
     vcf_samples = vcf.samples
 
     # Focus on a few loci of interest
     for chrom, start, gene in annotations:
-        all_alleles = []
-        empty_calls, no_calls = 0, 0
         if chrom != vcf_chrom:
             continue
+
+        # Check if genotypes are extracted before
+        df_load_path = "genotypes/genotypes_{}_{}_{}_{}.csv".format(gene, chrom, start, cohort)
+        if not os.path.exists(df_load_path):
+            # Load for all samples instead of cohort specific
+            df_load_path = "genotypes/genotypes_{}_{}_{}_passing_samples_v7.1.csv".format(gene, chrom, start)
+        print("df_load_path: ", df_load_path)
+        if os.path.exists(df_load_path):
+            ids_not_found = []
+            data.loc[:, [gene]] = np.nan
+            print("Loading genotypes from ", df_load_path)
+            genotypes_df = pd.read_csv(df_load_path, index_col=0)
+            #for idx, row in genotypes_df.iterrows():
+            #    sample = idx
+            #    rc = float(row["rc"])
+            #    data.loc[data["person_id"]==str(sample), gene] = rc
+            for idx, row in data.iterrows():
+                sample = idx
+                if int(row["person_id"]) not in genotypes_df.index:
+                    ids_not_found.append(int(row["person_id"]))
+                else:
+                    rc = float(genotypes_df.loc[int(row["person_id"])]["rc"])
+                    #row[gene] = rc
+                    data.at[idx, gene] = rc
+            print("ids_not_found len {} head {}".format(len(ids_not_found), ids_not_found[:10]))
+            continue
+
+        # Compute genotypes from VCF file        
+        all_alleles = []
+        genotypes_df = pd.DataFrame(columns=["rc"])
+        empty_calls, no_calls = 0, 0
         variant = list(vcf("{}:{}-{}".format(chrom, int(start)-1, int(start) + 1)))[0]
         print("Processing annotation {} {}:{}".format(gene, chrom, start))
         data.loc[:, [gene]] = np.nan
@@ -172,17 +197,20 @@ def set_genotypes(data, annotations, cohort, samples, phenotype, tr_vcf, outdir)
 
             samples_with_calls.add(sample)
             data.loc[data["person_id"]==sample, gene] = rc
+            genotypes_df.loc[sample] = rc
         print("Alleles count for the 4 most common alleles: ", Counter(all_alleles).most_common(4))
         # Plot alleles
         if len(set(all_alleles)) > 1:
             print("Plotting alleles histogram")
             print("gene: ", gene)
-            print("phenotype: ", phenotype)
             # Polymorphic vntr in the imputed set. Otherwise, if it's non-polymorphic, it'll get an error.
-            plot_histogram(all_alleles, gene, os.path.join(outdir, "{}_alleles_{}_{}.png".format(gene, phenotype, cohort)))
+            plot_histogram(all_alleles, gene, os.path.join(outdir, "{}_alleles_{}.png".format(gene, cohort)))
+            #plot_histogram(list(data[gene]), gene,
+            #                os.path.join(outdir, "{}_genotypes_{}.png".format(gene, cohort)))
         if no_calls + empty_calls > 0:
             print("Skipping {} empty calls and {} no calls for {} on vcf".format(
                     empty_calls, no_calls, gene))
+        genotypes_df.to_csv(df_load_path)
     return data
 
 def print_stats(data, locus):
@@ -256,7 +284,7 @@ def main():
     args = parser.parse_args()
 
     # Set up paths
-    ptcovar_path = "{}_phenocovar.csv".format(args.phenotype)
+    ptcovar_path = "phenocovars/{}_phenocovar.csv".format(args.phenotype)
     #if args.phenotype.endswith(".csv"):
     if os.path.exists(ptcovar_path):
         pass
@@ -345,9 +373,12 @@ def main():
                          annotations=annotations,
                          cohort=cohort,
                          samples=samples["person_id"],
-                         phenotype=args.phenotype,
                          tr_vcf=args.tr_vcf,
                          outdir=args.outdir)
+        # Plot phenotype histogram
+        plot_histogram(data["phenotype"], args.phenotype,
+                    os.path.join(args.outdir,
+                        "{}_histogram_after_norm.png".format(args.phenotype)))
     
     data = pd.merge(data, samples)
 

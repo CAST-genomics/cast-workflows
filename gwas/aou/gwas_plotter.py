@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-def plot_histogram(data, xlabel, outpath):
-    plot = sns.histplot(data, binwidth=0.5)
+def plot_histogram(data, xlabel, outpath, stat='percent', binwidth=0.5):
+    plot = sns.histplot(data, binwidth=binwidth, stat=stat)
     plot.set_xlabel(xlabel)
     plt.savefig(outpath)
     plt.clf()
@@ -19,7 +19,8 @@ def plot_histogram(data, xlabel, outpath):
 def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
                             phenotype_label, outpath, binary, violin,
                             merge_bins,
-                            min_gt_count=10):
+                            min_gt_count=30,
+                            min_gt_freq=0.05):
     if len(gwas) == 1:
         if gwas.iloc[0]["chrom"] != chrom or \
                 abs(int(gwas.iloc[0]["pos"]) - int(pos)) < 1:
@@ -38,6 +39,36 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
     plotted_data = data[[genotype, phenotype]].dropna()
     plotted_data = plotted_data.astype(float)
 
+    # Combine bins if indicated to get a more coarse set of alleles
+    if merge_bins:
+        plotted_data[genotype] = plotted_data[genotype].astype(int)
+
+    # Filter out alleles that are rare
+    counts = plotted_data[genotype].value_counts()
+    #print("counts before filtering: ", counts)
+    # Based on counts
+    plotted_data = plotted_data.loc[plotted_data[genotype].isin(counts[counts > min_gt_count].index), :]
+    #print("counts after count filtering: ", plotted_data[genotype].value_counts())
+    # Based on frequency
+    value_counts = plotted_data[genotype].value_counts()
+    to_remove = value_counts[value_counts <= min_gt_freq].index
+    plotted_data[genotype] = plotted_data[genotype].replace(to_remove, np.nan)
+    #print("counts after freq filtering: ", plotted_data[genotype].value_counts())
+
+    # Alleles histogram
+    out = outpath.replace("genotype", "alleles_hist_after_filter")
+    bin_width = 0.5
+    plot = sns.histplot(plotted_data, x=genotype, stat="percent", binwidth=bin_width)
+    plot.set_xlabel(genotype)
+    min_val = plotted_data[genotype].min()
+    max_val = plotted_data[genotype].max()
+    xtick_labels = np.arange(min_val, max_val + epsilon, bin_width)
+    xticks = np.arange(min_val+bin_width/2, max_val+bin_width/2 + epsilon, bin_width)
+    plt.xticks(ticks = xticks, labels = xtick_labels)
+
+    plt.savefig(out, bbox_inches="tight")
+    plt.clf()
+
     if binary:
         # This is only necessary for the binary phenotypes.
         # Where usually negative samples are over represented
@@ -50,32 +81,42 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
                   "Unique values for the phenotype {}".format(unique_phenotypes.tolist()))
 
             
-        plotted_data["odds_ratio"] = None
-        odds_ratio = {}
-        uniq_alleles = plotted_data[genotype].unique()
+        plotted_data["odds_ratio_threshold"] = None
+        odds_ratio_threshold = {}
+        odds_threshold = {}
+        epsilon = 1E-8
+        uniq_alleles = sorted(plotted_data[genotype].unique())
         for uniq_allele in uniq_alleles:
-            num_cases_g = len(plotted_data[(plotted_data[genotype] == uniq_allele) & (plotted_data[phenotype] == 1)])
-            num_controls_g = len(plotted_data[(plotted_data[genotype] == uniq_allele) & (plotted_data[phenotype] == 0)])
-            num_cases_no_g = len(plotted_data[(plotted_data[genotype] != uniq_allele) & (plotted_data[phenotype] == 1)])
-            num_controls_no_g = len(plotted_data[(plotted_data[genotype] != uniq_allele) & (plotted_data[phenotype] == 0)])
-            #print("num_cases_g: {} num_cases_no_g: {} num_controls_g: {}, num_controls_no_g: {}".format(
-            #      num_cases_g, num_cases_no_g, num_controls_g, num_controls_no_g))
-            odds_ratio[uniq_allele] = (num_cases_g/num_cases_no_g) / (num_controls_g/num_controls_no_g)
-        sns.lineplot(x=odds_ratio.keys(),
-                     y=odds_ratio.values())
+            num_cases_g = len(plotted_data[(plotted_data[genotype] >= uniq_allele) & (plotted_data[phenotype] == 1)]) + epsilon
+            num_controls_g = len(plotted_data[(plotted_data[genotype] >= uniq_allele) & (plotted_data[phenotype] == 0)]) + epsilon
+            num_cases_no_g = len(plotted_data[(plotted_data[genotype] < uniq_allele) & (plotted_data[phenotype] == 1)]) + epsilon
+            num_controls_no_g = len(plotted_data[(plotted_data[genotype] < uniq_allele) & (plotted_data[phenotype] == 0)]) + epsilon
+            odds_ratio_threshold[uniq_allele] = (num_cases_g/num_controls_g) / (num_cases_no_g/num_controls_no_g)
+            odds_threshold[uniq_allele] = (num_cases_g/num_controls_g)
+            #print("for gene {} allele {} num_cases_g(>=allele): {} num_controls_g(>=allele): {} fraction {}".format(
+            #      genotype, uniq_allele, num_cases_g, num_controls_g, odds_threshold[uniq_allele]))
+        # Odds ratio plot
+        out = outpath.replace("genotype", "odds_ratio")
+        sns.lineplot(x=odds_ratio_threshold.keys(),
+                     y=odds_ratio_threshold.values())
         plt.xlabel(genotype)
-        plt.ylabel(phenotype +" odds ratio")
-        plt.savefig(outpath, bbox_inches="tight")
+        plt.ylabel(phenotype_label + " odds ratio >= allele")
+        plt.savefig(out, bbox_inches="tight")
         plt.clf()
+
+        # Odds plot
+        out = outpath.replace("genotype", "odds")
+        sns.lineplot(x=odds_threshold.keys(),
+                     y=odds_threshold.values())
+        plt.xlabel(genotype)
+        plt.ylabel(phenotype_label + " odds >= allele")
+        plt.savefig(out, bbox_inches="tight")
+        plt.clf()
+        
+
         return
     # Create a joint grid
     plot = sns.JointGrid()
-    if merge_bins:
-        plotted_data[genotype] = plotted_data[genotype].astype(int)
-    counts = plotted_data[genotype].value_counts()
-    print("counts before filtering: ", counts)
-    plotted_data = plotted_data.loc[plotted_data[genotype].isin(counts[counts > min_gt_count].index), :]
-    print("counts after filtering: ", plotted_data[genotype].value_counts())
     # Plot phenotype
     # Plot joint plot in the middle
     if violin:
@@ -116,8 +157,9 @@ def annotate_points(ax, gwas, annotations):
         locus = gwas[(gwas["chrom"] == chrom) & \
                  (gwas["pos"] < int(position) + 1) &\
                  (gwas["pos"] > int(position) - 1)]
-        if len(locus) > 0:
-            print("multiple VNTRs within 1 bp for {}:{}".format(chrom, position))
+        if len(locus) > 1:
+            print("multiple VNTRs or associatios within 1 bp for {}:{}".format(chrom, position))
+        elif len(locus) == 1:
             x = locus["pos"].values[0]
             y = locus["-log10pvalue"].values[0]
             ax.text(x=x, y=y, s=label, fontsize="medium")
