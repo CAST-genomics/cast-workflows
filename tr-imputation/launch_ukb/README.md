@@ -65,10 +65,19 @@ To reduce the memory, the VCF files combined by chromosomes are furhter split by
 
 ## 2.2 Imputation
 
-The imputation is performed using beagle on each batch of 1,000 samples. Run the following command to submit the imputation jobs.
+The imputation is performed using beagle on each batch of 1,000 samples. First run `./get_snp_vcf_file_id.sh` to get file ids.  
 
-The current [workflow](../wdl/batch_imputation_bref3.wdl) run batched jobs using `scatter`, which concurrently run all jobs in the same batch using multiple instance. Scatter job finish faster will still be charging till all of the rest scatter jobs is finished. It might be very expensive use a large `--batch-size` as it required more concurrent instance.
+AnnotaTR may take long time to run, so it will be better to split the input files by regions first.
+```bash
+batch_num=2
+for i in $(seq 1 22); do 
+    grep "chr${i}\>" ./hg38.txt > input_chr${i}.txt; 
+    bedtools makewindows -g input_chr${i}.txt -n ${batch_num} > chr${i}_${batch_num}_regions.bed;
+    rm input_chr${i}.txt; 
+done
 
+```
+Run the following command to submit the imputation jobs.
 Mofidy the `./imputation_launcher_ukb.py` to change the output folders.
 ```bash
 # for test
@@ -78,6 +87,9 @@ Mofidy the `./imputation_launcher_ukb.py` to change the output folders.
 ./imputation_launcher_ukb.py --chrom 21 --batch-size 10 
 
 ```
+
+The current [workflow](../wdl/batch_imputation_bref3.wdl) run batched jobs using `scatter`, which concurrently run all jobs in the same batch using multiple instance. Scatter job finish faster will still be charging till all of the rest scatter jobs is finished. It might be very expensive use a large `--batch-size` as it required more concurrent instance.
+
 
 This workflow will output the following files:
 

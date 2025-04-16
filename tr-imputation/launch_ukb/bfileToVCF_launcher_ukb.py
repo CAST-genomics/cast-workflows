@@ -54,7 +54,7 @@ def main():
     parser.add_argument("--bfileTovcf-id", help="id of workflow", required=False, default="workflow-GzV23bQJX3JYQVgKPBBqB943", type=str)
    
     # input for liftOver
-    parser.add_argument("--liftover-mem", help="memory for liftOver", required=False, default=16, type=int)
+    parser.add_argument("--liftover-mem", help="memory for liftOver", required=False, default=32, type=int)
     parser.add_argument("--liftover-id", help="workflow id for liftOvr", required=False, default="workflow-GzVQ9Q0JX3Jq44vFPpkGV4j8", type=str)
     
     # input for split by samples

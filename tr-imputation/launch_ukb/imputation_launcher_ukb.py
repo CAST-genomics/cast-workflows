@@ -42,7 +42,11 @@ def getfileID(file_path, chrom, project_id="project-GbjB4x0JX3JyK5PZK67q0fZG"):
     index_file = f"ensembletr_refpanel_v4_chr{chrom}.vcf.gz.tbi"
     result =  list(dxpy.find_data_objects(name=f"{index_file}", folder=f"{file_path}/ensembletr_refpanel_v4/", project=f"{project_id}", return_handler=True))
     index_id = result[0].get_id()
-    return map_id, ref_id, vcf_id, index_id 
+    split_file = f"chr{chrom}_2_regions.bed"
+    result =  list(dxpy.find_data_objects(name=f"{split_file}", folder=f"{file_path}/hg38_chromsome_regions/", project=f"{project_id}", return_handler=True))
+    split_region_id = result[0].get_id()
+
+    return map_id, ref_id, vcf_id, index_id, split_region_id 
 
 
 def saveJson(file_name, input_dict):
@@ -82,15 +86,18 @@ def main():
     parser.add_argument("--extract-id", help="workflow for extract SNP/TRs", required=False, default="workflow-GzX83B0JX3JqxvBb4vJJ0j5b", type=str)
     parser.add_argument("--extract-mem", help="memory for extraction", required=False, default=16, type=int)
     parser.add_argument("--extract-merge-mem", help="memory for merge", required=False, default=32, type=int)
-
-    parser.add_argument("--merge-anno-id", help="workflow for merge and annotation", required=False, default="workflow-GzX96z8JX3JgFV97PXp8Jq0q", type=str)
+## This is the old one where annotaTR only output DSLEN
+#    parser.add_argument("--merge-anno-id", help="workflow for merge and annotation", required=False, default="workflow-GzX96z8JX3JgFV97PXp8Jq0q", type=str)
+#    parser.add_argument("--merge-anno-id", help="workflow for merge and annotation", required=False, default="workflow-GzqYK1QJX3JZ5Pzp861gzJjq", type=str)
+    # This split the imputed VCF for annotation
+    parser.add_argument("--merge-anno-id", help="workflow for merge and annotation", required=False, default="workflow-GzzvbQjJX3JZpgP2xQpYb8qg", type=str)
     parser.add_argument("--merge-mem", help="memory for extraction", required=False, default=32, type=int)
     parser.add_argument("--anno-mem", help="memory for merge", required=False, default=32, type=int)
 
     args = parser.parse_args()
     log_dir="./logs/batch_imputation/"
     os.makedirs(log_dir, exist_ok=True)
-    map_id, ref_bref3_id, ref_vcf_id, ref_index_id = getfileID(args.file_path, args.chrom)
+    map_id, ref_bref3_id, ref_vcf_id, ref_index_id, split_region_id = getfileID(args.file_path, args.chrom)
 
     impute_dict = {}
     impute_dict["stage-common.ref_panel"] = dxpy.dxlink(ref_bref3_id)
@@ -146,6 +153,7 @@ def main():
     anno_dict["stage-common.idx_list"] = chunk_tr_vcfs_idx
     anno_dict["stage-common.ref_vcf"] = dxpy.dxlink(ref_vcf_id)
     anno_dict["stage-common.ref_vcf_idx"] = dxpy.dxlink(ref_index_id)
+    anno_dict["stage-common.region_file"] = dxpy.dxlink(split_region_id)   
     anno_dict["stage-common.merge_mem"] = args.merge_mem 
     anno_dict["stage-common.out_prefix"] = f"chr{args.chrom}" 
     anno_dict["stage-common.anno_mem"] = args.anno_mem
