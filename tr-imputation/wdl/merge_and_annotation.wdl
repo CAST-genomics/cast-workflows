@@ -141,7 +141,7 @@ task concat_pgen {
         set -e
         ulimit -n 800000
         pgen_array=(~{sep=" " pgen_files})
-        pgen_prefix=("${pgen_array[@]}%.*")
+        pgen_prefix=("${pgen_array[@]%.*}")
         pgen_prefix_sorted=($(printf "%s\n" "${pgen_prefix[@]}" | sort -u -V))
         # sorted_vcf_array=($(printf "%s\n" "${vcf_array[@]}" | sort -V))
         for f in ${pgen_prefix_sorted[@]:1}; do 
@@ -149,7 +149,7 @@ task concat_pgen {
         done
         cat merge_list.txt
         plink2 --pfile ${pgen_prefix_sorted[0]} \
-            --merge-list ./merge_list.txt \
+            --pmerge-list ./merge_list.txt \
             --make-pgen \
             --out ~{merged_prefix}_annotated 
     >>>

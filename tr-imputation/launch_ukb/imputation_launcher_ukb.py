@@ -90,7 +90,7 @@ def main():
 #    parser.add_argument("--merge-anno-id", help="workflow for merge and annotation", required=False, default="workflow-GzX96z8JX3JgFV97PXp8Jq0q", type=str)
 #    parser.add_argument("--merge-anno-id", help="workflow for merge and annotation", required=False, default="workflow-GzqYK1QJX3JZ5Pzp861gzJjq", type=str)
     # This split the imputed VCF for annotation
-    parser.add_argument("--merge-anno-id", help="workflow for merge and annotation", required=False, default="workflow-GzzvbQjJX3JZpgP2xQpYb8qg", type=str)
+    parser.add_argument("--merge-anno-id", help="workflow for merge and annotation", required=False, default="workflow-J00qk48JX3Jb9VkZVX9ZZkpv", type=str)
     parser.add_argument("--merge-mem", help="memory for extraction", required=False, default=32, type=int)
     parser.add_argument("--anno-mem", help="memory for merge", required=False, default=32, type=int)
 
