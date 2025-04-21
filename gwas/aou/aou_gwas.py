@@ -152,25 +152,18 @@ def set_genotypes(data, annotations, cohort, samples, tr_vcf, outdir):
         if not os.path.exists(df_load_path):
             # Load for all samples instead of cohort specific
             df_load_path = "genotypes/genotypes_{}_{}_{}_passing_samples_v7.1.csv".format(gene, chrom, start)
-        print("df_load_path: ", df_load_path)
         if os.path.exists(df_load_path):
             ids_not_found = []
             data.loc[:, [gene]] = np.nan
-            print("Loading genotypes from ", df_load_path)
             genotypes_df = pd.read_csv(df_load_path, index_col=0)
-            #for idx, row in genotypes_df.iterrows():
-            #    sample = idx
-            #    rc = float(row["rc"])
-            #    data.loc[data["person_id"]==str(sample), gene] = rc
             for idx, row in data.iterrows():
                 sample = idx
                 if int(row["person_id"]) not in genotypes_df.index:
                     ids_not_found.append(int(row["person_id"]))
                 else:
                     rc = float(genotypes_df.loc[int(row["person_id"])]["rc"])
-                    #row[gene] = rc
                     data.at[idx, gene] = rc
-            print("ids_not_found len {} head {}".format(len(ids_not_found), ids_not_found[:10]))
+            print("Number of samples where the genotype could not be loaded {}".format(len(ids_not_found)))
             continue
 
         # Compute genotypes from VCF file        

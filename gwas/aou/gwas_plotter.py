@@ -53,18 +53,28 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
     value_counts = plotted_data[genotype].value_counts()
     to_remove = value_counts[value_counts <= min_gt_freq].index
     plotted_data[genotype] = plotted_data[genotype].replace(to_remove, np.nan)
+    # Update the counts after filtering
+    counts = plotted_data[genotype].value_counts()
     #print("counts after freq filtering: ", plotted_data[genotype].value_counts())
-
+    # If after filtering we have no polymorphism, return
+    if len(counts) == 1:
+        print("{} is non-polymorphic after filtering for rare genotypes".format(chrom))
+        return
+        
     # Alleles histogram
+    epsilon = 1E-8
     out = outpath.replace("genotype", "alleles_hist_after_filter")
     bin_width = 0.5
     plot = sns.histplot(plotted_data, x=genotype, stat="percent", binwidth=bin_width)
     plot.set_xlabel(genotype)
-    min_val = plotted_data[genotype].min()
-    max_val = plotted_data[genotype].max()
-    xtick_labels = np.arange(min_val, max_val + epsilon, bin_width)
-    xticks = np.arange(min_val+bin_width/2, max_val+bin_width/2 + epsilon, bin_width)
-    plt.xticks(ticks = xticks, labels = xtick_labels)
+    # Center the x ticks
+    if len(counts) < 10:
+        # Center the bars only if there are not too many labels. Otherwise it gets too crowded
+        min_val = plotted_data[genotype].min()
+        max_val = plotted_data[genotype].max()
+        xtick_labels = np.arange(min_val, max_val + epsilon, bin_width)
+        xticks = np.arange(min_val+bin_width/2, max_val+bin_width/2 + epsilon, bin_width)
+        plt.xticks(ticks = xticks, labels = xtick_labels)
 
     plt.savefig(out, bbox_inches="tight")
     plt.clf()
@@ -84,7 +94,7 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
         plotted_data["odds_ratio_threshold"] = None
         odds_ratio_threshold = {}
         odds_threshold = {}
-        epsilon = 1E-8
+        fraction_threshold = {}
         uniq_alleles = sorted(plotted_data[genotype].unique())
         for uniq_allele in uniq_alleles:
             num_cases_g = len(plotted_data[(plotted_data[genotype] >= uniq_allele) & (plotted_data[phenotype] == 1)]) + epsilon
@@ -92,9 +102,11 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
             num_cases_no_g = len(plotted_data[(plotted_data[genotype] < uniq_allele) & (plotted_data[phenotype] == 1)]) + epsilon
             num_controls_no_g = len(plotted_data[(plotted_data[genotype] < uniq_allele) & (plotted_data[phenotype] == 0)]) + epsilon
             odds_ratio_threshold[uniq_allele] = (num_cases_g/num_controls_g) / (num_cases_no_g/num_controls_no_g)
-            odds_threshold[uniq_allele] = (num_cases_g/num_controls_g)
+            odds_threshold[uniq_allele] = num_cases_g/num_controls_g
+            fraction_threshold[uniq_allele] = num_cases_g/(num_controls_g + num_cases_g)
             #print("for gene {} allele {} num_cases_g(>=allele): {} num_controls_g(>=allele): {} fraction {}".format(
             #      genotype, uniq_allele, num_cases_g, num_controls_g, odds_threshold[uniq_allele]))
+
         # Odds ratio plot
         out = outpath.replace("genotype", "odds_ratio")
         sns.lineplot(x=odds_ratio_threshold.keys(),
@@ -109,10 +121,18 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
         sns.lineplot(x=odds_threshold.keys(),
                      y=odds_threshold.values())
         plt.xlabel(genotype)
-        plt.ylabel(phenotype_label + " odds >= allele")
+        plt.ylabel(phenotype_label + " case ratio >= allele")
         plt.savefig(out, bbox_inches="tight")
         plt.clf()
         
+        # Fraction plot
+        out = outpath.replace("genotype", "fraction")
+        sns.lineplot(x=fraction_threshold.keys(),
+                     y=fraction_threshold.values())
+        plt.xlabel(genotype)
+        plt.ylabel(phenotype_label + " odds >= allele")
+        plt.savefig(out, bbox_inches="tight")
+        plt.clf()
 
         return
     # Create a joint grid
