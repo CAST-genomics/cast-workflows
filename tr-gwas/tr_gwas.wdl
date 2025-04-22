@@ -142,7 +142,7 @@ task run_tr_gwas {
             if [[ "~{logistic}" == false ]] ; then
                 plink2 --pfile ${pfile_outprefix} \
                 --pheno ~{pheno} \
-                --pheno-quantile-normalize \
+                --quantile-normalize \
                 --linear hide-covar \
                 --covar ${covar_file} \
                 --covar-name ~{covar_name} \
@@ -156,7 +156,6 @@ task run_tr_gwas {
             if [[ "~{logistic}" == true ]] ; then
                 plink2 --pfile ${pfile_outprefix} \
                 --pheno ~{pheno} \
-                --pheno-quantile-normalize \
                 --logistic hide-covar\
                 --covar ${covar_file} \
                 --covar-name ~{covar_name} \
