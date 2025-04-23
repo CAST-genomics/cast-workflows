@@ -80,6 +80,13 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
     plt.clf()
 
     if binary:
+        counts = plotted_data[phenotype].value_counts()
+        print("Number of cases {} number of controls {} total {}".format(
+                len(plotted_data[plotted_data[phenotype] == 1]),
+                len(plotted_data[plotted_data[phenotype] == 0]),
+                len(plotted_data),
+            ))
+        print(counts)
         # This is only necessary for the binary phenotypes.
         # Where usually negative samples are over represented
         # Check the phenotype is binary
@@ -101,7 +108,7 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
             num_controls_g = len(plotted_data[(plotted_data[genotype] >= uniq_allele) & (plotted_data[phenotype] == 0)]) + epsilon
             num_cases_no_g = len(plotted_data[(plotted_data[genotype] < uniq_allele) & (plotted_data[phenotype] == 1)]) + epsilon
             num_controls_no_g = len(plotted_data[(plotted_data[genotype] < uniq_allele) & (plotted_data[phenotype] == 0)]) + epsilon
-            odds_ratio_threshold[uniq_allele] = (num_cases_g/num_controls_g) / (num_cases_no_g/num_controls_no_g)
+            odds_ratio_threshold[uniq_allele] = (num_cases_g/num_cases_no_g) / (num_controls_g/num_controls_no_g)
             odds_threshold[uniq_allele] = num_cases_g/num_controls_g
             fraction_threshold[uniq_allele] = num_cases_g/(num_controls_g + num_cases_g)
             #print("for gene {} allele {} num_cases_g(>=allele): {} num_controls_g(>=allele): {} fraction {}".format(
@@ -121,7 +128,7 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
         sns.lineplot(x=odds_threshold.keys(),
                      y=odds_threshold.values())
         plt.xlabel(genotype)
-        plt.ylabel(phenotype_label + " case ratio >= allele")
+        plt.ylabel(phenotype_label + " odds >= allele")
         plt.savefig(out, bbox_inches="tight")
         plt.clf()
         
@@ -130,7 +137,7 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
         sns.lineplot(x=fraction_threshold.keys(),
                      y=fraction_threshold.values())
         plt.xlabel(genotype)
-        plt.ylabel(phenotype_label + " odds >= allele")
+        plt.ylabel(phenotype_label + " fraction >= allele")
         plt.savefig(out, bbox_inches="tight")
         plt.clf()
 

@@ -99,14 +99,15 @@ def NormalizeData(data, norm):
 
 def read_annotations(filename):
     annotations = []
-    with open(filename, "r") as annotations_file:
-        lines = annotations_file.readlines()
-    for line in lines:
-        if line.startswith("chrom"):
-            # Header line
-            continue
-        chrom, start, gene = line.strip().split(",")[:3]
-        annotations.append((str(chrom), str(start), str(gene)))
+    if filename:
+        with open(filename, "r") as annotations_file:
+            lines = annotations_file.readlines()
+        for line in lines:
+            if line.startswith("chrom"):
+                # Header line
+                continue
+            chrom, start, gene = line.strip().split(",")[:3]
+            annotations.append((str(chrom), str(start), str(gene)))
     return annotations
 
 def get_alleles(record):
@@ -234,6 +235,13 @@ def load_snp_gwas_df(filename):
                      "CHR": "chrom"})
     return snp_data
 
+def load_snp_gwas_tab(filename):
+    snp_data = pd.read_csv(filename, skiprows=2, sep="\t")
+    snp_data["chrom"] = snp_data["locus"].apply(lambda x: x.split(":")[0])
+    snp_data["pos"] = snp_data["locus"].apply(lambda x: x.split(":")[1]).astype(int)
+    
+    return snp_data
+
 def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--phenotype", help="Phenotypes file path, or phenotype name", type=str, required=True)
@@ -310,7 +318,8 @@ def main():
     # Load SNP gwas
     snp_gwas = None
     if args.snp_gwas_file is not None:
-        snp_gwas = load_snp_gwas_df(args.snp_gwas_file)
+        #snp_gwas = load_snp_gwas_df(args.snp_gwas_file)
+        snp_gwas = load_snp_gwas_tab(args.snp_gwas_file)
 
     # Get covarlist
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
@@ -426,19 +435,25 @@ def main():
             p_value_threshold = -np.log10(5*10**-8)
 
         gwas = runner.gwas
+        print(gwas["pos"].describe())
+        if args.region:
+            chrom, start_end = args.region.split(":")
+            start, end = start_end.split("-")
+            start, end = int(start), int(end)
+            gwas = gwas[(gwas["chrom"] == chrom) & \
+                        (gwas["pos"] >= start) & \
+                        (gwas["pos"] <= end)]
         # Combine two dataframes into one, with source indicated in a new column.
         columns = ["chrom", "pos", "-log10pvalue"]
         if snp_gwas is not None:
             columns = ["chrom", "pos", "-log10pvalue"]
             gwas = gwas[columns]
-            gwas["variant"] = "VNTR"
+            gwas.loc[:,"variant"] = "VNTR"
             snp_gwas = snp_gwas[columns]
-            snp_gwas["variant"] = "SNP"
+            snp_gwas.loc[:,"variant"] = "SNP"
             print("gwas shape", gwas.shape)
             print("snp_gwas shape", snp_gwas.shape)
-            gwas = pd.concat([
-                        snp_gwas[snp_gwas.index.isin(gwas.index) == False],
-                        gwas])
+            gwas = pd.concat([snp_gwas, gwas], ignore_index=True)
             print("combined gwas shape", gwas.shape)
             columns = ["variant"] + columns
             hue = "variant"
@@ -447,8 +462,8 @@ def main():
 
 
         # Store significant hits
-        significant_hits = gwas[gwas["-log10pvalue"] > p_value_threshold]
-        significant_hits.sort_values(by="pos", ignore_index=True, inplace=True)
+        significant_hits = gwas.loc[gwas["-log10pvalue"] > p_value_threshold]
+        significant_hits = significant_hits.sort_values(by="pos", ignore_index=True)
         significant_hits = significant_hits[columns]
         significant_hits.to_csv(outpath + "_significant_hits.csv", index=False)
 
