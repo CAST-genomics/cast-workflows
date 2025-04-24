@@ -114,7 +114,7 @@ def main():
             ptcovar_path = GetPTCovarPath(args.phenotype,binary=False)
 
     # Get covarlist
-    pcols = ["PC%s"%i for i in range(args.num_pcs)]
+    pcols = ["PC%s"%i for i in range(1,args.num_pcs+1)]
     shared_covars = [item for item in args.sharedcovars.split(",") if item != ""]
     pt_covars = [item for item in args.ptcovars.split(",") if item != ""]
     covars = pt_covars + shared_covars
