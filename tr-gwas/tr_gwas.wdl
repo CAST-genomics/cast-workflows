@@ -144,10 +144,11 @@ task run_tr_gwas {
                 --pheno ~{pheno} \
                 --quantile-normalize \
                 --linear hide-covar \
-                --covar ${covar_file} \
+                #--covar ${covar_file} \
+                --covar ~{covar} \
                 --covar-name ~{covar_name} \
                 --keep ~{samples} \
-                --covar-variance-standardize \
+                #--covar-variance-standardize \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
                 
                 gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear "
@@ -157,11 +158,12 @@ task run_tr_gwas {
                 plink2 --pfile ${pfile_outprefix} \
                 --pheno ~{pheno} \
                 --logistic hide-covar\
-                --covar ${covar_file} \
+                #--covar ${covar_file} \
+                --covar ~{covar} \
                 --covar-name ~{covar_name} \
                 --keep ~{samples} \
                 --1 \
-                --covar-variance-standardize \
+                #--covar-variance-standardize \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
                 
                 gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.logistic.hybrid "
