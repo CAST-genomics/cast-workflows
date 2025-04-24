@@ -121,14 +121,14 @@ task run_tr_gwas {
 
         #check if cohort is EUR or non_AFR, exclude PC6
         
-        echo ~{sample_name} | grep -q -E "EUR|NOT_AFR"
-        if [ $? -eq 0 ]; then
-            cut --complement -f 10 ~{covar} > "~{sample_name}_~{out_prefix}_covar.txt"
-            covar_file="~{sample_name}_~{out_prefix}_covar.txt"
+        #echo ~{sample_name} | grep -q -E "EUR|NOT_AFR"
+        #if [ $? -eq 0 ]; then
+        #    cut --complement -f 10 ~{covar} > "~{sample_name}_~{out_prefix}_covar.txt"
+        #    covar_file="~{sample_name}_~{out_prefix}_covar.txt"
 
-        else 
-            covar_file=~{covar}           
-        fi
+        #else 
+        #    covar_file=~{covar}           
+        #fi
 
         # Run GWAS on each chrom
         PFILEARRAY=(~{sep=" " pgens})

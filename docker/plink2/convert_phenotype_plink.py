@@ -100,7 +100,7 @@ def main():
     parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
     parser.add_argument("--case-control",help="Use binary phenotype", action="store_true")
     parser.add_argument("--ancestry-pc", help="Use precomputed ancestry specific PCs", action="store_true")
-    parser.add_argument("--ancestry-pc-path", help="File name to plink2 computed ancestry predictions",type=str, default="afr_eur_pca.tsv")
+    parser.add_argument("--ancestry-pc-path", help="File name to plink2 computed ancestry predictions",type=str, default="ancestry_jm_pc.tsv")
     args = parser.parse_args()
 
 
@@ -114,7 +114,7 @@ def main():
             ptcovar_path = GetPTCovarPath(args.phenotype,binary=False)
 
     # Get covarlist
-    pcols = ["PC_%s"%i for i in range(args.num_pcs)]
+    pcols = ["PC%s"%i for i in range(args.num_pcs)]
     shared_covars = [item for item in args.sharedcovars.split(",") if item != ""]
     pt_covars = [item for item in args.ptcovars.split(",") if item != ""]
     covars = pt_covars + shared_covars
