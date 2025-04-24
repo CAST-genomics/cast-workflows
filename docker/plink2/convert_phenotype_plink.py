@@ -75,7 +75,7 @@ def LoadAncestry(ancestry_pred_path,project):
     ancestry.rename({"research_id": "IID"}, axis=1, inplace=True)
     ancestry['IID'] = ancestry['IID'].astype(str)
     num_pcs = len(ancestry["pca_features"].values[0].split(","))
-    pcols = ["PC_%s"%i for i in range(num_pcs)]
+    pcols = ["PC%s"%i for i in range(1,num_pcs+1)]
     ancestry[pcols] = ancestry["pca_features"].str.split(",", expand=True)
     for p in pcols:
         ancestry[p] = ancestry[p].apply(lambda x: GetFloatFromPC(x), 1)
