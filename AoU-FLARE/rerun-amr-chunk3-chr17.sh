@@ -2,7 +2,7 @@
 
 # Special case handling: rerun FLARE local ancestry calling on Chr17 AMR-chunk_3 & Chr18 AMR-chunk_3
 # Standard workflow failed on Chr17 AMR-chunk_3 (chunk sample size =10K) & Chr18 AMR-chunk_3 (chunk sample size =10K)
-# Issue solved: merge AMR-chunk_3 and AMR-chunk_4 (chunk sample size =11,018), then rerin FLARE on this merged AMR_chunk_3_4 VCF
+# Issue solved: merge AMR-chunk_3 and AMR-chunk_4 (chunk sample size =11,018), then rerun FLARE on this merged AMR_chunk_3_4 VCF
 
 
 # Step 1: Merge AMR-chunk_3 and AMR-chunk_4
