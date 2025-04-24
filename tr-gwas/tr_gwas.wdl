@@ -12,7 +12,7 @@ workflow tr_gwas {
         String WORKSPACE_BUCKET = ""
         Boolean logistic = false
         Boolean ancestry_pc = false
-        String ancestry_pc_path = ""
+        String? ancestry_pc_path = ""
         String covar_name = ""
         
     }
@@ -68,7 +68,7 @@ task convert_phenotype {
         String WORKSPACE_BUCKET = ""
         Boolean logistic = false
         Boolean ancestry_pc = false
-        String ancestry_pc_path = ""
+        String? ancestry_pc_path = ""
     }
     
     String pheno_name = basename(pheno,"_phenocovar.csv")
