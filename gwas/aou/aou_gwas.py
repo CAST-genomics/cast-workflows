@@ -143,11 +143,14 @@ def set_genotypes(data, annotations, cohort, samples, tr_vcf, outdir):
     vcf = VCF(tr_vcf, samples = samples_str)
     vcf_samples = vcf.samples
 
+    relevant_annotations = []
+
     # Focus on a few loci of interest
     for chrom, start, gene in annotations:
         if chrom != vcf_chrom:
             continue
 
+        relevant_annotations.append((chrom, start, gene))
         # Check if genotypes are extracted before
         df_load_path = "genotypes/genotypes_{}_{}_{}_{}.csv".format(gene, chrom, start, cohort)
         if not os.path.exists(df_load_path):
@@ -165,6 +168,8 @@ def set_genotypes(data, annotations, cohort, samples, tr_vcf, outdir):
                     rc = float(genotypes_df.loc[int(row["person_id"])]["rc"])
                     data.at[idx, gene] = rc
             print("Number of samples where the genotype could not be loaded {}".format(len(ids_not_found)))
+            print("For gene {} skipping {} samples".format(gene, len(ids_not_found)) +
+                  "4 most common genotypes: ", genotypes_df["rc"].value_counts().head(4))
             continue
 
         # Compute genotypes from VCF file        
@@ -205,7 +210,7 @@ def set_genotypes(data, annotations, cohort, samples, tr_vcf, outdir):
             print("Skipping {} empty calls and {} no calls for {} on vcf".format(
                     empty_calls, no_calls, gene))
         genotypes_df.to_csv(df_load_path)
-    return data
+    return data, relevant_annotations
 
 def print_stats(data, locus):
     print("For phenotype, mean {:.4f} and sd {:.4f}".format(
@@ -235,12 +240,13 @@ def load_snp_gwas_df(filename):
                      "CHR": "chrom"})
     return snp_data
 
-def load_snp_gwas_tab(filename):
-    snp_data = pd.read_csv(filename, skiprows=2, sep="\t")
-    snp_data["chrom"] = snp_data["locus"].apply(lambda x: x.split(":")[0])
-    snp_data["pos"] = snp_data["locus"].apply(lambda x: x.split(":")[1]).astype(int)
+def load_gwas_tab(filename, max_nlp_val=100):
+    data = pd.read_csv(filename, sep="\t")
+    data["chrom"] = data["#CHROM"].apply(lambda x: "chr" + str(x))
+    data["pos"] = data["POS"].astype(int)
+    data["-log10pvalue"] = data["P"].apply(lambda x: -np.log10(float(x))).apply(lambda x: max_nlp_val if x == np.inf else x)
     
-    return snp_data
+    return data
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
@@ -264,6 +270,8 @@ def main():
                                               type=str)
     parser.add_argument("--snp-gwas-file", help="File where SNP gwas dataframe was stored from the "+ \
                                                 "all by all dataset")
+    parser.add_argument("--vntr-gwas-file", help="File where VNTR gwas dataframe was stored from the "+ \
+                                                "plink run, usually needed for binary traits.")
     parser.add_argument("--plot", help="Make a Manhattan plot", action="store_true")
     parser.add_argument("--violin", help="Make the genotype_phenotype plot a violinplot instead of boxplot.",
                             action="store_true")
@@ -317,9 +325,10 @@ def main():
 
     # Load SNP gwas
     snp_gwas = None
-    if args.snp_gwas_file is not None:
-        #snp_gwas = load_snp_gwas_df(args.snp_gwas_file)
-        snp_gwas = load_snp_gwas_tab(args.snp_gwas_file)
+    if args.snp_gwas_file:
+        snp_gwas = load_snp_gwas_df(args.snp_gwas_file)
+    if args.vntr_gwas_file:
+        vntr_gwas = load_gwas_tab(args.vntr_gwas_file)
 
     # Get covarlist
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
@@ -366,12 +375,17 @@ def main():
     
     # Get annotations of specific TRs for plotting
     annotations = read_annotations(args.annotations)
+
+    # Extract the chrom from the tr_vcf file for the manhattan plot
+    words = re.split("_|\.", args.tr_vcf)
+    vcf_chrom = [word for word in words if word.startswith("chr")][0]
+
     # Plot genotype-phenotype plot and allele histogram
     if args.method == "associaTR" \
             and args.plot_genotype_phenotype:
         # This is necessary for genotype-phenotype plot
         # To run a quick check, randomly subsample the samples
-        data = set_genotypes(data=data,
+        data, annotations = set_genotypes(data=data,
                          annotations=annotations,
                          cohort=cohort,
                          samples=samples["person_id"],
@@ -404,8 +418,12 @@ def main():
 
     # Run GWAS
     outpath = GetOutPath(args.phenotype, args.method, args.region, sampfile, args.outdir)
-    runner.RunGWAS()
-    WriteGWAS(runner.gwas, outpath+".tab", covars)
+    if args.vntr_gwas_file:
+        gwas = vntr_gwas.loc[vntr_gwas["chrom"]==vcf_chrom]
+    else:   
+        runner.RunGWAS()
+        WriteGWAS(runner.gwas, outpath+".tab", covars)
+        gwas = runner.gwas
 
     # Plot Manhattan
     if args.plot:
@@ -418,7 +436,7 @@ def main():
                     #print("chrom, pos and gene", chrom, pos, gene)
                     plot_genotype_phenotype(data=data,
                         genotype=gene,
-                        gwas=runner.gwas,
+                        gwas=gwas,
                         chrom=chrom,
                         pos=pos,
                         phenotype="phenotype",
@@ -429,13 +447,22 @@ def main():
                         outpath=os.path.join(args.outdir,
                                 "{}_genotype_{}_{}.png".format(
                                     gene, args.phenotype, cohort)))
+                    if args.binary:
+                        effect_column = "OR"
+                    else:
+                        effect_column = "beta"
+                    if len(gwas) == 1:
+                        effect_size = gwas.iloc[0][effect_column]
+                    else: # To avoid warning on single element series
+                        effect_size = gwas.loc[(gwas["chrom"] == chrom) &\
+                                        (gwas["pos"] > int(pos) - 1) &\
+                                        (gwas["pos"] < int(pos) + 1), effect_column].item()
+                    print("Effect {} for {} is {}".format(effect_column, gene, effect_size))
         else:
             # no text annotation on manhattan plot for hail runner
             annotate = False
             p_value_threshold = -np.log10(5*10**-8)
 
-        gwas = runner.gwas
-        print(gwas["pos"].describe())
         if args.region:
             chrom, start_end = args.region.split(":")
             start, end = start_end.split("-")
@@ -472,7 +499,7 @@ def main():
                       annotations=annotations,
                       annotate=annotate,
                       p_value_threshold=p_value_threshold)
-        PlotQQ(runner.gwas, outpath+".qq.png")
+        PlotQQ(gwas, outpath+".qq.png")
 
 if __name__ == "__main__":
     main()

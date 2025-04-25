@@ -30,12 +30,6 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
                         (gwas["pos"].astype(int) > int(pos) - 1) &\
                         (gwas["pos"].astype(int) < int(pos) + 1)]) == 0:
             return
-    if len(gwas) == 1:
-        effect_size = gwas.iloc[0]["beta"]
-    else: # To avoid warning on single element series
-        effect_size = gwas.loc[(gwas["chrom"] == chrom) &\
-                        (gwas["pos"] > int(pos) - 1) &\
-                        (gwas["pos"] < int(pos) + 1), 'beta'].item()
     plotted_data = data[[genotype, phenotype]].dropna()
     plotted_data = plotted_data.astype(float)
 
@@ -86,7 +80,6 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
                 len(plotted_data[plotted_data[phenotype] == 0]),
                 len(plotted_data),
             ))
-        print(counts)
         # This is only necessary for the binary phenotypes.
         # Where usually negative samples are over represented
         # Check the phenotype is binary
@@ -173,7 +166,6 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
                 ax=plot.ax_marg_x)
 
     plot.set_axis_labels(ylabel=phenotype_label, xlabel=genotype)
-    print("effect size {:.4}".format(effect_size))
     plt.savefig(outpath, bbox_inches="tight")
     plt.clf()
 
