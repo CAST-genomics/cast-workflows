@@ -130,6 +130,8 @@ task run_tr_gwas {
         #    covar_file=~{covar}           
         #fi
 
+        covar_file=~{covar}
+
         # Run GWAS on each chrom
         PFILEARRAY=(~{sep=" " pgens})
         gwas_outfiles=""
@@ -144,12 +146,11 @@ task run_tr_gwas {
                 --pheno ~{pheno} \
                 --quantile-normalize \
                 --linear hide-covar \
-                #--covar ${covar_file} \
-                --covar ~{covar} \
+                --covar ${covar_file} \
                 --covar-name ~{covar_name} \
                 --keep ~{samples} \
-                #--covar-variance-standardize \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
+                #--covar-variance-standardize \
                 
                 gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear "
             fi
@@ -158,12 +159,11 @@ task run_tr_gwas {
                 plink2 --pfile ${pfile_outprefix} \
                 --pheno ~{pheno} \
                 --logistic hide-covar\
-                #--covar ${covar_file} \
-                --covar ~{covar} \
+                --covar ${covar_file} \
                 --covar-name ~{covar_name} \
                 --keep ~{samples} \
                 --1 \
-                #--covar-variance-standardize \
+                --covar-variance-standardize \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
                 
                 gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.logistic.hybrid "
