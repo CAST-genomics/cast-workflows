@@ -2,35 +2,42 @@
 
 # Special case handling: rerun FLARE local ancestry calling on Chr3-EUR-chunk_2
 # Standard workflow failed on Chr3-EUR-chunk_2 (chunk sample size =10K)
+# Failed on the above chunk with 'probs=true', success with FLARE defult setting 'probs=false'
+
 # Issue solved: Split Chr3-EUR-chunk_2 into 2 chunks: 
 # Chr3-EUR-chunk_2.part1 (chunk sample size =5K) & Chr3-EUR-chunk_2.part2 (chunk sample size =5K), then rerun FLARE on each VCF
+#################################################################################################################################
+#################################################################################################################################
 
+# Step 1: Split EUR-chunk_2
 
-# Step 1: Extract all sample names
+# Extract all sample names
 bcftools query -l chunk_2.vcf.gz > chunk_2.samples.txt
 
-# Step 2: Split the sample list into two equal parts
+# Split the sample list into two equal parts
 head -n 5000 chunk_2.samples.txt > chunk_2.part1.samples.txt
 tail -n +5001 chunk_2.samples.txt > chunk_2.part2.samples.txt
 
-# Step 3: Extract the first 5000 samples into a new VCF
+# Extract the first 5000 samples into a new VCF
 bcftools view -S chunk_2.part1.samples.txt -Oz -o chunk_2.part1.vcf.gz chunk_2.vcf.gz
 tabix -p vcf chunk_2.part1.vcf.gz
 
-# Step 4: Extract the second 5000 samples into another new VCF
+# Extract the second 5000 samples into another new VCF
 bcftools view -S chunk_2.part2.samples.txt -Oz -o chunk_2.part2.vcf.gz chunk_2.vcf.gz
 tabix -p vcf chunk_2.part2.vcf.gz
 
-# Optional: Verify sample counts
+# Verify sample counts
 echo "Samples in part 1:"
 bcftools query -l chunk_2.part1.vcf.gz | wc -l
-
 echo "Samples in part 2:"
 bcftools query -l chunk_2.part2.vcf.gz | wc -l
 
 
-###################################################################################################################
-###################################################################################################################
+#################################################################################################################################
+#################################################################################################################################
+
+# Step 2: Rerun FLARE on EUR-chunk_2.part1 & EUR-chunk_2.part2 VCF file
+
 # Set parameters
 JAVA_OPTS="-Xmx500g"
 FLARE_JAR="flare.jar"
@@ -75,10 +82,13 @@ java $JAVA_OPTS -jar $FLARE_JAR \
 bcftools index --tbi ancestry-flare-EUR-run/flare_output.six-ancestry-acaf-unrelated-EUR.chr3.chunk_2.part2.anc.vcf.gz
 
 
-###################################################################################################################
-###################################################################################################################
-###################################################################################################################
-###################################################################################################################
+#################################################################################################################################
+#################################################################################################################################
+
+
+# Step 3: List and Merge all chunk output files
+# move the previous AMR-chunk_3 FLARE outputs to the folder 'pre-run'
+# mkdir -p pre-run
 
 # Define output file
 OUTPUT_GLOBAL="flare_output.seperated-ancestry-run-acaf-unrelated.chr3.merged.global.anc.gz"
