@@ -18,16 +18,16 @@ awk '$2 == "sas" {print $1}' flare-ga-check.txt > aou-sas-sample-list.txt
 awk '$2 == "eas" {print $1}' flare-ga-check.txt > aou-eas-sample-list.txt
 awk '$2 == "eur" {print $1}' flare-ga-check.txt > aou-eur-sample-list.txt
 awk '$2 == "mid" {print $1}' flare-ga-check.txt > aou-mid-sample-list.txt
-##########################################################################
-##########################################################################
+
+#################################################################################################################################
+#################################################################################################################################
 
 ## Step 2: Extract and create VCF for each group of samples
 
-##########################
 # Download the phased VCF of all AoU samples on chr1
 gsutil -u $GOOGLE_PROJECT cp gs://fc-secure-5efb5f8d-7703-495b-8dc7-3d90605152e5/phased-vcf/acaf_threshold_unrelated.chr1.biallelic.phased.vcf.gz .
 gsutil -u $GOOGLE_PROJECT cp gs://fc-secure-5efb5f8d-7703-495b-8dc7-3d90605152e5/phased-vcf/acaf_threshold_unrelated.chr1.biallelic.phased.vcf.gz.tbi .
-##########################
+
 
 bcftools view -S aou-sas-sample-list.txt --force-samples \
   -Oz -o acaf_threshold_unrelated_SAS.chr1.biallelic.phased.vcf.gz \
@@ -35,7 +35,7 @@ bcftools view -S aou-sas-sample-list.txt --force-samples \
 bcftools index --tbi acaf_threshold_unrelated_SAS.chr1.biallelic.phased.vcf.gz
 echo "Creating SAS VCF complete."
 
-##########################################################################
+##############################################################################
 
 bcftools view -S aou-eas-sample-list.txt --force-samples \
   -Oz -o acaf_threshold_unrelated_EAS.chr1.biallelic.phased.vcf.gz \
@@ -43,7 +43,7 @@ bcftools view -S aou-eas-sample-list.txt --force-samples \
 bcftools index --tbi acaf_threshold_unrelated_EAS.chr1.biallelic.phased.vcf.gz
 echo "Creating EAS VCF complete."
 
-##########################################################################
+##############################################################################
 
 bcftools view -S aou-mid-sample-list.txt --force-samples \
   -Oz -o acaf_threshold_unrelated_MID.chr1.biallelic.phased.vcf.gz \
@@ -51,7 +51,7 @@ bcftools view -S aou-mid-sample-list.txt --force-samples \
 bcftools index --tbi acaf_threshold_unrelated_MID.chr1.biallelic.phased.vcf.gz
 echo "Creating MID VCF complete."
 
-##########################################################################
+##############################################################################
 
 bcftools view -S aou-eur-sample-list.txt --force-samples \
   -Oz -o acaf_threshold_unrelated_EUR.chr1.biallelic.phased.vcf.gz \
@@ -59,7 +59,7 @@ bcftools view -S aou-eur-sample-list.txt --force-samples \
 bcftools index --tbi acaf_threshold_unrelated_EUR.chr1.biallelic.phased.vcf.gz
 echo "Creating EUR VCF complete."
 
-##########################################################################
+##############################################################################
 
 bcftools view -S aou-amr-sample-list.txt --force-samples \
   -Oz -o acaf_threshold_unrelated_AMR.chr1.biallelic.phased.vcf.gz \
@@ -67,7 +67,7 @@ bcftools view -S aou-amr-sample-list.txt --force-samples \
 bcftools index --tbi acaf_threshold_unrelated_AMR.chr1.biallelic.phased.vcf.gz
 echo "Creating AMR VCF complete."
 
-##########################################################################
+##############################################################################
 
 bcftools view -S aou-afr-sample-list.txt --force-samples \
   -Oz -o acaf_threshold_unrelated_AFR.chr1.biallelic.phased.vcf.gz \
@@ -75,13 +75,12 @@ bcftools view -S aou-afr-sample-list.txt --force-samples \
 bcftools index --tbi acaf_threshold_unrelated_AFR.chr1.biallelic.phased.vcf.gz
 echo "Creating AFR VCF complete."
 
-##########################################################################
-##########################################################################
+#################################################################################################################################
+#################################################################################################################################
 
 ## Step 3: Split chunks for AFR, AMR, EUR with chink size 10K using GNU parallel
 
-##########################################################################
-
+##############################################################################
 ## Download GNU Parallel to parallel the splitting job of bcftools
 
 #wget -qO parallel.tar.bz2 https://ftp.gnu.org/gnu/parallel/parallel-latest.tar.bz2
@@ -92,19 +91,16 @@ echo "Creating AFR VCF complete."
 #cd parallel-*
 
 # Use GNU Parallel without installing
-#/home/jupyter/workspaces/cast/parallel-20250222/src/parallel --version
+#/home/jupyter/workspaces/cast/parallel-20250322/src/parallel --version
 # if has results: '/src/parallel' file exists, then export the path:
-#export PATH=/home/jupyter/workspaces/cast/parallel-20250222/src:$PATH
 
+#export PATH=/home/jupyter/workspaces/cast/parallel-20250322/src:$PATH
 #parallel --version
-
-#echo 'export PATH=/home/jupyter/workspaces/cast/parallel-20250222/src:$PATH' >> ~/.bashrc
-
+#echo 'export PATH=/home/jupyter/workspaces/cast/parallel-20250322/src:$PATH' >> ~/.bashrc
 #source ~/.bashrc
 
 #cd ../
-
-##########################################################################
+##############################################################################
 
 # Set variables 
 VCF_FILE="acaf_threshold_unrelated_EUR.chr1.biallelic.phased.vcf.gz"
@@ -243,8 +239,8 @@ seq 1 $CHUNK_SIZE $TOTAL_SAMPLES | \
 echo "Splitting AFR chunks complete."
 
 
-##########################################################################
-##########################################################################
+#################################################################################################################################
+#################################################################################################################################
 
 ## Step 4: Run FLARE on each chunk (seperated ancetry VCF files)
 
@@ -259,8 +255,7 @@ wget -O flare.jar https://faculty.washington.edu/browning/flare.jar
 gsutil -u $GOOGLE_PROJECT cp gs://fc-secure-5efb5f8d-7703-495b-8dc7-3d90605152e5/ancestry-calling/reference/hgdp-1kgp-ref_chr1_biallelic.phased.add_chr.vcf.gz .
 gsutil -u $GOOGLE_PROJECT cp gs://fc-secure-5efb5f8d-7703-495b-8dc7-3d90605152e5/ancestry-calling/reference/hgdp-1kgp-ref_chr1_biallelic.phased.add_chr.vcf.gz.tbi .
 
-##################################################################################
-
+##############################################################################
 ## Create java21 conda environment
 
 #export LD_LIBRARY_PATH=/home/jupyter/miniconda/pkgs/libarchive-3.7.4-hfab0078_0/lib:$LD_LIBRARY_PATH
@@ -274,8 +269,7 @@ gsutil -u $GOOGLE_PROJECT cp gs://fc-secure-5efb5f8d-7703-495b-8dc7-3d90605152e5
 #conda init bash
 #source ~/.bashrc
 #conda activate java21_env
-
-##################################################################################
+##############################################################################
 
 # Set parameters
 JAVA_OPTS="-Xmx500g"
@@ -340,8 +334,9 @@ java $JAVA_OPTS -jar $FLARE_JAR \
     out=$OUTPUT_PREFIX
 
 bcftools index --tbi flare_output.six-ancestry-acaf-unrelated-MID.chr1.anc.vcf.gz
-##################################################################################
-##################################################################################
+
+#################################################################################
+#################################################################################
 
 # Set variables
 JAVA_OPTS="-Xmx512g"
@@ -393,7 +388,7 @@ process_chunk_with_flare
 # Run indexing for all .anc.vcf.gz files
 index_anc_vcf_files
 
-##########################################################################
+#################################################################################
 
 # Set variables
 JAVA_OPTS="-Xmx512g"
@@ -446,7 +441,7 @@ process_chunk_with_flare
 index_anc_vcf_files
 
 
-##########################################################################
+#################################################################################
 
 # Set variables
 JAVA_OPTS="-Xmx512g"
@@ -498,8 +493,8 @@ process_chunk_with_flare
 # Run indexing for all .anc.vcf.gz files
 index_anc_vcf_files
 
-##########################################################################
-##########################################################################
+#################################################################################################################################
+#################################################################################################################################
 
 ## Step 5: Merge all FLARE chunk results
 
@@ -540,7 +535,7 @@ mv flare_output.seperated-ancestry-run-acaf-unrelated.chr1.merged.global.anc.tmp
 
 echo "Merged global ancestry file created: $OUTPUT_GLOBAL"
 
-##################################################################################
+#################################################################################
 
 # Define output file names
 OUTPUT_MODEL="flare_output.seperated-ancestry-run-acaf-unrelated.chr1.merged.model"
@@ -572,7 +567,7 @@ rm log_files.txt
 
 echo "Merged .log file created: $OUTPUT_LOG"
 
-##################################################################################
+#################################################################################
 
 # Define output file
 OUTPUT_VCF="flare_output.seperated-ancestry-run-acaf-unrelated.chr1.merged.anc.vcf.gz"
@@ -602,8 +597,8 @@ rm "$FILE_LIST"
 echo "Merged VCF file created: $OUTPUT_VCF"
 
 
-##########################################################################
-##########################################################################
+#################################################################################################################################
+#################################################################################################################################
 
 ## Step 6: Upload all merged FLARE results to workspace bucket
 
@@ -612,4 +607,3 @@ gsutil -u $GOOGLE_PROJECT cp flare_output.seperated-ancestry-run-acaf-unrelated.
 gsutil -u $GOOGLE_PROJECT cp flare_output.seperated-ancestry-run-acaf-unrelated.chr1.merged.log gs://fc-secure-5efb5f8d-7703-495b-8dc7-3d90605152e5/ancestry-calling/
 gsutil -u $GOOGLE_PROJECT cp flare_output.seperated-ancestry-run-acaf-unrelated.chr1.merged.anc.vcf.gz gs://fc-secure-5efb5f8d-7703-495b-8dc7-3d90605152e5/ancestry-calling/
 gsutil -u $GOOGLE_PROJECT cp flare_output.seperated-ancestry-run-acaf-unrelated.chr1.merged.anc.vcf.gz.tbi gs://fc-secure-5efb5f8d-7703-495b-8dc7-3d90605152e5/ancestry-calling/
-
