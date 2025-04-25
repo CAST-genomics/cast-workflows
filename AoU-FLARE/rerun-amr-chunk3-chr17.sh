@@ -2,8 +2,11 @@
 
 # Special case handling: rerun FLARE local ancestry calling on Chr17 AMR-chunk_3 & Chr18 AMR-chunk_3
 # Standard workflow failed on Chr17 AMR-chunk_3 (chunk sample size =10K) & Chr18 AMR-chunk_3 (chunk sample size =10K)
-# Issue solved: merge AMR-chunk_3 and AMR-chunk_4 (chunk sample size =11,018), then rerun FLARE on this merged AMR_chunk_3_4 VCF
+# Failed on the above chunk with 'probs=true', success with FLARE defult setting 'probs=false'
 
+# Issue solved: merge AMR-chunk_3 and AMR-chunk_4 (chunk sample size =11,018), then rerun FLARE on this merged AMR_chunk_3_4 VCF
+#################################################################################################################################
+#################################################################################################################################
 
 # Step 1: Merge AMR-chunk_3 and AMR-chunk_4
 
@@ -18,10 +21,11 @@ bcftools merge flare-AMR-run/chunk_3.vcf.gz flare-AMR-run/chunk_4.vcf.gz -Oz -o 
 tabix -p flare-AMR-run/vcf merged_chunk_3_4.vcf.gz
 
 
-###################################################################################################################
-###################################################################################################################
+#################################################################################################################################
+#################################################################################################################################
 
 # Step 2: Rerun FLARE on the merged AMR-chunk_3_4 VCF file
+
 # Set parameters
 JAVA_OPTS="-Xmx500g"
 FLARE_JAR="flare.jar"
@@ -44,8 +48,8 @@ java $JAVA_OPTS -jar $FLARE_JAR \
 bcftools index --tbi ancestry-flare-AMR-run/flare_output.six-ancestry-acaf-unrelated-AMR.chr17.chunk_3_4.anc.vcf.gz
 
 
-###################################################################################################################
-###################################################################################################################
+#################################################################################################################################
+#################################################################################################################################
 
 # Step 3: List and Merge all chunk output files
 # move the previous AMR-chunk_3 FLARE outputs to the folder 'pre-run'
