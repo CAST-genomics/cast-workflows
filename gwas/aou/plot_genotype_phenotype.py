@@ -1,6 +1,26 @@
+
+"""
+Plot genotype-phenotype plots and odds ratio plots depending on the phenotype being binary or continuous.
+These plots are currently automatically created when running GWAS (aou_gwas.py), but can be generated separately as well.
+
+Example:
+python plot_genotype_phenotype.py --phenotype Hyperlipidemia \
+                                  --binary \
+                                  --annotations annotation_points.csv \
+                                  --tr-vcf chr1_imputed.vcf.gz
+"""
+
+import os
+import argparse
 import matplotlib.pyplot as plt
+import re
 import numpy as np
 import seaborn as sns
+import pandas as pd
+from gwas_plotter import plot_histogram
+from gwas_utils import SAMPLEFILE, GetPTCovarPath, GetCohort, CheckRegion, NormalizeData, \
+                        read_annotations, set_genotypes, load_snp_gwas_df, load_gwas_tab
+
 
 def line_plot(data_dict, genotype, phenotype_label, out):
     sns.lineplot(x=data_dict.keys(),
@@ -119,26 +139,17 @@ def plot_alleles_histogram(data, genotype, out, epsilon, bin_width=0.5):
     plt.clf()
 
 
-def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
+def plot_genotype_phenotype(data, genotype, phenotype,
                             phenotype_label, outpath, binary, violin,
                             merge_bins,
                             min_gt_count=30,
                             min_gt_freq=0.05,
                             verbose=False,
                             epsilon=1E-8):
-    if len(gwas) == 1:
-        if gwas.iloc[0]["chrom"] != chrom or \
-                abs(int(gwas.iloc[0]["pos"]) - int(pos)) < 1:
-            return
-    else: # To avoid warning on single element series
-        if len(gwas.loc[(gwas["chrom"].astype(str) == chrom) &\
-                        (gwas["pos"].astype(int) > int(pos) - 1) &\
-                        (gwas["pos"].astype(int) < int(pos) + 1)]) == 0:
-            return
     plotted_data = data[[genotype, phenotype]].dropna()
     plotted_data = plotted_data.astype(float)
 
-    # Combine bins if indicated to get a more coarse set of alleles
+    # Combine bins if indicated to get a more coarse set of alleles by rounding genotypes to the int values
     if merge_bins:
         plotted_data[genotype] = plotted_data[genotype].astype(int)
 
@@ -193,3 +204,118 @@ def plot_genotype_phenotype(data, genotype, phenotype, gwas, chrom, pos,
                                            outpath=outpath,
                                            violin=violin,
                                            verbose=verbose)
+
+def parse_args():
+    parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument("--tr-vcf", help="VCF file with TR genotypes. Required if running associaTR", type=str)
+    parser.add_argument("--annotations", help="CSV file with annotations for plotting" + \
+                                              "each line should include the " + \
+                                              "chromosome, start coordinate and label(gene).",
+                                              type=str)
+    parser.add_argument("--phenotype", help="Phenotypes file path, or phenotype name", type=str, required=True)
+    parser.add_argument("--binary", help="Plot the genotype-phenotype for binary phenotypes", action="store_true")
+    parser.add_argument("--samples", help="List of sample IDs, sex to keep", type=str, default=SAMPLEFILE)
+    parser.add_argument("--violin", help="Make the genotype_phenotype plot a violinplot instead of boxplot.",
+                            action="store_true")
+    parser.add_argument("--merge-bins", help="Merge bins in the genotype_phenotype plot.",
+                            action="store_true")
+    parser.add_argument("--norm", help="Normalize phenotype either quantile or zscore", type=str)
+    parser.add_argument("--norm-by-sex",
+                        help="Apply the normalization for each sex separately. Default: False",
+                        action="store_true")
+    parser.add_argument("--outdir", help="Path to the output directory", type=str, required=True)
+    args = parser.parse_args()
+    return args
+
+def main():
+    args = parse_args()
+
+    # Eventhough covariates are not needed for plotting genotype-phenotypes, we load phenocovar files as
+    # sample ids and phenotype lables are stored there.
+    ptcovar_path = "phenocovars/{}_phenocovar.csv".format(args.phenotype)
+    if os.path.exists(ptcovar_path):
+        pass
+    else:
+        ptcovar_path = GetPTCovarPath(args.phenotype)
+
+    # Create output dir if does not exist
+    if not os.path.exists(args.outdir):
+        os.makedirs(args.outdir, exist_ok=True)
+
+    # Set up data frame with phenotype and covars
+    data = pd.read_csv(ptcovar_path)
+    data["person_id"] = data["person_id"].apply(str)
+
+    # Add normalization. If indicated, normalize for each sex separately.
+    if args.norm_by_sex:
+        # Separate the data into two smaller dataframes based on sex at birth.
+        female_data = data[data['sex_at_birth_Male'] == 0].copy()
+        male_data = data[data['sex_at_birth_Male'] == 1].copy()
+
+        # Apply normalization on female and male dataframes separately.
+        female_data = NormalizeData(data=female_data, norm=args.norm)
+        male_data = NormalizeData(data=male_data, norm=args.norm)
+
+        # Concatenate the female and male dataframes back into one
+        # and sort the dataframe by original order.
+        data = pd.concat([female_data, male_data])
+        data = data.sort_index()
+    else:
+        # Apply normalization on the entire data.
+        if args.norm is not None:
+            data = NormalizeData(data=data, norm=args.norm)
+
+    # Collect desired samples
+    sampfile = args.samples
+    if sampfile.startswith("gs://"):
+        sampfile = sampfile.split("/")[-1]
+        if not os.path.isfile(sampfile):
+            os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
+    samples = pd.read_csv(sampfile)
+    samples["person_id"] = samples["person_id"].apply(str)
+
+    # Set cohort name which is later used to name output files
+    cohort = GetCohort(sampfile)
+    
+    # Get annotations of specific TRs for plotting
+    annotations = read_annotations(args.annotations)
+
+    # Extract the chrom from the tr_vcf file for the manhattan plot
+    words = re.split("_|\.", args.tr_vcf)
+    vcf_chrom = [word for word in words if word.startswith("chr")][0]
+
+    # Extract genotypes from vcf and plot allele histogram
+    # Setting genotypes is necessary for genotype-phenotype plot.
+    # The first time computing it for each phenotype-VNTR locus pair
+    # takes some time (about an hour). Consecutive times are much faster
+    # as genotype data is automatically stored the first time computed and loaded later.
+    data, annotations = set_genotypes(data=data,
+                     annotations=annotations,
+                     cohort=cohort,
+                     samples=samples["person_id"],
+                     tr_vcf=args.tr_vcf,
+                     outdir=args.outdir)
+    # Plot phenotype histogram
+    plot_histogram(data["phenotype"], args.phenotype,
+                os.path.join(args.outdir,
+                    "{}_histogram_after_norm.png".format(args.phenotype)))
+    
+    data = pd.merge(data, samples)
+    # Plot genotype phenotype
+    for chrom, pos, gene in annotations:
+        plot_genotype_phenotype(data=data,
+                            genotype=gene,
+                            phenotype="phenotype",
+                            phenotype_label=args.phenotype,
+                            binary=args.binary,
+                            violin=args.violin,
+                            merge_bins=args.merge_bins,
+                            outpath=os.path.join(args.outdir,
+                                "{}_genotype_{}_{}.png".format(
+                                    gene, args.phenotype, cohort)),
+                            min_gt_count=30,
+                            min_gt_freq=0.05,
+                            verbose=False)
+
+if __name__ == "__main__":
+    main()

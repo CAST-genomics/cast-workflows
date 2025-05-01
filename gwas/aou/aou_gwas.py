@@ -8,38 +8,20 @@ Example:
 """
 
 import argparse
-from gwas_plotter import PlotManhattan, PlotQQ, plot_histogram
-from plot_genotype_phenotype import plot_genotype_phenotype
 import os
 import pandas as pd
 import re
 import sys
 from utils import MSG, ERROR
 import numpy as np
-import scipy.stats as stats
-import warnings
-from cyvcf2 import VCF
-from collections import Counter
+from gwas_plotter import PlotManhattan, PlotQQ, plot_histogram
+from plot_genotype_phenotype import plot_genotype_phenotype
+from gwas_utils import SAMPLEFILE, GetPTCovarPath, GetCohort, CheckRegion, NormalizeData, \
+                        read_annotations, set_genotypes, load_snp_gwas_df, load_gwas_tab
 
 GWAS_METHODS = ["hail", "associaTR"]
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
-SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
-    "passing_samples_v7.1.csv")
-DEFAULTSAMPLECSV = "passing_samples_v7.1.csv"
 
-def GetPTCovarPath(phenotype):
-    return os.path.join(os.getenv('WORKSPACE_BUCKET'), \
-        "phenotypes", "%s_phenocovar.csv"%phenotype)
-
-def CheckRegion(region):
-    if region is None: return True
-    return re.match(r"\w+:\d+-\d+", region) is not None
-
-def GetCohort(samplefile):
-    cohort = "ALL" #if samplefile == DEFAULTSAMPLECSV
-    if samplefile != DEFAULTSAMPLECSV:
-        cohort = os.path.basename(samplefile[:-4]) #chop off .csv at the end
-    return cohort
 
 def GetOutPath(phenotype, method, region, samplefile, outdir):
     cohort = GetCohort(samplefile)
@@ -49,10 +31,6 @@ def GetOutPath(phenotype, method, region, samplefile, outdir):
     if not os.path.exists(outdir):
         os.mkdir(outdir)
     return os.path.join(outdir, outprefix + ".gwas")
-
-def GetFloatFromPC(x):
-    x = x.replace("[","").replace("]","")
-    return float(x)
 
 def LoadAncestry(ancestry_pred_path):
     if ancestry_pred_path.startswith("gs://"):
@@ -65,7 +43,7 @@ def LoadAncestry(ancestry_pred_path):
     pcols = ["PC_%s"%i for i in range(num_pcs)]
     ancestry[pcols] = ancestry["pca_features"].str.split(",", expand=True)
     for p in pcols:
-        ancestry[p] = ancestry[p].apply(lambda x: GetFloatFromPC(x), 1)
+        ancestry[p] = ancestry[p].str.replace("[","").str.replace("]","").astype(float)
     return ancestry
 
 def WriteGWAS(gwas, outpath, covars):
@@ -77,177 +55,6 @@ def WriteGWAS(gwas, outpath, covars):
     # Append gwas results
     gwas.to_csv(outpath, sep="\t", mode="a", index=False)
 
-def Inverse_Quantile_Normalization(M):
-    M = M.transpose()
-    R = stats.mstats.rankdata(M,axis=1)  # ties are averaged
-    Q = stats.norm.ppf(R/(M.shape[1]+1))
-    Q = Q.transpose() 
-    return Q
-
-def NormalizeData(data, norm):
-    # Add normalization quantile
-    if norm == "quantile":
-        data["phenotype"] = Inverse_Quantile_Normalization(data[["phenotype"]])
-        return data
-
-    # Add z-score normalization
-    elif norm == "zscore":
-        data["phenotype"]  = stats.zscore(data[["phenotype"]])
-        return data
-
-    else:
-        ERROR("No normalization method specified")
-
-def read_annotations(filename):
-    annotations = []
-    if filename:
-        with open(filename, "r") as annotations_file:
-            lines = annotations_file.readlines()
-        for line in lines:
-            if line.startswith("chrom"):
-                # Header line
-                continue
-            chrom, start, gene = line.strip().split(",")[:3]
-            annotations.append((str(chrom), str(start), str(gene)))
-    return annotations
-
-def get_alleles(record):
-    ref_allele = record.REF
-    alt_alleles = record.ALT
-    info_fields = record.INFO
-    ru = info_fields["RU"]
-    if ru is None:
-        print("Error: Repeat Unit (RU) not provided in the info field")
-        return
-    ru_len = len(ru)
-    #print("ru_len, ru, len ref allele", ru_len, ru, len(ref_allele))
-    len_ref_allele = len(ref_allele)
-    len_alt_alleles = [len(alt_allele) for alt_allele in alt_alleles]
-    return len_ref_allele, len_alt_alleles, ru_len
-
-def get_rc_from_allele(allele, ref_allele, alt_alleles, ru_len):
-    if allele == 0:
-        ref_rc = int(ref_allele/ru_len)
-        #print("ref_rc ", ref_rc)
-        return ref_rc
-    else:
-        rc = int(alt_alleles[allele-1]/ru_len)
-        #print("call {} allele {}".format(allele, rc))
-        return rc
-
-def set_genotypes(data, annotations, cohort, samples, tr_vcf, outdir):
-    print("Reading genotypes from the vcf file")
-    # Extract the chrom from the tr_vcf file
-    words = re.split("_|\.", tr_vcf)
-    vcf_chrom = [word for word in words if word.startswith("chr")][0]
-    samples_str = [str(sample) for sample in samples]
-    vcf = VCF(tr_vcf, samples = samples_str)
-    vcf_samples = vcf.samples
-
-    relevant_annotations = []
-
-    # Focus on a few loci of interest
-    for chrom, start, gene in annotations:
-        if chrom != vcf_chrom:
-            continue
-
-        relevant_annotations.append((chrom, start, gene))
-        # Check if genotypes are extracted before
-        df_load_path = "genotypes/genotypes_{}_{}_{}_{}.csv".format(gene, chrom, start, cohort)
-        if not os.path.exists(df_load_path):
-            # Load for all samples instead of cohort specific
-            df_load_path = "genotypes/genotypes_{}_{}_{}_passing_samples_v7.1.csv".format(gene, chrom, start)
-        if os.path.exists(df_load_path):
-            ids_not_found = []
-            data.loc[:, [gene]] = np.nan
-            genotypes_df = pd.read_csv(df_load_path, index_col=0)
-            for idx, row in data.iterrows():
-                sample = idx
-                if int(row["person_id"]) not in genotypes_df.index:
-                    ids_not_found.append(int(row["person_id"]))
-                else:
-                    rc = float(genotypes_df.loc[int(row["person_id"])]["rc"])
-                    data.at[idx, gene] = rc
-            print("Number of samples where the genotype could not be loaded {}".format(len(ids_not_found)))
-            print("For gene {} skipping {} samples".format(gene, len(ids_not_found)) +
-                  "4 most common genotypes: ", genotypes_df["rc"].value_counts().head(4))
-            continue
-
-        # Compute genotypes from VCF file        
-        all_alleles = []
-        genotypes_df = pd.DataFrame(columns=["rc"])
-        empty_calls, no_calls = 0, 0
-        variant = list(vcf("{}:{}-{}".format(chrom, int(start)-1, int(start) + 1)))[0]
-        print("Processing annotation {} {}:{}".format(gene, chrom, start))
-        data.loc[:, [gene]] = np.nan
-        samples_with_calls = set()
-        print("Reading ref and alt alleles")
-        ref_allele_len, alt_alleles_len, ru_len = get_alleles(variant)
-        print("Reading calls")
-        counter = 0
-        for i, sample_call in enumerate(variant.genotypes):
-            counter += 1
-            sample = vcf_samples[i]
-            if counter % 10000 == 0:
-                print("reading call ", counter)
-            rc_1 = get_rc_from_allele(int(sample_call[0]), ref_allele_len, alt_alleles_len, ru_len)
-            rc_2 = get_rc_from_allele(int(sample_call[1]), ref_allele_len, alt_alleles_len, ru_len)
-            rc = (rc_1 + rc_2) / 2.0
-            all_alleles.extend([rc_1, rc_2])
-
-            samples_with_calls.add(sample)
-            data.loc[data["person_id"]==sample, gene] = rc
-            genotypes_df.loc[sample] = rc
-        print("Alleles count for the 4 most common alleles: ", Counter(all_alleles).most_common(4))
-        # Plot alleles
-        if len(set(all_alleles)) > 1:
-            print("Plotting alleles histogram")
-            print("gene: ", gene)
-            # Polymorphic vntr in the imputed set. Otherwise, if it's non-polymorphic, it'll get an error.
-            plot_histogram(all_alleles, gene, os.path.join(outdir, "{}_alleles_{}.png".format(gene, cohort)))
-            #plot_histogram(list(data[gene]), gene,
-            #                os.path.join(outdir, "{}_genotypes_{}.png".format(gene, cohort)))
-        if no_calls + empty_calls > 0:
-            print("Skipping {} empty calls and {} no calls for {} on vcf".format(
-                    empty_calls, no_calls, gene))
-        genotypes_df.to_csv(df_load_path)
-    return data, relevant_annotations
-
-def print_stats(data, locus):
-    print("For phenotype, mean {:.4f} and sd {:.4f}".format(
-        data["phenotype"].mean(),
-        data["phenotype"].std()))
-    print(data["phenotype"].describe())
-    print("For genotype, mean {:.4f} and sd {:.4f}".format(
-        data[locus].mean(),
-        data[locus].std()))
-    print(data[locus].describe())
-    min_height = data["phenotype"].min()
-    max_height = data["phenotype"].max()
-    samples_w_min_height = data[data["phenotype"]==min_height]
-    print("samples_w_min_height: ", len(samples_w_min_height))
-    samples_w_max_height = data[data["phenotype"]==max_height]
-    print("samples_w_max_height: ", len(samples_w_max_height))
-    
-    print("median genotype at samples_w_min_height: ", samples_w_min_height[locus].median())
-    print("median genotype at samples_w_max_height: ", samples_w_max_height[locus].median())
-
-def load_snp_gwas_df(filename):
-    snp_data = pd.read_csv(filename)
-    print("Num snp variants loaded: ", len(snp_data))
-    snp_data["POS"] = snp_data["POS"].astype(int)
-    snp_data = snp_data.rename(columns={"POS": "pos",
-                     "Pvalue_log10": "-log10pvalue",
-                     "CHR": "chrom"})
-    return snp_data
-
-def load_gwas_tab(filename, max_nlp_val=100):
-    data = pd.read_csv(filename, sep="\t")
-    data["chrom"] = data["#CHROM"].apply(lambda x: "chr" + str(x))
-    data["pos"] = data["POS"].astype(int)
-    data["-log10pvalue"] = data["P"].apply(lambda x: -np.log10(float(x))).apply(lambda x: max_nlp_val if x == np.inf else x)
-    
-    return data
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
@@ -264,7 +71,6 @@ def main():
                 help="Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male",
                             type=str, default="sex_at_birth_Male")
     parser.add_argument("--tr-vcf", help="VCF file with TR genotypes. Required if running associaTR", type=str)
-    parser.add_argument("--is-imputed", help="Indicate if the tr-vcf file is imputed", action="store_true")
     parser.add_argument("--annotations", help="CSV file with annotations for plotting" + \
                                               "each line should include the " + \
                                               "chromosome, start coordinate and label(gene).",
@@ -295,7 +101,6 @@ def main():
 
     # Set up paths
     ptcovar_path = "phenocovars/{}_phenocovar.csv".format(args.phenotype)
-    #if args.phenotype.endswith(".csv"):
     if os.path.exists(ptcovar_path):
         pass
     else:
@@ -309,7 +114,7 @@ def main():
         ERROR("--annotations must be provided when --plot-genotype-phenotype is set.")
         
     # Create output dir if does not exist
-    if os.path.exists(args.outdir):
+    if not os.path.exists(args.outdir):
         os.makedirs(args.outdir, exist_ok=True)
 
     # Check options
@@ -324,7 +129,7 @@ def main():
     if args.norm_by_sex and args.norm is None:
         ERROR("Must specify --norm if using --norm-by-sex")
 
-    # Load SNP gwas
+    # Load SNP gwas from all by all query or VNTR gwas from a previous run
     snp_gwas = None
     if args.snp_gwas_file:
         snp_gwas = load_snp_gwas_df(args.snp_gwas_file)
@@ -381,11 +186,13 @@ def main():
     words = re.split("_|\.", args.tr_vcf)
     vcf_chrom = [word for word in words if word.startswith("chr")][0]
 
-    # Plot genotype-phenotype plot and allele histogram
+    # Get repeat counts from the tr-vcf file and plot alleles histogram
     if args.method == "associaTR" \
             and args.plot_genotype_phenotype:
-        # This is necessary for genotype-phenotype plot
-        # To run a quick check, randomly subsample the samples
+        # Setting genotypes is necessary for genotype-phenotype plot.
+        # The first time computing it for each phenotype-VNTR locus pair
+        # takes some time (about an hour). Consecutive times are much faster
+        # as genotype data is automatically stored the first time computed and loaded later.
         data, annotations = set_genotypes(data=data,
                          annotations=annotations,
                          cohort=cohort,
@@ -432,14 +239,9 @@ def main():
             annotate = True
             p_value_threshold = -np.log10(5*10**-8)
             if args.plot_genotype_phenotype:
-                #print("plotting genotype phenotype for annotations ", annotations)
                 for chrom, pos, gene in annotations:
-                    #print("chrom, pos and gene", chrom, pos, gene)
                     plot_genotype_phenotype(data=data,
                         genotype=gene,
-                        gwas=gwas,
-                        chrom=chrom,
-                        pos=pos,
                         phenotype="phenotype",
                         phenotype_label=args.phenotype,
                         binary=args.binary,
