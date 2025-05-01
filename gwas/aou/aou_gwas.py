@@ -8,7 +8,8 @@ Example:
 """
 
 import argparse
-from gwas_plotter import PlotManhattan, PlotQQ, plot_histogram, plot_genotype_phenotype
+from gwas_plotter import PlotManhattan, PlotQQ, plot_histogram
+from plot_genotype_phenotype import plot_genotype_phenotype
 import os
 import pandas as pd
 import re
