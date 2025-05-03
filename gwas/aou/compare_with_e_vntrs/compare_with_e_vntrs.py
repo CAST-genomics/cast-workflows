@@ -22,11 +22,17 @@ def read_gwas(filename):
 
 def main():
     e_vntrs = read_e_vntrs(filename="41467_2021_22206_MOESM3_ESM.xlsx")
-    gwas_sig_hits = read_gwas("results_v4_blood_significant_hits.tab")
+    #gwas_sig_hits = read_gwas("results_v4_blood_significant_hits.tab")
     #gwas_sig_hits = read_gwas("results_v3_eur_significant_hits.tab")
+    gwas_sig_hits = read_gwas("results_v2_all_significant_hits.tab")
     print(f"Working with {len(e_vntrs)} e-vntrs and {len(gwas_sig_hits)} significant tr-gwas hits")
     gwas_e_vntrs = gwas_sig_hits.merge(e_vntrs, how="inner", on="chrom_start")
     print(gwas_e_vntrs[["chrom_start", "Nearest Gene", "phenotype", "P"]])
+
+    # A one-off check for a Schizophrenia specific VNTR in the literature
+    gwas_mir_137_dist = gwas_sig_hits.loc[gwas_sig_hits["chrom"] == "chr1"]["start"].apply(lambda x: abs(x - 98046174))
+
+    print("Distances of VNTRs with significant hit to the MIR137 VNTR: ", gwas_mir_137_dist.sort_values())
 
 if __name__ == "__main__":
     main()
