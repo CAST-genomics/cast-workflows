@@ -4,7 +4,8 @@ workflow bgenTopgen {
     input {
         File bgen_file
         File sample_file
-        Int split_mem 
+        Int split_mem
+				Int disk_space=300 
         String chrom
         String bgen_qc
     }
@@ -15,6 +16,7 @@ workflow bgenTopgen {
             input_sample = sample_file,
             outprefix = chrom,
             mem = split_mem,
+            disk_space = disk_space,
             qc_option = bgen_qc
     }
 
@@ -30,6 +32,7 @@ task convert {
         File input_sample
         String outprefix
         Int mem
+        Int disk_space
         String qc_option
     }
 
@@ -50,10 +53,11 @@ task convert {
     runtime {
         docker: "gcr.io/ucsd-medicine-cast/bcftools-plink2:latest"
         memory: mem + "GB" 
+				disks: "local-disk ~{disk_space} SSD"
         maxRetries: 1 
     }
 
     output {
-        Array[File] pgen_files = glob("bgenTopgen/~{outprefix}_filtered.p*")
+        Array[File] pgen_files = glob("bgenTopgen/~{outprefix}_filtered.*")
     }
 }

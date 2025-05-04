@@ -42,10 +42,15 @@ PROJID="project-GbjB4x0JX3JyK5PZK67q0fZG"
 # echo "check passed, start compiling"
 # java -jar "$DX_COMPILER_JAR" compile ../wdl/extract_trs.wdl -project $PROJID -folder /yal084/applets/extract_trs -streamFiles all -archive
 
-echo "merge_and_annotation workflow"
-java -jar ~/Desktop/CAST_repository/WDL_tools/wdlTools-0.17.12.jar check ../wdl/merge_and_annotation.wdl
+# echo "merge_and_annotation workflow"
+# java -jar ~/Desktop/CAST_repository/WDL_tools/wdlTools-0.17.12.jar check ../wdl/merge_and_annotation.wdl
+# echo "check passed, start compiling"
+# java -jar "$DX_COMPILER_JAR" compile ../wdl/merge_and_annotation.wdl -project $PROJID -folder /yal084/applets/merge_and_annotation -streamFiles all -archive
+
+java -jar ~/Desktop/CAST_repository/WDL_tools/wdlTools-0.17.12.jar check ../wdl/bgenToQCpgen.wdl
 echo "check passed, start compiling"
-java -jar "$DX_COMPILER_JAR" compile ../wdl/merge_and_annotation.wdl -project $PROJID -folder /yal084/applets/merge_and_annotation -streamFiles all -archive
+java -jar "$DX_COMPILER_JAR" compile ../wdl/bgenToQCpgen.wdl -project $PROJID -folder /yal084/applets/bgenToQCpgen -streamFiles all -archive
+
 
 # echo "bcf_liftover workflow-id"
 # java -jar ~/Desktop/CAST_repository/WDL_tools/wdlTools-0.17.12.jar check ../wdl/bcf_liftover.wdl

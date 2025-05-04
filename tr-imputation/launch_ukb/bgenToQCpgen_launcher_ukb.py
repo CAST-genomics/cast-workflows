@@ -23,10 +23,10 @@ def saveJson(file_name, input_dict):
         json.dump(input_dict, f, indent=4)
 
 
-def RunWorkflow(json_dict, workflow_id, chrom, job_priority="high"):
+def RunWorkflow(json_dict, workflow_id, chrom, job_priority="normal"):
     workflow = dxpy.dxworkflow.DXWorkflow(dxid=workflow_id)
     analysis = workflow.run(json_dict, folder=f"/yal084/QCed_pgen_from_field_22828/chr{chrom}", priority=job_priority)
-    sys.stderr.write(f"Submitted {analysis.get_id()} for chr{chrom}") 
+    sys.stderr.write(f"Submitted {analysis.get_id()} for chr{chrom}\n") 
     return analysis
 
 # plink_options = "--mac 10 --maf 0.0001 --hwe 1e-15 --mind 0.1 --geno 0.1"
@@ -37,7 +37,10 @@ def main():
     parser.add_argument("--bfile-path", help="the folder of bfile on DNANexus", required=False, default="/Bulk/Imputation/UKB imputation from genotype", type=str)
     parser.add_argument("--split-mem", help="memory of instance used for plist", required=False, default=32, type=int)
     parser.add_argument("--bgen-qc", help="qc for bgen file, default from UKB recommended", required=False, default="--mac 20", type=str)
-    parser.add_argument("--workflow-id", help="id of workflow", required=False, default="workflow-J0BKGx8JX3JjPYjQJ5F1Yvfv", type=str)
+
+#    parser.add_argument("--workflow-id", help="id of workflow", required=False, default="workflow-J0BKGx8JX3JjPYjQJ5F1Yvfv", type=str)
+#   Add minimum requirement for disk space
+    parser.add_argument("--workflow-id", help="id of workflow", required=False, default="workflow-J0BPPGjJX3JXx32B0y0gbG4B", type=str)
 
     args = parser.parse_args()
     bgen_id, sample_id = getbfileID(args.bfile_path, args.chrom)    
