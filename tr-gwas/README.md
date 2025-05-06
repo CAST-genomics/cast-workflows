@@ -67,7 +67,7 @@ Additional input files:
 Additional run options:
 * `--logistic`:Run logistic regression. Default is linear regression
 * `--ancestry-pc`: Use ancestry specific PC instead of Global PC. Default use global PC
-* `--covar-name`: Name of covariates to run, default is "age,sex_at_birth_Male,PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10"
+* `--covar-name <STRING>`: Name of covariates to run, default is "age,sex_at_birth_Male,PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10"
 
 
 
