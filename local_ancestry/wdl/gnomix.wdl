@@ -128,7 +128,7 @@ task beagle {
 
     runtime {
         docker: "gcr.io/ucsd-medicine-cast/beagle:latest"
-        memory: "25GB"
+        memory: "30GB"
     }
 
     output {
