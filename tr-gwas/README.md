@@ -120,7 +120,15 @@ TR-gwas results
 Example to plot manhattan and qq plots:
 
 ```
-python plot_gwas.py --gwas platelet_count_gwas.tab
+python plot_gwas.py --gwas platelet_count_gwas.tab --P 8
+
+```
+
+## Cleaning up gwas result, compressing and indexing the file for downloading locally
+
+```
+python gwas_cleanup.py --phenotype platelet_count
+```
 
 ## TODO
 
