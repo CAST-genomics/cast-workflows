@@ -44,6 +44,33 @@ Example test to run tr-gwas on case/control phenotype :
 --logistic
 ```
 
+Example test to run tr-gwas on specific ancestry pc :
+
+```
+./tr_gwas_aou.py \
+--name test_binary_trait \
+--phenotype platelet_count \
+--cohort EUR \
+--ancestry-pc \
+--ancestry-pc-path ${filename}
+
+```
+
+Required options:
+* `--name <STRING>`: Name of the run. Used as the prefix to output files.
+* `--phenotype <STRING>`: Name of the phenotype
+* `--cohort <STRING>`: Choose one or more from `EUR`, `AFR`, `AMR`, `NOT_AFR`, `ALL` . If empty, default run all. 
+
+Additional input files:
+* `--ancestry-pc-path <STRING>`: Name of the ancestry pc file. Need to upload to google bucket first $WORKSPACE/ancestry_pc/
+
+Additional run options:
+* `--logistic`:Run logistic regression. Default is linear regression
+* `--ancestry-pc`: Use ancestry specific PC instead of Global PC. Default use global PC
+* `--covar-name`: Name of covariates to run, default is "age,sex_at_birth_Male,PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10"
+
+
+
 This will print out a friendly turtle with the job ID if successful. Use the following to check the status of your job. It will take around 10-20 minutes to run. If successful the status will eventually change to "Succeeded".
 
 ```
@@ -69,17 +96,6 @@ cromshell list-outputs $JOBID
 ./tr_gwas_aou.py \
 --name test_all
 ```
-## Detailed usage
-
-Required arguments:
-
-* `--name <STR>`: name of the run
-
-Optional arguments:
-
-* `--phenotype <STR>`: name of targeted phenotype, seperated by comma. Default: None, run all 
-* `--cohort <SAMPLE>`: name of targeted cohort, seperated by comma.  Options: AFR, EUR, AMR, ALL . Default: None, run all 
-* `--logistic`: run logistic regression. Default:  run linear regression
 
 Warning: This script manually filters PC6 for EUR and NOT_AFR cohorts
 

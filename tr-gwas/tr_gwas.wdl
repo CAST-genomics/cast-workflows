@@ -144,13 +144,14 @@ task run_tr_gwas {
             if [[ "~{logistic}" == false ]] ; then
                 plink2 --pfile ${pfile_outprefix} \
                 --pheno ~{pheno} \
-                --quantile-normalize \
-                --linear hide-covar \
+                --glm hide-covar \
                 --covar ${covar_file} \
                 --covar-name ~{covar_name} \
                 --keep ~{samples} \
+                --ci 0.95 \
+                --covar-variance-standardize \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
-                #--covar-variance-standardize \
+                
                 
                 gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear "
             fi
