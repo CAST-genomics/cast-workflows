@@ -78,9 +78,9 @@ def GetCohortPath(cohort):
 	return cohort_array
 
 def phenotypes_from_file(filename):
-    pheno_df = pd.read_csv(filename)
-    phenotypes = list(pheno_df["phecode_string"])
-    return phenotypes
+	pheno_df = pd.read_csv(filename)
+	phenotypes = list(pheno_df["phecode_string"])
+	return phenotypes
 
 
 def main():
@@ -89,6 +89,8 @@ def main():
 	parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions",type=str, default="gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv")
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	parser.add_argument("--pheno-file", help="The phenotype file to extract phenotypes from.", type=str)
+	parser.add_argument("--variant-as-covar-file", help="The file with variants that " + \
+							"we want to include as covariate in association testing.", type=str)
 	parser.add_argument("--phenotype", help="name of the phenotype, seperated by comma", required=False, type=str)
 	parser.add_argument("--pheno-prefix", help="prefix of the phenocovar files if present", required=False, default="")
 	parser.add_argument("--cohort", help="name of the cohort, seperated by comma, options: AFR, EUR, AMR, NOT_AFR, ALL", required=False, type=str)
@@ -105,24 +107,31 @@ def main():
 	project = os.getenv("GOOGLE_PROJECT")
 	client = storage.Client()
 	bucket = client.bucket(bucket_name)
-    # Define the gs prefix
+	# Define the gs prefix
 	gs_prefix = f"gs://{bucket_name}/"
 	#pfile = "tr_imputation/enstr-v3/results-250K/"
 	pfile = "saraj/imputation_output/"
 
+	variant_as_covar_file = "empty.csv"
+	if args.variant_as_covar_file:
+		variant_as_covar_file = args.variant_as_covar_file
+	else:
+		# Create an empty file if no file indicated.
+		open(variant_as_covar_file, 'w').close()
+
 	#return phenotype array if choose targeted phenotypes 
 	if args.phenotype is not None:
 			target_phenotype =  GetPhenotypePath(args.phenotype,
-                                                binary=args.logistic,
-                                                pheno_prefix=args.pheno_prefix)
+												binary=args.logistic,
+												pheno_prefix=args.pheno_prefix)
 	elif args.pheno_file:
 		phenotypes = phenotypes_from_file(args.pheno_file)
 		#print("len phenotypes extracted: ", len(set(phenotypes)))
 		target_phenotype = []
 		for phenotype in phenotypes:
 			target_phenotype.extend(GetPhenotypePath(phenotype,
-                                                     binary=args.logistic,
-                                                     pheno_prefix=args.pheno_prefix))
+													 binary=args.logistic,
+													 pheno_prefix=args.pheno_prefix))
 	else:
 		if args.logistic:
 			target_phenotype = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="phenotypes/case/") if blob.name.endswith('.csv')]
@@ -131,11 +140,9 @@ def main():
 		if len(args.pheno_prefix) > 0:
 			target_phenotype = [pheno for pheno in target_phenotype if args.pheno_prefix in pheno]
 
-            
+			
 
-	#target_phenotype = target_phenotype[500:]
 	print("len of target_phenotype: ", len(target_phenotype))
-	#print("head of target_phenotype: ", target_phenotype)
 	print("pfile: ", pfile)
 	#return cohort array if choose targeted cohorts 
 	if args.cohort is not None:
@@ -154,6 +161,7 @@ def main():
 	json_dict["tr_gwas.WORKSPACE_BUCKET"] = gs_prefix
 	json_dict["tr_gwas.phenotypes"] = target_phenotype
 	json_dict["tr_gwas.logistic"] = args.logistic
+	json_dict["tr_gwas.variant_as_covar_file"] = variant_as_covar_file
 	
 
 	# Convert to json and save as a file
