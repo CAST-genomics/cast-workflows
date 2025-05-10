@@ -17,16 +17,34 @@ import re
 import numpy as np
 import seaborn as sns
 import pandas as pd
+from scipy.stats.contingency import odds_ratio
 from gwas_plotter import plot_histogram
 from gwas_utils import SAMPLEFILE, GetPTCovarPath, GetCohort, CheckRegion, NormalizeData, \
                         read_annotations, set_genotypes, load_snp_gwas_df, load_gwas_tab
 
 
-def line_plot(data_dict, genotype, phenotype_label, out):
-    sns.lineplot(x=data_dict.keys(),
-                 y=data_dict.values())
+def line_plot(data_dict, genotype, phenotype_label, out, confidence_interval=None, std_error=None):
+    x = list(data_dict.keys())
+    y = list(data_dict.values())
+    ax = sns.lineplot(x=x,
+                 y=y)
+    if confidence_interval:
+        ci_x = list(confidence_interval.keys())
+        assert len(x) == len(ci_x), f"x: {x} ci_x: {ci_x}"
+
+        lower = [item[0] for item in confidence_interval.values()]
+        higher = [item[1] for item in confidence_interval.values()]
+        sns.lineplot(x=ci_x, y=lower, alpha=0.5, color='tab:blue')
+        sns.lineplot(x=ci_x, y=higher, alpha=0.5, color='tab:blue')
+        plt.fill_between(ci_x, lower, higher, alpha=0.5)
+    if std_error:
+        serr_x = std_error.keys()
+        se = std_error.values()
+        assert len(x) == len(serr_x), f"len(x): {len(x)} len(serr_x){len(serr_x)}"
+        plt.errorbar(x=x, y=y, yerr=list(std_error.values()), fmt='none', c= 'tab:blue')
+            
     plt.xlabel(genotype)
-    plt.ylabel(phenotype_label + " odds ratio >= allele")
+    plt.ylabel(phenotype_label)
     plt.savefig(out, bbox_inches="tight")
     plt.clf()
 
@@ -48,19 +66,46 @@ def plot_genotype_phenotype_binary(data, genotype, phenotype, phenotype_label, o
     # Initialize separate variables for each variation of the odds plot    
     data["odds_ratio_threshold"] = None
     odds_ratio_threshold = {}
+    odds_ratio_nominal = {}
     odds_threshold = {}
+    odds_ratio_threshold_lib = {}
+    odds_ratio_threshold_lib_ci = {}
+    odds_ratio_threshold_se = {}
     fraction_threshold = {}
     uniq_alleles = sorted(data[genotype].unique())
+    min_allele = min(uniq_alleles)
 
     for uniq_allele in uniq_alleles:
+        num_cases_allele = len(data[(data[genotype] == uniq_allele) & (data[phenotype] == 1)]) + epsilon
+        num_controls_allele = len(data[(data[genotype] == uniq_allele) & (data[phenotype] == 0)]) + epsilon
+        num_cases_no_allele = len(data[(data[genotype] != uniq_allele) & (data[phenotype] == 1)]) + epsilon
+        num_controls_no_allele = len(data[(data[genotype] != uniq_allele) & (data[phenotype] == 0)]) + epsilon
         num_cases_gte_allele = len(data[(data[genotype] >= uniq_allele) & (data[phenotype] == 1)]) + epsilon
         num_controls_gte_allele = len(data[(data[genotype] >= uniq_allele) & (data[phenotype] == 0)]) + epsilon
         num_cases_lt_allele = len(data[(data[genotype] < uniq_allele) & (data[phenotype] == 1)]) + epsilon
         num_controls_lt_allele = len(data[(data[genotype] < uniq_allele) & (data[phenotype] == 0)]) + epsilon
-        odds_ratio_threshold[uniq_allele] = (num_cases_gte_allele/num_cases_lt_allele) \
-                                            / (num_controls_gte_allele/num_controls_lt_allele)
-        odds_threshold[uniq_allele] = num_cases_gte_allele/num_controls_gte_allele
-        fraction_threshold[uniq_allele] = num_cases_gte_allele/(num_controls_gte_allele + num_cases_gte_allele)
+
+        if uniq_allele > min_allele:
+            # For threhsold based methods, odds ratio of min value is ill defined.
+            odds_ratio_threshold[uniq_allele] = (num_cases_gte_allele/num_cases_lt_allele) \
+                                                / (num_controls_gte_allele/num_controls_lt_allele)
+            se = np.sqrt(1/num_cases_gte_allele + \
+                     1/num_cases_lt_allele + \
+                     1/num_controls_gte_allele + \
+                     1/num_controls_lt_allele)
+            odds_ratio_threshold_se[uniq_allele] = se
+            odds_ratio_res = odds_ratio([
+                                        [int(num_cases_gte_allele), int(num_cases_lt_allele)],
+                                        [int(num_controls_gte_allele), int(num_controls_lt_allele)]])
+            odds_ratio_threshold_lib[uniq_allele] = odds_ratio_res.statistic
+            odds_ratio_threshold_lib_ci[uniq_allele] = odds_ratio_res.confidence_interval(confidence_level=0.95)
+            
+            odds_threshold[uniq_allele] = num_cases_gte_allele/num_controls_gte_allele
+            fraction_threshold[uniq_allele] = num_cases_gte_allele/(num_controls_gte_allele + num_cases_gte_allele)
+
+        # For nominal method, any allele value can be computed
+        odds_ratio_nominal[uniq_allele] = (num_cases_allele/num_cases_no_allele) \
+                                            / (num_controls_allele/num_controls_no_allele)
         if verbose:
             print("for gene {} allele {} num_cases(>=allele): {} num_controls(>=allele): {} fraction {}".format(
                   genotype,
@@ -69,11 +114,25 @@ def plot_genotype_phenotype_binary(data, genotype, phenotype, phenotype_label, o
                   num_controls_gte_allele,
                   odds_threshold[uniq_allele]))
     
+    # Odds ratio nominal plot
+    line_plot(data_dict=odds_ratio_nominal,
+              genotype=genotype,
+              phenotype_label=phenotype_label + " odds ratio == allele",
+              out=outpath.replace("genotype", "odds_ratio_nominal"))
+
     # Odds ratio plot
     line_plot(data_dict=odds_ratio_threshold,
+              std_error=odds_ratio_threshold_se,
               genotype=genotype,
-              phenotype_label=phenotype_label + " odds ratio >= allele",
-              out=outpath.replace("genotype", "odds_ratio"))
+              phenotype_label=phenotype_label + " odds ratio >= allele with se error",
+              out=outpath.replace("genotype", "odds_ratio_se_error"))
+
+    # Odds ratio plot with error bars
+    line_plot(data_dict=odds_ratio_threshold_lib,
+              confidence_interval=odds_ratio_threshold_lib_ci,
+              genotype=genotype,
+              phenotype_label=phenotype_label + " odds ratio >= allele with ci",
+              out=outpath.replace("genotype", "odds_ratio_ci_error"))
 
     # Odds plot
     line_plot(data_dict=odds_threshold,
@@ -176,7 +235,7 @@ def plot_genotype_phenotype(data, genotype, phenotype,
 
     # If after filtering we have no polymorphism, return
     if len(counts) == 1:
-        print("{} is non-polymorphic after filtering for rare genotypes".format(chrom))
+        print("{} is non-polymorphic after filtering for rare genotypes".format(phenotype))
         return
         
     # Plot alleles histogram after filtering

@@ -148,11 +148,6 @@ def set_genotypes(data, annotations, cohort, samples, tr_vcf, outdir):
             data.loc[data["person_id"]==sample, gene] = rc
             genotypes_df.loc[sample] = rc
         print("Alleles count for the 4 most common alleles: ", Counter(all_alleles).most_common(4))
-        # Plot alleles
-        if len(set(all_alleles)) > 1:
-            print("Plotting alleles histogram for gene: ", gene)
-            # Polymorphic vntr in the imputed set. Otherwise, if it's non-polymorphic, it'll get an error.
-            plot_histogram(all_alleles, gene, os.path.join(outdir, "{}_alleles_{}.png".format(gene, cohort)))
         if no_calls + empty_calls > 0:
             print("Skipping {} empty calls and {} no calls for {} on vcf".format(
                     empty_calls, no_calls, gene))
