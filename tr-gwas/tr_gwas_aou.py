@@ -68,6 +68,7 @@ def GetCohortPath(cohort):
 	cohort = cohort.replace("EUR","EUR_WHITE")
 	cohort = cohort.replace("AMR","AMR_HISPANIC")
 	cohort = cohort.replace("NOT_AFR","NOT_AFR_BLACK")
+	cohort = cohort.replace("merged_all","ALL_ANCESTRY")
 	
 
 	cohorts = [item.strip() for item in cohort.split(',')]
@@ -83,7 +84,7 @@ def main():
 	parser.add_argument("--ancestry-pred-path", help="Path to ancestry predictions",type=str, default="gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv")
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	parser.add_argument("--phenotype", help="name of the phenotype, seperated by comma", required=False, type=str)
-	parser.add_argument("--cohort", help="name of the cohort, seperated by comma, options: AFR, EUR, AMR, NOT_AFR, ALL", required=False, type=str)
+	parser.add_argument("--cohort", help="name of the cohort, seperated by comma, options: AFR, EUR, AMR, NOT_AFR, ALL, ALL_ANCESTRY", required=False, type=str)
 	parser.add_argument("--logistic", help="Run logistic regression", action="store_true")
 	parser.add_argument("--ancestry-pc", help="Use precomputed ancestry specific PCs", action="store_true")
 	parser.add_argument("--ancestry-pc-path", help="name of ancestry PC specific file", required=False, type=str)
