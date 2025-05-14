@@ -1,16 +1,16 @@
 #!/bin/bash
 
-variants="$WORKSPACE_BUCKET/saraj/tr_gwas/variants_DBNDD1.csv"
-time python tr_gwas_aou.py --name sara_tr_gwas \
-                           --cohort EUR \
+#variants="$WORKSPACE_BUCKET/saraj/tr_gwas/variants_DBNDD1.csv"
+time python tr_gwas_aou.py --name sara_tr_gwas_amr \
+                           --cohort AMR \
                            --logistic \
-                           --variant-as-covar-file $variants \
                            --pheno-prefix sara_ \
-                           --phenotype Malignant_neoplasm_of_the_skin
+                           --pheno-file disease_phenotypes_significant_hits_2000_cases_all.csv
 
-                           #--pheno-file disease_phenotypes_significant_hits_2000_cases_all.csv
-                           #--phenotype Atrial_fibrillation,Atrial_fibrillation_and_flutter,Basal_cell_carcinoma,Keratinocyte_carcinoma,Leiomyoma_of_uterus,Schizophrenia,Malignant_neoplasm_of_the_skin
+                           #--phenotype Malignant_neoplasm_of_the_skin
                            #--pheno-file ../../../cast-workflows/phewas/phenotypes_min_2000_cases.csv
+                           #--variant-as-covar-file $variants \
+                           #--phenotype Atrial_fibrillation,Atrial_fibrillation_and_flutter,Basal_cell_carcinoma,Keratinocyte_carcinoma,Leiomyoma_of_uterus,Schizophrenia,Malignant_neoplasm_of_the_skin
 exit 0
 time python tr_gwas_aou.py --name sara_tr_gwas \
                            --cohort ALL \

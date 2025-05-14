@@ -5,7 +5,7 @@ workflow tr_gwas {
         Array[String] pgens = [] 
         Array[String] psams = [] 
         Array[String] pvars = [] 
-        File variant_as_covar_file = ""
+        File variant_as_covar_file
         Array[File] phenotypes = []
         Array[File] cohorts = []
         String GOOGLE_PROJECT = ""
@@ -131,12 +131,12 @@ task run_tr_gwas {
             pfile_outprefix="${pfile%.pgen}"
             chrom_outprefix=$(basename $pfile .pgen)
 
+
             if [[ "~{logistic}" == false ]] ; then
                 plink2 --pfile ${pfile_outprefix} \
                 --pheno ~{pheno} \
                 --linear \
                 --covar ${covar_file} \
-                --condition-list ~{variant_as_covar_file} \
                 --keep ~{samples} \
                 --covar-variance-standardize \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
@@ -149,7 +149,6 @@ task run_tr_gwas {
                 --pheno ~{pheno} \
                 --logistic \
                 --covar ${covar_file} \
-                --condition-list ~{variant_as_covar_file} \
                 --keep ~{samples} \
                 --1 \
                 --covar-variance-standardize \

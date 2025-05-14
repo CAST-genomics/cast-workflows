@@ -112,12 +112,10 @@ def main():
 	#pfile = "tr_imputation/enstr-v3/results-250K/"
 	pfile = "saraj/imputation_output/"
 
-	variant_as_covar_file = "empty.csv"
+	variant_as_covar_file = "{}saraj/tr_gwas/empty.csv".format(gs_prefix)
+	#variant_as_covar_file = ""
 	if args.variant_as_covar_file:
 		variant_as_covar_file = args.variant_as_covar_file
-	else:
-		# Create an empty file if no file indicated.
-		open(variant_as_covar_file, 'w').close()
 
 	#return phenotype array if choose targeted phenotypes 
 	if args.phenotype is not None:
@@ -161,7 +159,8 @@ def main():
 	json_dict["tr_gwas.WORKSPACE_BUCKET"] = gs_prefix
 	json_dict["tr_gwas.phenotypes"] = target_phenotype
 	json_dict["tr_gwas.logistic"] = args.logistic
-	json_dict["tr_gwas.variant_as_covar_file"] = variant_as_covar_file
+	if len(variant_as_covar_file) != 0:
+		json_dict["tr_gwas.variant_as_covar_file"] = variant_as_covar_file
 	
 
 	# Convert to json and save as a file
