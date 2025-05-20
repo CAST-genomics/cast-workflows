@@ -18,7 +18,7 @@ plt.rcParams.update({'font.size': plt.rcParams['font.size'] * scale_factor})
 def plot_histogram(data, xlabel, outpath, stat='percent', binwidth=0.5):
     plot = sns.histplot(data, binwidth=binwidth, stat=stat)
     plot.set_xlabel(xlabel)
-    plt.savefig(outpath)
+    plt.savefig(outpath, bbox_inches='tight')
     plt.clf()
 
 
@@ -74,7 +74,7 @@ def PlotManhattan(gwas, outpath,
 
     # Put the threshold
     plot.ax.axhline(p_value_threshold, linestyle="--", linewidth=1)
-    plot.fig.savefig(outpath)
+    plot.fig.savefig(outpath, bbox_inches='tight')
 
 def ppoints(n, a=None):
         """ numpy analogue or `R`'s `ppoints` function
@@ -118,4 +118,4 @@ def PlotQQ(gwas, outpath):
         ax.set_xlabel("Expected $-log_{10}(p)$")
         ax.set_ylabel("Observed $-log_{10}(p)$")
 
-        fig.savefig(outpath)
+        fig.savefig(outpath, bbox_inches='tight')

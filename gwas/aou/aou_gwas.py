@@ -209,9 +209,12 @@ def main():
                          tr_vcf=args.tr_vcf,
                          outdir=args.outdir)
         # Plot phenotype histogram
+        suffix = "no_norm"
+        if args.norm:
+            suffix = "after_norm"
         plot_histogram(data["phenotype"], phenotype_label,
                     os.path.join(args.outdir,
-                        "{}_histogram_after_norm.png".format(args.phenotype)))
+                        "{}_histogram_{}.png".format(args.phenotype, suffix)))
     # Using vntr as covariate for a conditional snp gwas.
     if args.vntr_as_covariate:
         annotations = [args.vntr_as_covariate.split("_")]
