@@ -79,6 +79,8 @@ def main():
                                                 "all by all dataset")
     parser.add_argument("--vntr-gwas-file", help="File where VNTR gwas dataframe was stored from the "+ \
                                                 "plink run, usually needed for binary traits.")
+    parser.add_argument("--vntr-as-covariate", help="VNTR (chrom_start_gene) to be considered as "+ \
+                                                "a covariate for a conditional snp gwas.")
     parser.add_argument("--plot", help="Make a Manhattan plot", action="store_true")
     parser.add_argument("--violin", help="Make the genotype_phenotype plot a violinplot instead of boxplot.",
                             action="store_true")
@@ -128,6 +130,8 @@ def main():
         ERROR("Must specify --tr-vcf for associaTR")
     if args.norm_by_sex and args.norm is None:
         ERROR("Must specify --norm if using --norm-by-sex")
+    if args.vntr_as_covariate and args.method != "hail":
+        ERROR("--vntr-as-covariate could only be used with SNP-gwas. Use hail for --method.")
 
     # Load SNP gwas from all by all query or VNTR gwas from a previous run
     snp_gwas = None
@@ -208,7 +212,19 @@ def main():
         plot_histogram(data["phenotype"], phenotype_label,
                     os.path.join(args.outdir,
                         "{}_histogram_after_norm.png".format(args.phenotype)))
-    
+    # Using vntr as covariate for a conditional snp gwas.
+    if args.vntr_as_covariate:
+        annotations = [args.vntr_as_covariate.split("_")]
+        gene = annotations[0][2]
+        g_data, annotations = set_genotypes(data=data,
+                         annotations=annotations,
+                         cohort=cohort,
+                         samples=samples["person_id"],
+                         tr_vcf=args.tr_vcf,
+                         outdir=args.outdir)
+        covars = covars + [gene]
+        data[gene] = g_data[gene]
+
     data = pd.merge(data, samples)
 
     # Check we have all covars
