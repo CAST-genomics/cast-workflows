@@ -186,6 +186,11 @@ def main():
     words = re.split("_|\.", args.tr_vcf)
     vcf_chrom = [word for word in words if word.startswith("chr")][0]
 
+    # Create a more natural phenotype label
+    phenotype_label = args.phenotype.lower().replace("_", " ")
+    if phenotype_label == "red blood cell distribution width":
+        phenotype_label = "RDW"
+
     # Get repeat counts from the tr-vcf file and plot alleles histogram
     if args.method == "associaTR" \
             and args.plot_genotype_phenotype:
@@ -200,7 +205,7 @@ def main():
                          tr_vcf=args.tr_vcf,
                          outdir=args.outdir)
         # Plot phenotype histogram
-        plot_histogram(data["phenotype"], args.phenotype,
+        plot_histogram(data["phenotype"], phenotype_label,
                     os.path.join(args.outdir,
                         "{}_histogram_after_norm.png".format(args.phenotype)))
     
@@ -243,7 +248,7 @@ def main():
                     plot_genotype_phenotype(data=data,
                         genotype=gene,
                         phenotype="phenotype",
-                        phenotype_label=args.phenotype,
+                        phenotype_label=phenotype_label,
                         binary=args.binary,
                         violin=args.violin,
                         merge_bins=args.merge_bins,
@@ -256,11 +261,16 @@ def main():
                         effect_column = "beta"
                     if len(gwas) == 1:
                         effect_size = gwas.iloc[0][effect_column]
+                        p_val = gwas.iloc[0]["-log10pvalue"]
                     else: # To avoid warning on single element series
                         effect_size = gwas.loc[(gwas["chrom"] == chrom) &\
                                         (gwas["pos"] > int(pos) - 1) &\
                                         (gwas["pos"] < int(pos) + 1), effect_column].item()
-                    print("Effect {} for {} is {}".format(effect_column, gene, effect_size))
+                        p_val = gwas.loc[(gwas["chrom"] == chrom) &\
+                                        (gwas["pos"] > int(pos) - 1) &\
+                                        (gwas["pos"] < int(pos) + 1)]["-log10pvalue"].item()
+                    print("Effect ({}) for {} is {} and -log10p is {}".format(
+                            effect_column, gene, effect_size, p_val))
         else:
             # no text annotation on manhattan plot for hail runner
             annotate = False
@@ -299,6 +309,7 @@ def main():
 
         PlotManhattan(gwas, outpath+".manhattan.png",
                       hue=hue,
+                      phenotype=phenotype_label,
                       annotations=annotations,
                       annotate=annotate,
                       p_value_threshold=p_value_threshold)

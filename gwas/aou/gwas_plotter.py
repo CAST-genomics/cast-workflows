@@ -10,6 +10,11 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+# Scale the size of all texts in the plots including xlabel, ylabel, annotations and legend.
+scale_factor = 1.5
+plt.rcParams.update({'font.size': plt.rcParams['font.size'] * scale_factor})
+
+
 def plot_histogram(data, xlabel, outpath, stat='percent', binwidth=0.5):
     plot = sns.histplot(data, binwidth=binwidth, stat=stat)
     plot.set_xlabel(xlabel)
@@ -33,6 +38,7 @@ def annotate_points(ax, gwas, annotations):
 
 def PlotManhattan(gwas, outpath,
                 hue,
+                phenotype,
                 annotations,
                 annotate=False,
                 p_value_threshold=-np.log10(5*10**-8),
@@ -40,9 +46,11 @@ def PlotManhattan(gwas, outpath,
                 ):
     num_points = gwas.shape[0]
     size = 30
+    plotted_gwas = gwas.rename(columns={"-log10pvalue":"-log10pvalue ({})".format(phenotype)})
     plot = sns.relplot(data=gwas, x="pos", y="-log10pvalue",
                 s=30, aspect=4, linewidth=0, hue=hue, palette="tab10",
                 )
+    plot.set_ylabels("-log10pvalue({})".format(phenotype))
     chrom_df = gwas.groupby("chrom")["pos"].median()
 
     if extra_points and num_points > 0 and max(gwas['-log10pvalue'].dropna()):

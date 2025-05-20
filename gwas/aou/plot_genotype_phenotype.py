@@ -22,6 +22,10 @@ from gwas_plotter import plot_histogram
 from gwas_utils import SAMPLEFILE, GetPTCovarPath, GetCohort, CheckRegion, NormalizeData, \
                         read_annotations, set_genotypes, load_snp_gwas_df, load_gwas_tab
 
+# Scale the size of all texts in the plots including xlabel, ylabel, annotations and legend.
+#scale_factor = 2
+#plt.rcParams.update({'font.size': plt.rcParams['font.size'] * scale_factor})
+
 
 def line_plot(data_dict, genotype, phenotype_label, out, confidence_interval=None, std_error=None):
     x = list(data_dict.keys())
