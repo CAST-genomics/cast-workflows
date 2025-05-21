@@ -31,7 +31,8 @@ def line_plot(data_dict, genotype, phenotype_label, out, confidence_interval=Non
     x = list(data_dict.keys())
     y = list(data_dict.values())
     ax = sns.lineplot(x=x,
-                 y=y)
+                 y=y,
+                linewidth=3)
     if confidence_interval:
         ci_x = list(confidence_interval.keys())
         assert len(x) == len(ci_x), f"x: {x} ci_x: {ci_x}"
@@ -128,14 +129,14 @@ def plot_genotype_phenotype_binary(data, genotype, phenotype, phenotype_label, o
     line_plot(data_dict=odds_ratio_threshold,
               std_error=odds_ratio_threshold_se,
               genotype=genotype,
-              phenotype_label=phenotype_label + " odds ratio >= allele with se error",
+              phenotype_label=phenotype_label + " odds ratio >= allele",
               out=outpath.replace("genotype", "odds_ratio_se_error"))
 
     # Odds ratio plot with error bars
     line_plot(data_dict=odds_ratio_threshold_lib,
               confidence_interval=odds_ratio_threshold_lib_ci,
               genotype=genotype,
-              phenotype_label=phenotype_label + " odds ratio >= allele with ci",
+              phenotype_label=phenotype_label + " odds ratio >= allele",
               out=outpath.replace("genotype", "odds_ratio_ci_error"))
 
     # Odds plot
@@ -364,12 +365,20 @@ def main():
                     "{}_histogram_after_norm.png".format(args.phenotype)))
     
     data = pd.merge(data, samples)
+
+    # Create a more natural phenotype label
+    phenotype_label = args.phenotype.lower().replace("_", " ")
+    if phenotype_label == "red blood cell distribution width":
+        phenotype_label = "RDW"
+    if phenotype_label == "malignant neoplasm of the skin":
+        phenotype_label = "skin cancer"
+
     # Plot genotype phenotype
     for chrom, pos, gene in annotations:
         plot_genotype_phenotype(data=data,
                             genotype=gene,
                             phenotype="phenotype",
-                            phenotype_label=args.phenotype,
+                            phenotype_label=phenotype_label,
                             binary=args.binary,
                             violin=args.violin,
                             merge_bins=args.merge_bins,

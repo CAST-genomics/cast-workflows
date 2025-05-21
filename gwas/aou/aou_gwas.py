@@ -194,6 +194,8 @@ def main():
     phenotype_label = args.phenotype.lower().replace("_", " ")
     if phenotype_label == "red blood cell distribution width":
         phenotype_label = "RDW"
+    if phenotype_label == "malignant neoplasm of the skin":
+        phenotype_label = "skin cancer"
 
     # Get repeat counts from the tr-vcf file and plot alleles histogram
     if args.method == "associaTR" \
