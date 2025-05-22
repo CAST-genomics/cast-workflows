@@ -15,7 +15,7 @@ from collections import defaultdict
 
 
 
-def heatmap(data):
+def heatmap(data, filename_base):
     print("Plotting the heatmap")
     plt.clf()
     # Remove annotations due to the large number of rows and columns
@@ -40,8 +40,8 @@ def heatmap(data):
         #print(f"min and max row for chrom {chrom}: {min(rows_with_chrom)}, {max(rows_with_chrom)}")
     plot.set_yticks(yticks, yticklabels)
 
-    plt.savefig("heatmap.pdf", bbox_inches="tight")
-    plt.savefig("heatmap.png", bbox_inches="tight")
+    plt.savefig(filename_base + ".pdf", bbox_inches="tight")
+    plt.savefig(filename_base + ".png", bbox_inches="tight")
 
 def vntr_order_comp(a, b):
     # Returns -1 if a < b, 1 if a > b and 0 if a = b
@@ -116,12 +116,47 @@ def get_p_val_df(filename, verbose):
 
     return p_val_df
 
+def get_phenotype_similarity(filename):
+    print("Reading the phenotype counts file")
+    pheno_df = pd.read_csv(filename)
+    print(pheno_df)
+
+    samples = pheno_df["person_id"].unique()
+    phecodes = pheno_df["phecode"].unique()
+    print("samples len ", len(samples))
+    print("phecode len ", len(phecodes))
+
+    print("Creating a case-control dataframe")
+    case_control_df = pd.DataFrame(index=samples, columns=phecodes)
+    index = 0
+    for sample in samples:
+        if index >= 10:
+            break
+        for phecode in phecodes:
+            index += 1
+            count = pheno_df[(pheno_df["person_id"] == sample) & \
+                             (pheno_df["phecode"] == phecode)]["count"]
+            if isinstance(count, pd.core.series.Series) and len(count) == 0:
+                # No entry for this sample and this phecode. So it's a control
+                case_control_df.loc[sample, phecode] = 0
+            else:
+                if count >= 2:
+                    case_control_df.loc[sample, phecode] = 1
+                else:
+                    case_control_df.loc[sample, phecode] = 0
+    print(case_control_df)            
+                
+            
+
 def parse_arguments():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--gwas-summary", required=True,
                          help="Path to the file including the gwas summary results.")
     parser.add_argument("--verbose", action="store_true",
                          help="Enable verbosity.")
+    parser.add_argument("--cohort", required=True,
+                         help="Cohort for which the gwas summary stats are provided. " +
+                                "Choose among ALL, EUR, AFR, AMR")
 
     args = parser.parse_args()
     return args
@@ -129,10 +164,14 @@ def parse_arguments():
 def main():
     args = parse_arguments()
     
+    phenotypes_df = get_phenotype_similarity("my_phecode_counts.csv")
     p_val_df = get_p_val_df(filename=args.gwas_summary,
                             verbose=args.verbose)
 
-    heatmap(p_val_df)
+
+    filename_base = "heatmap_{}".format(args.cohort)
+    heatmap(data=p_val_df,
+            filename_base=filename_base)
 
 if __name__ == "__main__":
     main()
