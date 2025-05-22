@@ -68,7 +68,7 @@ def GetCohortPath(cohort):
 	cohort = cohort.replace("EUR","EUR_WHITE")
 	cohort = cohort.replace("AMR","AMR_HISPANIC")
 	cohort = cohort.replace("NOT_AFR","NOT_AFR_BLACK")
-	cohort = cohort.replace("merged_all","ALL_ANCESTRY")
+	cohort = cohort.replace("ALL_ANCESTRY","merged_all")
 	
 
 	cohorts = [item.strip() for item in cohort.split(',')]
