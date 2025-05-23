@@ -7,9 +7,12 @@ python gwas_summary_plot.py --gwas-summary <gwas_input_file>
 """
 
 import pandas as pd
+import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
 import argparse
+from sklearn.metrics import jaccard_score
+from scipy.sparse import csr_matrix
 from functools import cmp_to_key
 from collections import defaultdict
 
@@ -119,33 +122,57 @@ def get_p_val_df(filename, verbose):
 def get_phenotype_similarity(filename):
     print("Reading the phenotype counts file")
     pheno_df = pd.read_csv(filename)
-    print(pheno_df)
 
     samples = pheno_df["person_id"].unique()
     phecodes = pheno_df["phecode"].unique()
     print("samples len ", len(samples))
     print("phecode len ", len(phecodes))
 
+    # Create a case-control dataframe.
     print("Creating a case-control dataframe")
-    case_control_df = pd.DataFrame(index=samples, columns=phecodes)
+    case_control_df = pd.DataFrame(index=samples, columns=phecodes, dtype=bool)
+    case_control_df[:] = False
+    num_cases = defaultdict(int)
     index = 0
-    for sample in samples:
-        if index >= 10:
-            break
-        for phecode in phecodes:
-            index += 1
-            count = pheno_df[(pheno_df["person_id"] == sample) & \
-                             (pheno_df["phecode"] == phecode)]["count"]
-            if isinstance(count, pd.core.series.Series) and len(count) == 0:
-                # No entry for this sample and this phecode. So it's a control
-                case_control_df.loc[sample, phecode] = 0
-            else:
-                if count >= 2:
-                    case_control_df.loc[sample, phecode] = 1
-                else:
-                    case_control_df.loc[sample, phecode] = 0
-    print(case_control_df)            
-                
+    for idx, row in pheno_df.iterrows():
+        phecode = row["phecode"]
+        #if phecode not in ["272.1", "EM_239.1", "3027114", "MS_718", "EM_239.11"]:
+        #    continue
+        #print(f"processing phecode {phecode}")
+        if idx % 100000 == 0:
+            print(f"processing row {idx}")
+        sample = row["person_id"]
+        count = row["count"]
+        if count >= 2:
+            case_control_df.loc[sample, phecode] = True
+            num_cases[phecode] += 1
+
+
+    # Find the distance between two phenotypes
+    # Convert boolean DataFrame to a sparse matrix for memory and compute efficiency
+    X = csr_matrix(case_control_df.values.astype(np.uint8))
+    
+    # Compute the intersection: dot product gives number of co-True values per pair
+    intersection = np.dot(X.T, X)  # shape: (4000, 4000)
+    print("intersection shape: ", intersection.shape)
+    
+    # Convert diagonal to a dense array (number of True values per column)
+    col_sums = intersection.diagonal()
+    print("col_sums shape: ", col_sums.shape)
+    
+    # Compute union: |A ∪ B| = |A| + |B| - |A ∩ B|
+    union = col_sums[:, None] + col_sums[None, :] - intersection.toarray()
+    print("union shape: ", union.shape)
+    
+    # Compute Jaccard similarity: |A ∩ B| / |A ∪ B|
+    jaccard_similarity = np.where(union != 0, intersection.toarray() / union, 0.0)
+    #jaccard_similarity = intersection.toarray() / union
+    
+    print("jaccard_similarity type", type(jaccard_similarity))
+    print("jaccard_similarity shape", jaccard_similarity.shape)
+    similarity_df = pd.DataFrame(jaccard_similarity, columns=phecodes, index=phecodes)
+    similarity_df.to_csv("pheno_similarities.csv")
+    return similarity_df
             
 
 def parse_arguments():
