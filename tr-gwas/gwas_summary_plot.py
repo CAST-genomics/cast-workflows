@@ -15,15 +15,21 @@ from sklearn.metrics import jaccard_score
 from scipy.sparse import csr_matrix
 from functools import cmp_to_key
 from collections import defaultdict
+from scipy.spatial.distance import squareform
+import scipy.cluster.hierarchy as sch
 
 
 
-def heatmap(data, filename_base):
+
+
+def heatmap(data, col_linkage, filename_base):
     print("Plotting the heatmap")
     plt.clf()
     # Remove annotations due to the large number of rows and columns
-    plot = sns.heatmap(data,
+    plot = sns.clustermap(data,
+                col_linkage=col_linkage,
                 annot=False,
+                row_cluster=False,
                 xticklabels=False,
                 yticklabels=False)
     yticks, yticklabels = [], []
@@ -41,7 +47,9 @@ def heatmap(data, filename_base):
         #print("row number for the first value ", data.index.get_loc(rows_with_chrom[0]))
         #print("row number for the last value ", data.index.get_loc(rows_with_chrom[-1]))
         #print(f"min and max row for chrom {chrom}: {min(rows_with_chrom)}, {max(rows_with_chrom)}")
-    plot.set_yticks(yticks, yticklabels)
+    plot.ax_heatmap.set_yticks(yticks)
+    plot.ax_heatmap.set_yticklabels(yticklabels)
+    #plot.ax.ax_heatmap.axes.yticks(yticks, yticklabels)
 
     plt.savefig(filename_base + ".pdf", bbox_inches="tight")
     plt.savefig(filename_base + ".png", bbox_inches="tight")
@@ -119,7 +127,7 @@ def get_p_val_df(filename, verbose):
 
     return p_val_df
 
-def get_phenotype_similarity(filename):
+def get_phenotype_similarity(filename, output):
     print("Reading the phenotype counts file")
     pheno_df = pd.read_csv(filename)
 
@@ -174,6 +182,23 @@ def get_phenotype_similarity(filename):
     similarity_df.to_csv("pheno_similarities.csv")
     return similarity_df
             
+def get_pheno_df_from_phecodes(phecode_df, selected_phenotypes,
+                                          phecode_filename):
+    phecode_map_df = pd.read_csv(phecode_filename, header=0)
+    phecodes = phecode_map_df['phecode']
+    print(phecode_map_df)
+    phecode_df = phecode_df[phecodes]
+    phecode_df = phecode_df.loc[phecodes]
+    mapping = dict(zip(phecode_map_df['phecode'], phecode_map_df['phecode_string']))
+    max_val = np.max(phecode_df.values)
+    phecode_df = phecode_df / max_val
+    pheno_df = phecode_df.rename(index=mapping, columns=mapping)
+    pheno_df = pheno_df[selected_phenotypes]
+    pheno_df = pheno_df.loc[selected_phenotypes]
+    print(pheno_df)
+    for idx, row in pheno_df.iterrows():
+        pheno_df.at[idx, idx] = 1
+    return pheno_df
 
 def parse_arguments():
     parser = argparse.ArgumentParser(__doc__)
@@ -181,23 +206,47 @@ def parse_arguments():
                          help="Path to the file including the gwas summary results.")
     parser.add_argument("--verbose", action="store_true",
                          help="Enable verbosity.")
+    parser.add_argument("--recompute-pheno-similarity", action="store_true",
+                         help="Recompute phenotype similarities based on a Jaccard similarity of case-controls. " + \
+                            "Warning: This could take several hours.")
     parser.add_argument("--cohort", required=True,
                          help="Cohort for which the gwas summary stats are provided. " +
                                 "Choose among ALL, EUR, AFR, AMR")
+    parser.add_argument("--phecode-to-name-file", required=True,
+                         help="Path to the file containing phecodes and phenotype names")
 
     args = parser.parse_args()
     return args
 
 def main():
     args = parse_arguments()
-    
-    phenotypes_df = get_phenotype_similarity("my_phecode_counts.csv")
+
     p_val_df = get_p_val_df(filename=args.gwas_summary,
                             verbose=args.verbose)
+    gwas_phenotypes = list(p_val_df.columns)
+    print("gwas_phenotypes", gwas_phenotypes)
+    
+    pheno_similarity_file = "pheno_similarities.csv"
+    if args.recompute_pheno_similarity:
+        phecode_df = get_phenotype_similarity(filename="my_phecode_counts.csv",
+                                                  output=pheno_similarity_file)
+    else:
+        phecode_df = pd.read_csv(pheno_similarity_file, index_col=0)
+        print(phecode_df)
+    pheno_df = get_pheno_df_from_phecodes(phecode_df=phecode_df,
+                                          selected_phenotypes=gwas_phenotypes,
+                                          phecode_filename=args.phecode_to_name_file)
+    distance_df = 1 - pheno_df
+    condensed_dist = squareform(distance_df.values)
+    col_linkage = sch.linkage(condensed_dist, method='average')
+    print("col linkage shape: ", np.shape(col_linkage))
 
+    
+    print("p_val_df shape: ", np.shape(p_val_df))
 
     filename_base = "heatmap_{}".format(args.cohort)
     heatmap(data=p_val_df,
+            col_linkage=col_linkage,
             filename_base=filename_base)
 
 if __name__ == "__main__":
