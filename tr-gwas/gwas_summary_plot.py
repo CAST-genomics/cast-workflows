@@ -146,13 +146,18 @@ def get_p_val_df(filename, verbose):
     summary_df["CHROM"] = summary_df["ID"].apply(lambda x: int(x.split("_")[0].replace("chr", "")))
     summary_df["POS"] = summary_df["POS"].astype(int)
     summary_df["Phenotype"] = summary_df["Phenotype"].apply(lambda x: x.replace("sara_", "")\
-                                                                        .replace("_EUR_WHITE.gwas.tab", "")\
-                                                                        .replace("_EUR_WHITE", "")\
-                                                                        .replace("_AFR_BLACK.gwas.tab", "")\
+                                                                        .replace(".gwas.tab", "")\
                                                                         .replace("_AFR_BLACK", "")\
-                                                                        .replace("_AMR_HISPANIC.gwas.tab", "")\
+                                                                        .replace("_AFR_BLACK_female", "")\
+                                                                        .replace("_AFR_BLACK_male", "")\
                                                                         .replace("_AMR_HISPANIC", "")\
+                                                                        .replace("_AMR_HISPANIC_female", "")\
+                                                                        .replace("_AMR_HISPANIC_male", "")\
+                                                                        .replace("_EUR_WHITE", "")\
+                                                                        .replace("_EUR_WHITE_female", "")\
+                                                                        .replace("_EUR_WHITE_male", "")\
                                                                         .replace("_passing_samples_v7.1_gwas.tab", "")\
+                                                                        .replace("_passing_samples_v7.1", "")\
                                                                         .split(":")[0]
                                                             )
     phenotypes = summary_df["Phenotype"].unique()
@@ -193,7 +198,7 @@ def get_p_val_df(filename, verbose):
         print(f"More than one entry for {len(multiple_entries)} phenotypes. Picking the first one.")
         print(f"full list {multiple_entries}" )
 
-    return p_val_df
+    return p_val_df, default_val
 
 def get_phenotype_similarity(filename, output):
     print("Reading the phenotype counts file")
@@ -267,14 +272,103 @@ def get_pheno_df_from_phecodes(phecode_df, selected_phenotypes,
         pheno_df.at[idx, idx] = 1
     return pheno_df, categories
 
+def is_sex_specific_pheno(pheno, category):
+    pheno = pheno.lower()
+    category = category.lower()
+    if "_female" in pheno or "_male" in pheno:
+        return True
+    if pheno.startswith("female") or pheno.startswith("male"):
+        return True
+    if "pregnancy" in category:
+        return True
+    if "testicular" in pheno or "testis" in pheno or "prostatic" in pheno or "prostate" in pheno:
+        return True
+    if "uterus" in pheno or "uterine" in pheno or "ovarian" in pheno or "ovary" in pheno:
+        return True
+    if "vagina" in pheno or "vaginitis" in pheno or "mastopathy" in pheno or "breast" in pheno:
+        return True
+    if "menstrual" in pheno or "menopausal" in pheno or "menopause" in pheno:
+        return True
+    if "oligomenorrhea" in pheno or "dysmenorrhea" in pheno or "amenorrhea" in pheno or "endometriosis" in pheno:
+        return True
+    return False
+
+def distance_based_clustermap_deprecated(pheno_df):
+    distance_df = 1 - pheno_df
+    condensed_dist = squareform(distance_df.values)
+    col_linkage = sch.linkage(condensed_dist, method='average')
+    print("col linkage shape: ", np.shape(col_linkage))
+    filename_base = "figures/clustermap_{}".format(args.cohort)
+
+    clustermap(data=p_val_df,
+        col_linkage=col_linkage,
+        filename_base=filename_base)
+
+def filter_vntr_phenos(p_val_df, gwas_phenotypes, categories_map, verbose):
+    # Filter VNTRs that appear to have inflated p-values
+    # by filtering VNTRs that have very significant p-values in more than a certain number of categories
+    p_val_thr_for_filtering = 3E-8
+    max_categories_per_vntr = 2
+    chosen_vntrs = []
+    removed_vntrs = []
+    for vntr, row in p_val_df.iterrows():
+        categories_w_association = set()
+        for pheno in gwas_phenotypes:
+            if row[pheno] <= p_val_thr_for_filtering:
+                categories_w_association.add(pheno_to_category[pheno])
+        if len(categories_w_association) <= max_categories_per_vntr:
+            chosen_vntrs.append(vntr)
+        else:
+            removed_vntrs.append(vntr)
+    print("removed_vntrs len {} chosen_vntrs_len {}".format(len(removed_vntrs), len(chosen_vntrs)))
+    p_val_df = p_val_df.loc[chosen_vntrs]  
+    print("p_val_df shape ", p_val_df.shape)
+
+    # Filter phenotypes that appear to have inflated p-values
+    outlier_threshold = 90
+    num_vntrs_per_pheno = defaultdict(int)
+    for pheno in gwas_phenotypes:
+        for vntr in p_val_df.index:
+            if p_val_df.loc[vntr, pheno] <= p_val_thr_for_filtering:
+                num_vntrs_per_pheno[pheno] += 1
+    num_vntrs_threshold = np.percentile(sorted(list(num_vntrs_per_pheno.values())), outlier_threshold)
+    if verbose:
+        print("num_vntrs_threshold: ", num_vntrs_threshold)
+    removed_phenos = {k: v for k, v in num_vntrs_per_pheno.items() if v >= num_vntrs_threshold}
+    phenos_to_keep = [item for item in gwas_phenotypes if item not in removed_phenos]
+    print("Num phenotypes {} with {} to remove and {} to keep".format(
+            len(gwas_phenotypes),
+            len(removed_phenos),
+            len(phenos_to_keep)))
+    p_val_df = p_val_df[phenos_to_keep]
+
+    # Now remove the removed_phenos from the categories map as well
+    if verbose:
+        print("len categories_map before filtering: ", len(categories_map))
+    filtered_categories = defaultdict(list)
+    sorted_columns = []
+    for category in list(categories_map.keys()):
+        for pheno in categories_map[category]:
+            if pheno in phenos_to_keep:
+                filtered_categories[category].append(pheno)
+                sorted_columns.append(pheno)
+    categories_map = filtered_categories
+    p_val_df = p_val_df[sorted_columns]
+    return p_val_df, categories_map
+
 def parse_arguments():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--gwas-summary", required=True,
                          help="Path to the file including the gwas summary results.")
     parser.add_argument("--verbose", action="store_true",
                          help="Enable verbosity.")
-    parser.add_argument("--category", action="store_true",
-                         help="Group based on category rather than similarity.")
+    parser.add_argument("--keep-sex-specific-phenos", action="store_true",
+                         help="Keep sex specific phenotypes which are otherwise discarded.")
+    parser.add_argument("--filter", action="store_true",
+                         help="Apply filter on VNTRs and phenotypes. " + \
+                            "VNTRs that have significant associations in " + \
+                            "at least 3 different categories are filtered out. " + \
+                            "Also, 10% of phenotypes with most number of significant associations are filtered out.")
     parser.add_argument("--recompute-pheno-similarity", action="store_true",
                          help="Recompute phenotype similarities based on a Jaccard similarity of case-controls. " + \
                             "Warning: This could take several hours.")
@@ -290,8 +384,10 @@ def parse_arguments():
 def main():
     args = parse_arguments()
 
-    p_val_df = get_p_val_df(filename=args.gwas_summary,
-                            verbose=args.verbose)
+    # The default value for the matrix for the vntr-phenotype pairs where no significant hit is found.
+    # This is like a placeholder and is larger than the largest observed signficant hit in the matrix.
+    p_val_df, default_p_val = get_p_val_df(filename=args.gwas_summary,
+                                            verbose=args.verbose)
     gwas_phenotypes = list(p_val_df.columns)
     if args.verbose:
         print("gwas_phenotypes head", gwas_phenotypes[:10])
@@ -305,98 +401,61 @@ def main():
     pheno_df, category_df = get_pheno_df_from_phecodes(phecode_df=phecode_df,
                                               selected_phenotypes=gwas_phenotypes,
                                               phecode_filename=args.phecode_to_name_file)
-    if args.category:
-        categories = category_df['phecode_category'].unique()
-        sorted_columns = []
-        categories_map = defaultdict(list)
-        pheno_to_category = {}
-        if args.verbose:
-            print("categories head: ", categories[:10])
-            print("gwas_phenotypes head: ", gwas_phenotypes[:10])
-        for category in categories:
-            phecode_strs = category_df[category_df['phecode_category'] == category]["phecode_string"].values
-            for phecode_str in phecode_strs:
-                if phecode_str not in gwas_phenotypes:
-                    continue
-                categories_map[category].append(phecode_str)
-                pheno_to_category[phecode_str] = category
-                sorted_columns.append(phecode_str)
-        print("p_val_df shape ", p_val_df.shape)
-        # Sort columns based on category   
-        p_val_df = p_val_df[sorted_columns]
-        
-        # Filter VNTRs that appear to have inflated p-values
-        # by filtering VNTRs that have very significant p-values in more than a certain number of categories
-        p_val_thr_for_filtering = 3E-8
-        max_categories_per_vntr = 2
-        chosen_vntrs = []
-        removed_vntrs = []
-        for vntr, row in p_val_df.iterrows():
-            categories_w_association = set()
-            for pheno in gwas_phenotypes:
-                if row[pheno] <= p_val_thr_for_filtering:
-                    categories_w_association.add(pheno_to_category[pheno])
-            if len(categories_w_association) <= max_categories_per_vntr:
-                chosen_vntrs.append(vntr)
-            else:
-                removed_vntrs.append(vntr)
-        print("removed_vntrs len {} chosen_vntrs_len {}".format(len(removed_vntrs), len(chosen_vntrs)))
-        p_val_df = p_val_df.loc[chosen_vntrs]  
-        print("p_val_df shape ", p_val_df.shape)
 
-        # Filter phenotypes that appear to have inflated p-values
-        outlier_threshold = 90
-        num_vntrs_per_pheno = defaultdict(int)
-        for pheno in gwas_phenotypes:
-            for vntr in p_val_df.index:
-                if p_val_df.loc[vntr, pheno] <= p_val_thr_for_filtering:
-                    num_vntrs_per_pheno[pheno] += 1
-        num_vntrs_threshold = np.percentile(sorted(list(num_vntrs_per_pheno.values())), outlier_threshold)
-        if args.verbose:
-            print("num_vntrs_threshold: ", num_vntrs_threshold)
-        removed_phenos = {k: v for k, v in num_vntrs_per_pheno.items() if v >= num_vntrs_threshold}
-        phenos_to_keep = [item for item in gwas_phenotypes if item not in removed_phenos]
-        print("Num phenotypes {} with {} to remove and {} to keep".format(
-                len(gwas_phenotypes),
-                len(removed_phenos),
-                len(phenos_to_keep)))
-        p_val_df = p_val_df[phenos_to_keep]
+    # Find categories corresponding to each phenotype string
+    categories = category_df['phecode_category'].unique()
+    sorted_columns = []
+    sex_specific_phenotypes = []
+    categories_map = defaultdict(list)
+    pheno_to_category = {}
+    if args.verbose:
+        print("categories head: ", categories[:10])
+        print("gwas_phenotypes head: ", gwas_phenotypes[:10])
+    for category in categories:
+        phecode_strs = category_df[category_df['phecode_category'] == category]["phecode_string"].values
+        for phecode_str in phecode_strs:
+            # Skip phenotype if we did not find any significant hits
+            if phecode_str not in gwas_phenotypes:
+                continue
+            # Skip sex-specific phenotypes. We often run GWAS on those phenotypes a single sex separately.
+            if not args.keep_sex_specific_phenos and \
+                is_sex_specific_pheno(pheno=phecode_str, category=category):
+                sex_specific_phenotypes.append(phecode_str)
+                continue
+            categories_map[category].append(phecode_str)
+            pheno_to_category[phecode_str] = category
+            sorted_columns.append(phecode_str)
 
-        # Now remove the removed_phenos from the categories map as well
-        if args.verbose:
-            print("len categories_map before filtering: ", len(categories_map))
-        filtered_categories = defaultdict(list)
-        sorted_columns = []
-        for category in list(categories_map.keys()):
-            for pheno in categories_map[category]:
-                if pheno in phenos_to_keep:
-                    filtered_categories[category].append(pheno)
-                    sorted_columns.append(pheno)
-        categories_map = filtered_categories
-        p_val_df = p_val_df[sorted_columns]
+
+    print("p_val_df shape ", p_val_df.shape)
+    print("sex_specific_phenotypes: ", sex_specific_phenotypes)
+    print("sorted_columns: ", sorted_columns)
+    # Sort columns based on category, for a better appearance in the heatmap and possibly remove some filtered phenotypes.
+    p_val_df = p_val_df[sorted_columns]
+
+    # Remove rows (VNTR) with no significant hits after removing the sex-specific phenotypes.
+    if not args.keep_sex_specific_phenos:
+        print("test:", (p_val_df < default_p_val).any(axis=1))
+        p_val_df = p_val_df[(p_val_df < default_p_val).any(axis=1)]
+        print("Remove empty rows: ", p_val_df)
+
+    
+    if args.filter:
+        p_val_df, categories_map = filter_vntr_phenos(p_val_df=p_val_df,
+                                                      gwas_phenotypes=gwas_phenotypes,
+                                                      categories_map=categories_map,
+                                                      verbose=args.verbose)
         if args.verbose:
             print("len categories_map after filtering: ", len(categories_map))
-    else:
-        distance_df = 1 - pheno_df
-        condensed_dist = squareform(distance_df.values)
-        col_linkage = sch.linkage(condensed_dist, method='average')
-        print("col linkage shape: ", np.shape(col_linkage))
+            print(categories_map)
 
-    
     print("p_val_df shape: ", np.shape(p_val_df))
 
-    if args.category:
-        filename_base = "heatmap_{}".format(args.cohort)
-    
-        heatmap(data=p_val_df,
-            column_categories=categories_map,
-            filename_base=filename_base)
-    else:
-        filename_base = "clustermap_{}".format(args.cohort)
-    
-        clustermap(data=p_val_df,
-            col_linkage=col_linkage,
-            filename_base=filename_base)
+    filename_base = "figures/heatmap_{}".format(args.cohort)
+
+    heatmap(data=p_val_df,
+        column_categories=categories_map,
+        filename_base=filename_base)
 
 if __name__ == "__main__":
     main()

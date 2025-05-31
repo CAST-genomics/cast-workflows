@@ -54,7 +54,7 @@ def GetPhenotypePath(phenotype, pheno_prefix, binary=False):
 	return phenotype_array
 
 
-def GetCohortPath(cohort):
+def GetCohortPath(cohort, female_only, male_only):
 	"""	
 	Download a GCP path locally
 	Arguments
@@ -72,8 +72,13 @@ def GetCohortPath(cohort):
 	
 
 	cohorts = [item.strip() for item in cohort.split(',')]
+	sex_suffix = ""
+	if female_only:
+		sex_suffix = "_female"
+	if male_only:
+		sex_suffix = "_male"
 	for item in cohorts: 
-		path = os.getenv("WORKSPACE_BUCKET")+"/samples/"+item.strip()+"_plink.txt"
+		path = os.getenv("WORKSPACE_BUCKET") + "/samples/" + item.strip() + sex_suffix + "_plink.txt"
 		cohort_array.append(path)
 	return cohort_array
 
@@ -94,6 +99,10 @@ def main():
 	parser.add_argument("--phenotype", help="name of the phenotype, seperated by comma", required=False, type=str)
 	parser.add_argument("--pheno-prefix", help="prefix of the phenocovar files if present", required=False, default="")
 	parser.add_argument("--cohort", help="name of the cohort, seperated by comma, options: AFR, EUR, AMR, NOT_AFR, ALL", required=False, type=str)
+	parser.add_argument("--female", help="Run on female samples only. " + \
+						"This is needed for sex-stratification on sex specific phenotypes.", action="store_true")
+	parser.add_argument("--male", help="Run on male samples only. " + \
+						"This is needed for sex-stratification on sex specific phenotypes.", action="store_true")
 	parser.add_argument("--logistic", help="Run logistic regression", action="store_true")
 	args = parser.parse_args()
 
@@ -144,7 +153,7 @@ def main():
 	print("pfile: ", pfile)
 	#return cohort array if choose targeted cohorts 
 	if args.cohort is not None:
-		target_cohort =  GetCohortPath(args.cohort)
+		target_cohort =  GetCohortPath(args.cohort, female_only=args.female, male_only=args.male)
 	else: 
 		target_cohort = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix="samples/") if blob.name.endswith('.txt')]
 	
