@@ -150,6 +150,7 @@ task run_tr_gwas {
                 --keep ~{samples} \
                 --ci 0.95 \
                 --covar-variance-standardize \
+                --no-input-missing-phenotype \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
                 
                 
@@ -165,6 +166,7 @@ task run_tr_gwas {
                 --keep ~{samples} \
                 --1 \
                 --covar-variance-standardize \
+                --no-input-missing-phenotype \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
                 
                 gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.logistic.hybrid "
