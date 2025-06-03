@@ -103,7 +103,9 @@ def main():
 	bucket = client.bucket(bucket_name)
     # Define the gs prefix
 	gs_prefix = f"gs://{bucket_name}/"
-	pfile = "tr_imputation/enstr-v3/results-250K/"
+	#pfile = "tr_imputation/enstr-v3/results-250K/"
+	pfile = "tr_imputation/enstr-v3/results-250K/reannotated/"
+
 
 	#return phenotype array if choose targeted phenotypes 
 	if args.phenotype is not None:

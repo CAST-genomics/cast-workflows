@@ -55,7 +55,7 @@ task annotaTR {
         set -e
         annotaTR --vcf ~{vcf} \
             --ref-panel ~{ref_vcf} \
-            --out ~{out_prefix}_annotated \
+            --out ~{out_prefix} \
             --vcftype hipstr \
             --outtype pgen vcf \
             --vcf-outtype z \
@@ -65,7 +65,7 @@ task annotaTR {
             --warn-on-AP-error \
             --update-ref-alt
 
-        tabix -p vcf ~{out_prefix}_annotated.vcf.gz
+        tabix -p vcf ~{out_prefix}.vcf.gz
     >>>
 
     runtime {
@@ -75,10 +75,10 @@ task annotaTR {
     }
 
     output {
-        File pgen = "${out_prefix}_annotated.pgen"
-        File psam = "${out_prefix}_annotated.psam"
-        File pvar = "${out_prefix}_annotated.pvar"
-        File outvcf = "${out_prefix}_annotated.vcf.gz"
-        File outvcfind = "${out_prefix}_annotated.vcf.gz.tbi"
+        File pgen = "${out_prefix}.pgen"
+        File psam = "${out_prefix}.psam"
+        File pvar = "${out_prefix}.pvar"
+        File outvcf = "${out_prefix}.vcf.gz"
+        File outvcfind = "${out_prefix}.vcf.gz.tbi"
     }
 }
