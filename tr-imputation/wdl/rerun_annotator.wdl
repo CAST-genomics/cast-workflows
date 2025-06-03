@@ -4,8 +4,8 @@ workflow rerun_annotator {
     input {
         Array[File] vcf = []
         Array[File] vcf_index = []
-        File ref_vcf
-        File ref_index
+        Array[File] ref_vcf = []
+        Array[File] ref_index = []
         String out_prefix 
 
     }
@@ -15,22 +15,25 @@ workflow rerun_annotator {
     scatter (i in range(num_vcf)) {
         File chrom_vcf = vcf[i]
         File chrom_vcf_index = vcf[i]+".tbi"
+        File chrom_ref = ref_vcf[i]
+        File chrom_ref_index = ref_vcf[i]+".tbi"
+        String chrom = basename(vcf,"_TR_merged.vcf.gz")
 
         call annotaTR {
             input:
                 vcf=chrom_vcf,
                 vcf_index=chrom_vcf_index,
-                ref_vcf=ref_vcf,
-                ref_index=ref_index,
-                out_prefix=out_prefix
+                ref_vcf=chrom_ref,
+                ref_index=chrom_ref_index,
+                out_prefix=chrom+out_prefix
         }
     }
     output {
-        File outfile_pgen = annotaTR.pgen
-        File outfile_psam = annotaTR.psam
-        File outfile_pvar = annotaTR.pvar
-        File outfile_vcf = annotaTR.outvcf
-        File outfile_vcfind = annotaTR.outvcfind
+        Array[Array[File]] outfile_pgen = annotaTR.pgen
+        Array[Array[File]] outfile_psam = annotaTR.psam
+        Array[Array[File]] outfile_pvar = annotaTR.pvar
+        Array[Array[File]] outfile_vcf = annotaTR.outvcf
+        Array[Array[File]] outfile_vcfind = annotaTR.outvcfind
     }
 
     meta {
@@ -60,7 +63,7 @@ task annotaTR {
             --match-refpanel-on locid \
             --warn-on-AP-error \
             --update-ref-alt
-            
+
         tabix -p vcf ~{out_prefix}_annotated.vcf.gz
     >>>
 
