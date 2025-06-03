@@ -12,12 +12,13 @@ workflow rerun_annotator {
     ### Separate workflow for each chrom vcf ###
 
     Int num_vcf = length(vcf)
+
     scatter (i in range(num_vcf)) {
         File chrom_vcf = vcf[i]
-        File chrom_vcf_index = vcf[i]+".tbi"
+        File chrom_vcf_index = vcf_index[i]
         File chrom_ref = ref_vcf[i]
-        File chrom_ref_index = ref_vcf[i]+".tbi"
-        String chrom = basename(vcf,"_TR_merged.vcf.gz")
+        File chrom_ref_index = ref_index[i]
+        String chrom = basename(chrom_vcf,"_TR_merged.vcf.gz")
 
         call annotaTR {
             input:
@@ -29,11 +30,11 @@ workflow rerun_annotator {
         }
     }
     output {
-        Array[Array[File]] outfile_pgen = annotaTR.pgen
-        Array[Array[File]] outfile_psam = annotaTR.psam
-        Array[Array[File]] outfile_pvar = annotaTR.pvar
-        Array[Array[File]] outfile_vcf = annotaTR.outvcf
-        Array[Array[File]] outfile_vcfind = annotaTR.outvcfind
+        Array[File] outfile_pgen = annotaTR.pgen
+        Array[File] outfile_psam = annotaTR.psam
+        Array[File] outfile_pvar = annotaTR.pvar
+        Array[File] outfile_vcf = annotaTR.outvcf
+        Array[File] outfile_vcfind = annotaTR.outvcfind
     }
 
     meta {
