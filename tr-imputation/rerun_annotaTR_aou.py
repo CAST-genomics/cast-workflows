@@ -3,10 +3,9 @@
 Script to rerun annotaTR AOU TR imputation to output new INFO field DSCOUNT which contains the non-zero dosage and their counts number in the pvar file.
 
 
-chrom=1  
+
 ./rerun_annotaTR_aou.py \
---name chr${chrom}_annotated \
---chrom ${chrom} \
+--name reannotated 
 
 """
 
