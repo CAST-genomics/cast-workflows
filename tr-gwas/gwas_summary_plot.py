@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 import math
 from matplotlib import pyplot as plt
+from matplotlib.colors import LogNorm
 import seaborn as sns
 import argparse
 from sklearn.metrics import jaccard_score
@@ -18,6 +19,7 @@ from functools import cmp_to_key
 from collections import defaultdict
 from scipy.spatial.distance import squareform
 import scipy.cluster.hierarchy as sch
+
 
 
 def clustermap(data, col_linkage, filename_base):
@@ -52,65 +54,81 @@ def clustermap(data, col_linkage, filename_base):
     plt.savefig(filename_base + ".pdf", bbox_inches="tight")
     plt.savefig(filename_base + ".png", bbox_inches="tight")
 
-def heatmap(data, column_categories, filename_base):
+def rename_columns_for_heatmap(data):
+    orig_columns = data.columns
+    data.columns = data.columns.str.replace('_', ' ')
+    data.columns = data.columns.str.lower()
+    columns_rename_map = {"skin changes due to solar radiation": "skin changes (solar)",
+                          "skin changes due to chronic exposure to nonionizing radiation": "skin changes (NI)",
+                          "rheumatic fever and chronic rheumatic heart diseases": "rheumatic heart disease",
+                          "hashimoto thyroiditis  chronic lymphocytic thyroiditis ": "hashimoto thyroiditis",
+                          }
+    data = data.rename(columns=columns_rename_map)
+    return data
+    
+
+def heatmap(data, column_categories, filename_base, chrom_labels=False, category_labels=False, vmax=4e-8, vmin=1e-16):
     print("Plotting the heatmap")
-    plt.clf()
-    # Remove annotations due to the large number of rows and columns
-    plot = sns.heatmap(data,
-                annot=False,
-                xticklabels=False,
-                yticklabels=False)
-    yticks, yticklabels = [], []
+    
+    # Locate where each category begins and ends
     xticks, xticklabels = [], []
-
-    # Set yticks
-    for chrom in range(1, 23):
-        chrom_str = "chr" + str(chrom) + "_"
-        # Find the positions for y ticks grouped on chromosomes
-        rows_with_chrom = data[data.index.str.startswith(chrom_str)].index
-        if len(rows_with_chrom) == 0:
-            continue
-        min_row = data.index.get_loc(rows_with_chrom[0])
-        max_row = data.index.get_loc(rows_with_chrom[-1])
-        mean_row = math.ceil((min_row + max_row) / 2)
-        yticks.append(mean_row)
-        yticklabels.append(chrom_str.replace("_", ""))
-    plot.set_yticks(yticks)
-    plot.set_yticklabels(yticklabels, fontsize=8)
-    # Avoid overlaps by manually moving two closest ones.
-    label = plot.get_yticklabels()[-1]
-    label.set_position((0, label.get_position()[1] + 10))
-
-    # Set xticks
+    axvlines = []
     for idx, category in enumerate(column_categories):
         phenos = column_categories[category]
         min_col = list(data.columns).index(phenos[0])
         max_col = list(data.columns).index(phenos[-1])
         mean_col = int((min_col + max_col) / 2)
         if idx > 0:
-            plot.axvline(x=min_col, color='k',linestyle='--')
+            axvlines.append(min_col)
         xticks.append(mean_col)
         xticklabels.append(category)
-        
-    plot.set_xticks(xticks)
-    plot.set_xticklabels(xticklabels, rotation=90)#, fontsize=6)
-    # Avoid overlaps by manually moving two closest ones.
-    """label = plot.get_xticklabels()[4]
-    label.set_position((label.get_position()[0]-0.1, 0))
-    label = plot.get_xticklabels()[5]
-    label.set_position((label.get_position()[0]-0.1, 0))
-    label = plot.get_xticklabels()[6]
-    label.set_position((label.get_position()[0]-0.1, 0))
-    label = plot.get_xticklabels()[7]
-    label.set_position((label.get_position()[0]-0.4, 0))
-    label = plot.get_xticklabels()[8]
-    label.set_position((label.get_position()[0]-0.4, 0))
-    label = plot.get_xticklabels()[9]
-    label.set_position((label.get_position()[0]+0.4, 0))
-    label = plot.get_xticklabels()[10]
-    label.set_position((label.get_position()[0]+2, 0))"""
+
+    # Shorten the name of phenotypes for a better representation in the heatmap
+    data = rename_columns_for_heatmap(data)
+
+    plt.clf()
+    # Remove annotations due to the large number of rows and columns
+    plot = sns.heatmap(data,
+                annot=False,
+                vmin=vmin,
+                vmax=vmax,
+                )
+
+    # Separate rows and columns with white lines to distinguish easier
+    for idx in range(len(data.columns)):
+        plot.axvline(x=idx, color='w',linestyle='-')
+    for idx in range(len(data.index)):
+        plot.axhline(y=idx, color='w',linestyle='-')
+
+    # Set yticks
+    if chrom_labels:
+        yticks, yticklabels = [], []
+        for chrom in range(1, 23):
+            chrom_str = "chr" + str(chrom) + "_"
+            # Find the positions for y ticks grouped on chromosomes
+            rows_with_chrom = data[data.index.str.startswith(chrom_str)].index
+            if len(rows_with_chrom) == 0:
+                continue
+            min_row = data.index.get_loc(rows_with_chrom[0])
+            max_row = data.index.get_loc(rows_with_chrom[-1])
+            mean_row = math.ceil((min_row + max_row) / 2)
+            yticks.append(mean_row)
+            yticklabels.append(chrom_str.replace("_", ""))
+        plot.set_yticks(yticks)
+        plot.set_yticklabels(yticklabels, fontsize=8)
+        # Avoid overlaps by manually moving two closest ones.
+        label = plot.get_yticklabels()[-1]
+        label.set_position((0, label.get_position()[1] + 10))
 
 
+    # Place a vertical line at the beginning of each category
+    for axvline_pos in axvlines:
+        plot.axvline(x=axvline_pos, color='gray',linestyle='--')
+
+    # Set xticks as categories (instead of phenotypes) if indicated
+    if category_labels:
+        plot.set_xticks(xticks)
+        plot.set_xticklabels(xticklabels, rotation=90)#, fontsize=6)
 
     plt.savefig(filename_base + ".pdf", bbox_inches="tight")
     plt.savefig(filename_base + ".png", bbox_inches="tight")
@@ -281,6 +299,8 @@ def is_sex_specific_pheno(pheno, category):
         return True
     if "pregnancy" in category:
         return True
+    if "gynecological" in pheno:
+        return True
     if "testicular" in pheno or "testis" in pheno or "prostatic" in pheno or "prostate" in pheno:
         return True
     if "uterus" in pheno or "uterine" in pheno or "ovarian" in pheno or "ovary" in pheno:
@@ -435,9 +455,9 @@ def main():
 
     # Remove rows (VNTR) with no significant hits after removing the sex-specific phenotypes.
     if not args.keep_sex_specific_phenos:
-        print("test:", (p_val_df < default_p_val).any(axis=1))
+        #print("test:", (p_val_df < default_p_val).any(axis=1))
         p_val_df = p_val_df[(p_val_df < default_p_val).any(axis=1)]
-        print("Remove empty rows: ", p_val_df)
+        #print("Remove empty rows: ", p_val_df)
 
     
     if args.filter:
