@@ -153,10 +153,15 @@ def vntr_order_comp(a, b):
         return 1
     return 0
 
-def get_p_val_df(filename, verbose):
+def get_p_val_df(filename, verbose, is_continuous=False):
     # Read the summary stats file into a dataframe.
     print("Loading summary statistics into a dataframe.")
-    columns = ["Phenotype", "POS", "ID", "REF", "ALT",
+    if is_continuous:
+        columns = ["Phenotype", "POS", "ID", "REF", "ALT",
+                "PROVISIONAL_REF?", "A1", "OMITTED", "A1_FREQ",
+                "TEST", "OBS_CT", "BETA", "SE", "T_STAT", "P", "ERRCODE"]
+    else:
+        columns = ["Phenotype", "POS", "ID", "REF", "ALT",
                 "PROVISIONAL_REF?", "A1", " OMITTED", "A1_FREQ", "FIRTH?",
                 "TEST", "OBS_CT", "OR", "LOG(OR)_SE", "Z_STAT",
                 "P", "ERRCODE"]
@@ -384,6 +389,9 @@ def parse_arguments():
                          help="Enable verbosity.")
     parser.add_argument("--keep-sex-specific-phenos", action="store_true",
                          help="Keep sex specific phenotypes which are otherwise discarded.")
+    parser.add_argument("--is-continuous", action="store_true",
+                         help="Use this if the phenotype is continuous because the columns " + \
+                             "of the significant hits file should be interpretted differently")
     parser.add_argument("--filter", action="store_true",
                          help="Apply filter on VNTRs and phenotypes. " + \
                             "VNTRs that have significant associations in " + \
@@ -401,26 +409,17 @@ def parse_arguments():
     args = parser.parse_args()
     return args
 
-def main():
-    args = parse_arguments()
+def update_p_val_categories(p_val_df,
+                        phecode_df,
+                        gwas_phenotypes,
+                        phecode_to_name_file,
+                        default_p_val,
+                        keep_sex_specific_phenos,
+                        verbose):
 
-    # The default value for the matrix for the vntr-phenotype pairs where no significant hit is found.
-    # This is like a placeholder and is larger than the largest observed signficant hit in the matrix.
-    p_val_df, default_p_val = get_p_val_df(filename=args.gwas_summary,
-                                            verbose=args.verbose)
-    gwas_phenotypes = list(p_val_df.columns)
-    if args.verbose:
-        print("gwas_phenotypes head", gwas_phenotypes[:10])
-    
-    pheno_similarity_file = "pheno_similarities.csv"
-    if args.recompute_pheno_similarity:
-        phecode_df = get_phenotype_similarity(filename="my_phecode_counts.csv",
-                                                  output=pheno_similarity_file)
-    else:
-        phecode_df = pd.read_csv(pheno_similarity_file, index_col=0)
     pheno_df, category_df = get_pheno_df_from_phecodes(phecode_df=phecode_df,
-                                              selected_phenotypes=gwas_phenotypes,
-                                              phecode_filename=args.phecode_to_name_file)
+                                          selected_phenotypes=gwas_phenotypes,
+                                          phecode_filename=phecode_to_name_file)
 
     # Find categories corresponding to each phenotype string
     categories = category_df['phecode_category'].unique()
@@ -428,7 +427,7 @@ def main():
     sex_specific_phenotypes = []
     categories_map = defaultdict(list)
     pheno_to_category = {}
-    if args.verbose:
+    if verbose:
         print("categories head: ", categories[:10])
         print("gwas_phenotypes head: ", gwas_phenotypes[:10])
     for category in categories:
@@ -438,7 +437,7 @@ def main():
             if phecode_str not in gwas_phenotypes:
                 continue
             # Skip sex-specific phenotypes. We often run GWAS on those phenotypes a single sex separately.
-            if not args.keep_sex_specific_phenos and \
+            if not keep_sex_specific_phenos and \
                 is_sex_specific_pheno(pheno=phecode_str, category=category):
                 sex_specific_phenotypes.append(phecode_str)
                 continue
@@ -454,10 +453,41 @@ def main():
     p_val_df = p_val_df[sorted_columns]
 
     # Remove rows (VNTR) with no significant hits after removing the sex-specific phenotypes.
-    if not args.keep_sex_specific_phenos:
-        #print("test:", (p_val_df < default_p_val).any(axis=1))
+    if not keep_sex_specific_phenos:
         p_val_df = p_val_df[(p_val_df < default_p_val).any(axis=1)]
-        #print("Remove empty rows: ", p_val_df)
+
+    return p_val_df, categories_map
+
+def main():
+    args = parse_arguments()
+
+    # The default value for the matrix for the vntr-phenotype pairs where no significant hit is found.
+    # This is like a placeholder and is larger than the largest observed signficant hit in the matrix.
+    p_val_df, default_p_val = get_p_val_df(filename=args.gwas_summary,
+                                            verbose=args.verbose,
+                                            is_continuous=args.is_continuous)
+    gwas_phenotypes = list(p_val_df.columns)
+    if args.verbose:
+        print("gwas_phenotypes head", gwas_phenotypes[:10])
+    
+    pheno_similarity_file = "pheno_similarities.csv"
+    if args.recompute_pheno_similarity:
+        phecode_df = get_phenotype_similarity(filename="my_phecode_counts.csv",
+                                                  output=pheno_similarity_file)
+    else:
+        phecode_df = pd.read_csv(pheno_similarity_file, index_col=0)
+
+    # We do not need the categories for blood phenotypes.
+    if args.is_continuous:
+        categories_map = {}
+    else:
+        p_val_df, categories_map = update_p_val_categories(p_val_df=p_val_df,
+                                                        default_p_val=default_p_val,
+                                                        phecode_df=phecode_df,
+                                                        gwas_phenotypes=gwas_phenotypes,
+                                                        phecode_to_name_file=args.phecode_to_name_file,
+                                                        keep_sex_specific_phenos=args.keep_sex_specific_phenos,
+                                                        verbose=args.verbose)
 
     
     if args.filter:
