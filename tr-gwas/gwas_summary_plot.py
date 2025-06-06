@@ -153,7 +153,7 @@ def vntr_order_comp(a, b):
         return 1
     return 0
 
-def get_p_val_df(filename, verbose, is_continuous=False):
+def get_p_val_df(filename, verbose, default_val, is_continuous=False):
     # Read the summary stats file into a dataframe.
     print("Loading summary statistics into a dataframe.")
     if is_continuous:
@@ -195,7 +195,6 @@ def get_p_val_df(filename, verbose, is_continuous=False):
     print("Current min and max p-values: {}, {}".format(
             summary_df["P"].min(),
             summary_df["P"].max()))
-    default_val = summary_df["P"].max() * 1.2
     p_val_df = pd.DataFrame(columns=phenotypes, index=vntrs, dtype=float).fillna(default_val)
 
 
@@ -221,7 +220,7 @@ def get_p_val_df(filename, verbose, is_continuous=False):
         print(f"More than one entry for {len(multiple_entries)} phenotypes. Picking the first one.")
         print(f"full list {multiple_entries}" )
 
-    return p_val_df, default_val
+    return p_val_df
 
 def get_phenotype_similarity(filename, output):
     print("Reading the phenotype counts file")
@@ -462,8 +461,11 @@ def main():
     args = parse_arguments()
 
     # The default value for the matrix for the vntr-phenotype pairs where no significant hit is found.
+    #default_val = summary_df["P"].max() * 1.2
+    default_p_val = 4e-8
     # This is like a placeholder and is larger than the largest observed signficant hit in the matrix.
-    p_val_df, default_p_val = get_p_val_df(filename=args.gwas_summary,
+    p_val_df = get_p_val_df(filename=args.gwas_summary,
+                                            default_val=default_p_val,
                                             verbose=args.verbose,
                                             is_continuous=args.is_continuous)
     gwas_phenotypes = list(p_val_df.columns)
@@ -500,6 +502,7 @@ def main():
             print(categories_map)
 
     print("p_val_df shape: ", np.shape(p_val_df))
+    print("Number of significant values in df: ", (p_val_df < default_p_val).sum().sum())
 
     filename_base = "figures/heatmap_{}".format(args.cohort)
 
