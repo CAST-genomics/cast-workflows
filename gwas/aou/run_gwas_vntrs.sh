@@ -4,13 +4,16 @@ ref="data/lrwgs_p_g_polymorphic_vntrs_sr_6_ml_95.sorted.vcf.gz"
 
 
 
+
 # Disease
 samples="samples/EUR_WHITE.csv"
-for chr in "chr16"; do
+#samples="samples/AFR_BLACK.csv"
+#samples="samples/passing_samples_v7.1.csv"
+for chr in "chr1"; do
     aou_220k_imputed="../../imputation/wdl/data/imputed_${chr}.annotated.rh.vcf.gz"
-    for phenotype in "Malignant_neoplasm_of_the_skin"; do
-    #for phenotype in "Hyperlipidemia"; do
-    #for phenotype in "glaucoma"; do
+    #for phenotype in "Malignant_neoplasm_of_the_skin"; do
+    #for phenotype in "Hyperlipidemia" "Hypercholesterolemia"; do
+    for phenotype in "glaucoma"; do
             echo "Running gwas for $phenotype"
             python plot_genotype_phenotype.py --phenotype $phenotype \
                    --tr-vcf $aou_220k_imputed \
@@ -18,13 +21,12 @@ for chr in "chr16"; do
                    --outdir outputs/${chr} \
                    --annotations annotation_points.csv \
                    --binary
-           : '
-             vntr_plink_gwas_file="../../../rebased_cast-workflows/cast-workflows/tr-gwas/results_v3_eur_significant_in_v2/sara_${phenotype}_EUR_WHITE_gwas.tab"
+           
+    : "         vntr_plink_gwas_file="../../../rebased_cast-workflows/cast-workflows/tr-gwas/results_v3_eur_significant_in_v2/sara_${phenotype}_EUR_WHITE_gwas.tab"
             processed_vntr_gwas_file="data/plink/processed_gwas_${phenotype}.tab"
             cat $vntr_plink_gwas_file | grep "^#CHROM" | head -n 1 > $processed_vntr_gwas_file
             cat $vntr_plink_gwas_file | grep "ADD" >> $processed_vntr_gwas_file
-            phecode="EM_239.1"
-            snp_gwas_file="data/all_by_all/df_dump_${chr}_${phecode}.csv"
+            snp_gwas_file="data/all_by_all/df_dump_${chr}_${phenotype}.csv"
                 ./aou_gwas.py --phenotype $phenotype \
                    --num-pcs 10 \
                    --method associaTR \
@@ -36,29 +38,31 @@ for chr in "chr16"; do
                    --vntr-gwas-file $processed_vntr_gwas_file \
                    --plot-genotype-phenotype \
                    --binary \
-                   --plot'
+                   --plot
+    "
     done
 done
 
 exit 0
 
+
 # Blood
 samples="samples/passing_samples_v7.1.csv"
-for chr in "chr1"; do
+for chr in "chr2"; do
     #for phenotype in "red_blood_cell_distribution_width" "platelet_count" "mean_platelet_volume" "mean_corpuscular_hemoglobin" "cholesterol" "alkaline_phosphatase"; do
-    for phenotype in "alkaline_phosphatase"; do
-        #phecode="3035995"
+    for phenotype in "cholesterol"; do
+        phecode=$phenotype
         aou_220k_imputed="../../imputation/wdl/data/imputed_${chr}.annotated.rh.vcf.gz"
-        #snp_gwas_file="data/all_by_all/df_dump_${chr}_${phecode}.csv"
+        snp_gwas_file="data/all_by_all/df_dump_${chr}_${phecode}.csv"
         echo "Running gwas for $phenotype"
-        python plot_genotype_phenotype.py --phenotype $phenotype \
+        : "python plot_genotype_phenotype.py --phenotype $phenotype \
            --tr-vcf $aou_220k_imputed \
            --samples $samples \
            --outdir outputs/${chr} \
            --annotations annotation_points.csv \
-           --norm quantile
+           --norm zscore"
 
-       : " ./aou_gwas.py --phenotype $phenotype \
+        ./aou_gwas.py --phenotype $phenotype \
            --num-pcs 10 \
            --method associaTR \
            --tr-vcf $aou_220k_imputed \
@@ -66,11 +70,15 @@ for chr in "chr1"; do
            --outdir outputs/${chr} \
            --annotations annotation_points.csv \
            --plot-genotype-phenotype \
-           --norm quantile \
+           --snp-gwas-file $snp_gwas_file \
+           --norm zscore \
            --plot
-           #--snp-gwas-file $snp_gwas_file "
     done
 done
+
+
+
+exit 0
 
 exit 0
 

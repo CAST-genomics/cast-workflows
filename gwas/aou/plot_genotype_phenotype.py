@@ -71,6 +71,8 @@ def plot_genotype_phenotype_binary(data, genotype, phenotype, phenotype_label, o
     # Initialize separate variables for each variation of the odds plot    
     data["odds_ratio_threshold"] = None
     odds_ratio_threshold = {}
+    odds_ratio_threshold_lte = {}
+    odds_ratio_threshold_lte_se = {}
     odds_ratio_nominal = {}
     odds_threshold = {}
     odds_ratio_threshold_lib = {}
@@ -79,6 +81,7 @@ def plot_genotype_phenotype_binary(data, genotype, phenotype, phenotype_label, o
     fraction_threshold = {}
     uniq_alleles = sorted(data[genotype].unique())
     min_allele = min(uniq_alleles)
+    max_allele = max(uniq_alleles)
 
     for uniq_allele in uniq_alleles:
         num_cases_allele = len(data[(data[genotype] == uniq_allele) & (data[phenotype] == 1)]) + epsilon
@@ -87,8 +90,12 @@ def plot_genotype_phenotype_binary(data, genotype, phenotype, phenotype_label, o
         num_controls_no_allele = len(data[(data[genotype] != uniq_allele) & (data[phenotype] == 0)]) + epsilon
         num_cases_gte_allele = len(data[(data[genotype] >= uniq_allele) & (data[phenotype] == 1)]) + epsilon
         num_controls_gte_allele = len(data[(data[genotype] >= uniq_allele) & (data[phenotype] == 0)]) + epsilon
+        num_cases_gt_allele = len(data[(data[genotype] > uniq_allele) & (data[phenotype] == 1)]) + epsilon
+        num_controls_gt_allele = len(data[(data[genotype] > uniq_allele) & (data[phenotype] == 0)]) + epsilon
         num_cases_lt_allele = len(data[(data[genotype] < uniq_allele) & (data[phenotype] == 1)]) + epsilon
         num_controls_lt_allele = len(data[(data[genotype] < uniq_allele) & (data[phenotype] == 0)]) + epsilon
+        num_cases_lte_allele = len(data[(data[genotype] <= uniq_allele) & (data[phenotype] == 1)]) + epsilon
+        num_controls_lte_allele = len(data[(data[genotype] <= uniq_allele) & (data[phenotype] == 0)]) + epsilon
 
         if uniq_allele > min_allele:
             # For threhsold based methods, odds ratio of min value is ill defined.
@@ -107,6 +114,14 @@ def plot_genotype_phenotype_binary(data, genotype, phenotype, phenotype_label, o
             
             odds_threshold[uniq_allele] = num_cases_gte_allele/num_controls_gte_allele
             fraction_threshold[uniq_allele] = num_cases_gte_allele/(num_controls_gte_allele + num_cases_gte_allele)
+        if uniq_allele < max_allele:
+            odds_ratio_threshold_lte[uniq_allele] = (num_cases_gt_allele/num_cases_lte_allele) \
+                                                / (num_controls_gt_allele/num_controls_lte_allele)
+            se = np.sqrt(1/num_cases_gt_allele + \
+                     1/num_cases_lte_allele + \
+                     1/num_controls_gt_allele + \
+                     1/num_controls_lte_allele)
+            odds_ratio_threshold_lte_se[uniq_allele] = se
 
         # For nominal method, any allele value can be computed
         odds_ratio_nominal[uniq_allele] = (num_cases_allele/num_cases_no_allele) \
@@ -124,6 +139,13 @@ def plot_genotype_phenotype_binary(data, genotype, phenotype, phenotype_label, o
               genotype=genotype,
               phenotype_label=phenotype_label + " odds ratio == allele",
               out=outpath.replace("genotype", "odds_ratio_nominal"))
+
+    # Odds ratio plot
+    line_plot(data_dict=odds_ratio_threshold_lte,
+              std_error=odds_ratio_threshold_lte_se,
+              genotype=genotype,
+              phenotype_label=phenotype_label + " odds ratio > allele",
+              out=outpath.replace("genotype", "odds_ratio_lte_se_error"))
 
     # Odds ratio plot
     line_plot(data_dict=odds_ratio_threshold,

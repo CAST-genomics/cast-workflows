@@ -1,8 +1,10 @@
 #!/bin/bash
 
-while read line; do
-    phecode=$(echo $line | awk -F, '{print($1)}')
-    string=$(echo $line | awk -F, '{print($4)}')
+#while read line; do
+    #phecode=$(echo $line | awk -F, '{print($1)}')
+    #string=$(echo $line | awk -F, '{print($4)}')
+    phecode="CA_101.8"
+    string="Malignant_neoplasm_of_the_pancreas"
     string="sara_$string"
     if [ ! -e phenocovars/${string}_phenocovar.csv ]; then
         echo "phecode $phecode string $string"
@@ -16,4 +18,4 @@ while read line; do
             --phecode-count 2 \
             --outdir phenocovars \
             --verbose
-done < <(tail -n +2 ../../../phewas/phenotypes_min_1000_cases.csv)
+#done < <(tail -n +2 ../../../phewas/phenotypes_min_1000_cases.csv)
