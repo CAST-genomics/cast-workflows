@@ -15,7 +15,7 @@ import json
 import os
 import subprocess
 import sys
-from google.cloud import storage
+#from google.cloud import storage
 
 sys.path.append("../utils")
 import aou_utils
@@ -26,33 +26,21 @@ def main():
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	args = parser.parse_args()
 	
-    # Get token
-	token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
-		capture_output=True, check=True, encoding='utf-8')
-	token = str.strip(token_fetch_command.stdout)
-	#set up bucket
-	bucket_name = os.getenv("WORKSPACE_BUCKET").replace("gs://", "")
-	project = os.getenv("GOOGLE_PROJECT")
-	client = storage.Client()
-	bucket = client.bucket(bucket_name)
-    # Define the gs prefix
-	gs_prefix = f"gs://{bucket_name}/"
-	pfile = "imputation_merged_TR/"
-	ref = "tr_imputation/enstr-v3/"
-
 
 	# Set up workflow JSON
 	json_dict = {}
-	#json_dict["rerun_annotator.vcf"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.vcf.gz')]
-	#json_dict["rerun_annotator.vcf_index"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.vcf.gz.tbi')]
-	#json_dict["rerun_annotator.ref_vcf"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=ref) if blob.name.endswith('.vcf.gz')]
-	#json_dict["rerun_annotator.ref_index"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=ref) if blob.name.endswith('.vcf.gz.tbi')]
-	json_dict["rerun_annotator.out_prefix"] = args.chrom
+
 	json_dict["rerun_annotator.vcf"] = os.environ.get("WORKSPACE_BUCKET") + "/imputation_merged_TR//chr%s_TR_merged.vcf.gz"%args.chrom
 	json_dict["rerun_annotator.vcf_index"] = os.environ.get("WORKSPACE_BUCKET") + "/imputation_merged_TR/chr%s_TR_merged.vcf.gz.tbi"%args.chrom
 	json_dict["rerun_annotator.ref_vcf"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/ensembletr_refpanel_v3_chr%s.vcf.gz"%args.chrom
 	json_dict["rerun_annotator.ref_index"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/ensembletr_refpanel_v3_chr%s.vcf.gz.tbi"%args.chrom
-
+	json_dict["rerun_annotator.out_prefix"] = args.chrom
+	#json_dict["rerun_annotator.vcf"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.vcf.gz')]
+	#json_dict["rerun_annotator.vcf_index"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.vcf.gz.tbi')]
+	#json_dict["rerun_annotator.ref_vcf"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=ref) if blob.name.endswith('.vcf.gz')]
+	#json_dict["rerun_annotator.ref_index"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=ref) if blob.name.endswith('.vcf.gz.tbi')]
+	
+	
 
 	# Convert to json and save as a file
 	json_file = args.chrom+".aou.json"
