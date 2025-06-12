@@ -5,7 +5,7 @@ Script to rerun annotaTR AOU TR imputation to output new INFO field DSCOUNT whic
 
 
 ./rerun_annotaTR_aou.py \
---name reannotated 
+--chrom 
 
 """
 
@@ -58,13 +58,13 @@ def main():
 
 
 	# Convert to json and save as a file
-	json_file = args.name+".aou.json"
+	json_file = args.chrom+".aou.json"
 	with open(json_file, "w") as f:
 		json.dump(json_dict, f, indent=4)
 
 	# Set up json options
 	json_options_dict = {}
-	json_options_file = args.name+".options.aou.json"
+	json_options_file = args.chrom+".options.aou.json"
 	with open(json_options_file, "w") as f:
 		json.dump(json_options_dict, f, indent=4)
 
