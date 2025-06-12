@@ -9,16 +9,6 @@ workflow rerun_annotator {
         String out_prefix 
 
     }
-    ### Separate workflow for each chrom vcf ###
-
-    #Int num_vcf = length(vcf)
-
-    #scatter (i in range(num_vcf)) 
-    #    File chrom_vcf = vcf[i]
-    #    File chrom_vcf_index = vcf_index[i]
-    #    File chrom_ref = ref_vcf[i]
-    #    File chrom_ref_index = ref_index[i]
-    #    String chrom = basename(chrom_vcf,"_TR_merged.vcf.gz")
 
     call annotaTR {
         input:
@@ -26,7 +16,7 @@ workflow rerun_annotator {
             vcf_index=vcf_index,
             ref_vcf=ref_vcf,
             ref_index=ref_index,
-            out_prefix=out_prefix
+            out_prefix=out_prefix+"reannotated"
     }
 
     output {

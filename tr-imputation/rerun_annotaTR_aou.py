@@ -48,9 +48,6 @@ def main():
 	#json_dict["rerun_annotator.ref_vcf"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=ref) if blob.name.endswith('.vcf.gz')]
 	#json_dict["rerun_annotator.ref_index"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=ref) if blob.name.endswith('.vcf.gz.tbi')]
 	json_dict["rerun_annotator.out_prefix"] = args.chrom
-
-
-
 	json_dict["rerun_annotator.vcf"] = os.environ.get("WORKSPACE_BUCKET") + "/imputation_merged_TR//chr%s_TR_merged.vcf.gz"%args.chrom
 	json_dict["rerun_annotator.vcf_index"] = os.environ.get("WORKSPACE_BUCKET") + "/imputation_merged_TR/chr%s_TR_merged.vcf.gz.tbi"%args.chrom
 	json_dict["rerun_annotator.ref_vcf"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/ensembletr_refpanel_v3_chr%s.vcf.gz"%args.chrom
