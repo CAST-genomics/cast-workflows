@@ -22,7 +22,7 @@ import aou_utils
 
 def main():
 	parser = argparse.ArgumentParser(__doc__)
-	parser.add_argument("--name", help="Name of the TR job", required=True, type=str)
+	parser.add_argument("--chrom", help="Name of the TR job", required=True, type=str)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	args = parser.parse_args()
 	
@@ -47,7 +47,7 @@ def main():
 	#json_dict["rerun_annotator.vcf_index"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.vcf.gz.tbi')]
 	#json_dict["rerun_annotator.ref_vcf"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=ref) if blob.name.endswith('.vcf.gz')]
 	#json_dict["rerun_annotator.ref_index"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=ref) if blob.name.endswith('.vcf.gz.tbi')]
-	json_dict["rerun_annotator.out_prefix"] = args.name
+	json_dict["rerun_annotator.out_prefix"] = args.chrom
 
 
 
