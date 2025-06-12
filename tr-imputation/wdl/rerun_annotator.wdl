@@ -30,11 +30,11 @@ workflow rerun_annotator {
     }
 
     output {
-        Array[File] outfile_pgen = annotaTR.pgen
-        Array[File] outfile_psam = annotaTR.psam
-        Array[File] outfile_pvar = annotaTR.pvar
-        Array[File] outfile_vcf = annotaTR.outvcf
-        Array[File] outfile_vcfind = annotaTR.outvcfind
+        File outfile_pgen = annotaTR.pgen
+        File outfile_psam = annotaTR.psam
+        File outfile_pvar = annotaTR.pvar
+        File outfile_vcf = annotaTR.outvcf
+        File outfile_vcfind = annotaTR.outvcfind
     }
 
     meta {
