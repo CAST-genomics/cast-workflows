@@ -16,7 +16,7 @@ workflow rerun_annotator {
             vcf_index=vcf_index,
             ref_vcf=ref_vcf,
             ref_index=ref_index,
-            out_prefix=out_prefix+"reannotated"
+            out_prefix=out_prefix+"_reannotated"
     }
 
     output {
