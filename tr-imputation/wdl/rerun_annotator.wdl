@@ -23,8 +23,6 @@ workflow rerun_annotator {
         File outfile_pgen = annotaTR.pgen
         File outfile_psam = annotaTR.psam
         File outfile_pvar = annotaTR.pvar
-        File outfile_vcf = annotaTR.outvcf
-        File outfile_vcfind = annotaTR.outvcfind
     }
 
     meta {
@@ -47,7 +45,7 @@ task annotaTR {
             --ref-panel ~{ref_vcf} \
             --out ~{out_prefix} \
             --vcftype hipstr \
-            --outtype pgen vcf \
+            --outtype pgen \
             --vcf-outtype z \
             --dosages beagleap_norm \
             --ignore-duplicates \
@@ -55,7 +53,6 @@ task annotaTR {
             --warn-on-AP-error \
             --update-ref-alt
 
-        tabix -p vcf ~{out_prefix}.vcf.gz
     >>>
 
     runtime {
@@ -68,7 +65,5 @@ task annotaTR {
         File pgen = "${out_prefix}.pgen"
         File psam = "${out_prefix}.psam"
         File pvar = "${out_prefix}.pvar"
-        File outvcf = "${out_prefix}.vcf.gz"
-        File outvcfind = "${out_prefix}.vcf.gz.tbi"
     }
 }
