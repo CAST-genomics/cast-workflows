@@ -318,6 +318,8 @@ def is_sex_specific_pheno(pheno, category):
         return True
     if "pregnancy" in category:
         return True
+    if "genitourinary" in category:
+        return True
     if "gynecological" in pheno:
         return True
     if "testicular" in pheno or "testis" in pheno or "prostatic" in pheno or "prostate" in pheno:
@@ -463,7 +465,6 @@ def update_p_val_categories(p_val_df,
             pheno_to_category[phecode_str] = category
             sorted_columns.append(phecode_str)
 
-
     print("p_val_df shape ", p_val_df.shape)
     #print("sex_specific_phenotypes: ", sex_specific_phenotypes)
     print("sorted_columns: ", sorted_columns)
@@ -474,6 +475,37 @@ def update_p_val_categories(p_val_df,
     p_val_df = p_val_df[(p_val_df < default_p_val).any(axis=1)]
 
     return p_val_df, categories_map
+
+def replace_gene_names(data):
+    gene_map = {
+        # Significant in AFR
+        'chr10_11920339': "UPF2",
+        'chr11_33700443': "C11orf91",
+        'chr14_44389148': "LINC02307",
+        'chr18_47248369': "SKOR2",
+        'chr18_48409416': "ZBTB7C",
+        'chr20_58981148': "NELFCD",
+        'chr21_6103341': "SIK1",
+        # Significant in AMR
+        'chr1_1449119': "ATAD3C",
+        'chr4_3476128': "DOK7",
+        'chr6_167668185': "LINC02538",
+        'chr7_44036410': "RASA4CP",
+        'chr10_59957799': "LINC01553",
+        'chr19_40396555': "PRX",
+        'chr19_40396820': "PRX",
+        'chr19_53538674': "ZNF331",
+        # Significant in EUR
+        'chr1_165725024': "TMCO1",
+        'chr1_165761972': "TMCO1",
+        'chr2_21043882': "APOB",
+        'chr6_30813385': "LINC00243",
+        'chr12_112978257': "OAS2",
+        'chr16_89686039': "CDK10",
+        'chr16_90007850': "DBNDD1",
+        'chr16_90029134': "GAS8",
+                }
+    return data.rename(index=gene_map)
 
 def main():
     args = parse_arguments()
@@ -528,6 +560,9 @@ def main():
     print("Number of significant values in df: ", (p_val_df < default_p_val).sum().sum())
 
     filename_base = "figures/heatmap_{}".format(args.cohort)
+    
+    # Rename VNTR labels (index) with the gene names.
+    p_val_df = replace_gene_names(p_val_df)
 
     heatmap(data=p_val_df,
         column_categories=categories_map,
