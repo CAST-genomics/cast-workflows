@@ -15,6 +15,12 @@ def parse_dsfield(ds_string):
         d = defaultdict(float)
         for allele,count in zip(alleles,counts):
             d[allele] += count
+            total_count = sum(counts)
+        if total_count == 0:
+            raise ValueError("Total count is zero")
+            
+        for allele in d:
+            d[allele] /= total_count
         return d
         
     except Exception as e:
@@ -26,8 +32,8 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--input", help="Input file name", required=True, type=str)
     parser.add_argument("--output", help="Output file name", required=True, type=str)
-    parser.add_argument("--min-counts", help="Minimun of individual call count", type=int, default=20)
-    parser.add_argument("--min-alleles", help="Minimun of unique allele numbers", type=int, default=3)
+    parser.add_argument("--MAF", help="Minimun of minor allels frequency", type=float, default=0.01)
+    parser.add_argument("--min-alleles", help="Minimun of unique allele numbers", type=int, default=2)
 
     args = parser.parse_args()
 
@@ -49,7 +55,7 @@ def main():
     
             ds_counts = parse_dsfield(info_parts)
             #print(ds_counts)
-            passing_allele_count = sum(1 for count in ds_counts.values() if count >= args.min_counts)
+            passing_allele_count = sum(1 for count in ds_counts.values() if count >= args.MAF)
             if passing_allele_count >= args.min_alleles:
                 passing_ids.append(id_field)
 
