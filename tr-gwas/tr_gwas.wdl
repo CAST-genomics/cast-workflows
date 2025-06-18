@@ -149,7 +149,7 @@ task run_tr_gwas {
                 --covar-name ~{covar_name} \
                 --keep ~{samples} \
                 --ci 0.95 \
-                --covar-variance-standardize \
+                --variance-standardize \
                 --no-input-missing-phenotype \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
                 

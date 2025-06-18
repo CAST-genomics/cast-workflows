@@ -32,7 +32,7 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--input", help="Input file name", required=True, type=str)
     parser.add_argument("--output", help="Output file name", required=True, type=str)
-    parser.add_argument("--MAF", help="Minimun of minor allels frequency", type=float, default=0.01)
+    parser.add_argument("--MAF", help="Minimun of minor allels frequency", type=float, default=0.001)
     parser.add_argument("--min-alleles", help="Minimun of unique allele numbers", type=int, default=2)
 
     args = parser.parse_args()
