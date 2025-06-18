@@ -67,7 +67,14 @@ def rename_columns_for_heatmap(data):
     return data
     
 
-def heatmap(data, column_categories, filename_base, chrom_labels=False, category_labels=False, vmax=4e-8, vmin=1e-16):
+def heatmap(data,
+            column_categories,
+            filename_base,
+            vmax,
+            chrom_labels=False,
+            category_labels=False,
+            xlabel_rotation=45,
+            vmin=1e-16):
     print("Plotting the heatmap")
     
     # Locate where each category begins and ends
@@ -128,7 +135,15 @@ def heatmap(data, column_categories, filename_base, chrom_labels=False, category
     # Set xticks as categories (instead of phenotypes) if indicated
     if category_labels:
         plot.set_xticks(xticks)
-        plot.set_xticklabels(xticklabels, rotation=90)#, fontsize=6)
+        plot.set_xticklabels(xticklabels)
+    plt.xticks(rotation=xlabel_rotation, ha="right")
+
+    # Change the automatically generated offset text from e-8 to 10^-8
+    cbar = plot.collections[0].colorbar
+    text = cbar.ax.yaxis.get_offset_text().get_text()
+    text = text.replace("1e", "")
+    cbar.ax.yaxis.get_offset_text().set_visible(False)
+    cbar.ax.text(-1, 1.04, fr"$\times 10^{{{text}}}$", transform=cbar.ax.transAxes)
 
     plt.savefig(filename_base + ".pdf", bbox_inches="tight")
     plt.savefig(filename_base + ".png", bbox_inches="tight")
@@ -440,20 +455,23 @@ def update_p_val_categories(p_val_df,
                 is_sex_specific_pheno(pheno=phecode_str, category=category):
                 sex_specific_phenotypes.append(phecode_str)
                 continue
+            # Skip empty columns
+            if p_val_df[phecode_str].min() == default_p_val:
+                continue
+
             categories_map[category].append(phecode_str)
             pheno_to_category[phecode_str] = category
             sorted_columns.append(phecode_str)
 
 
     print("p_val_df shape ", p_val_df.shape)
-    print("sex_specific_phenotypes: ", sex_specific_phenotypes)
+    #print("sex_specific_phenotypes: ", sex_specific_phenotypes)
     print("sorted_columns: ", sorted_columns)
     # Sort columns based on category, for a better appearance in the heatmap and possibly remove some filtered phenotypes.
     p_val_df = p_val_df[sorted_columns]
 
     # Remove rows (VNTR) with no significant hits after removing the sex-specific phenotypes.
-    if not keep_sex_specific_phenos:
-        p_val_df = p_val_df[(p_val_df < default_p_val).any(axis=1)]
+    p_val_df = p_val_df[(p_val_df < default_p_val).any(axis=1)]
 
     return p_val_df, categories_map
 
@@ -462,7 +480,8 @@ def main():
 
     # The default value for the matrix for the vntr-phenotype pairs where no significant hit is found.
     #default_val = summary_df["P"].max() * 1.2
-    default_p_val = 4e-8
+    default_p_val = 5e-8
+    print("Plotting for cohort ", args.cohort)
     # This is like a placeholder and is larger than the largest observed signficant hit in the matrix.
     p_val_df = get_p_val_df(filename=args.gwas_summary,
                                             default_val=default_p_val,
@@ -482,7 +501,11 @@ def main():
     # We do not need the categories for blood phenotypes.
     if args.is_continuous:
         categories_map = {}
+        # Remove the rows where all values are insignificant.
+        p_val_df = p_val_df[(p_val_df < default_p_val).any(axis=1)]
+        # A 45 degree rotation is more readable, whereas a 90 degree rotation is ideal for the case of many xticks.
     else:
+        # A 45 degree rotation is more readable, whereas a 90 degree rotation is ideal for the case of many xticks.
         p_val_df, categories_map = update_p_val_categories(p_val_df=p_val_df,
                                                         default_p_val=default_p_val,
                                                         phecode_df=phecode_df,
@@ -508,7 +531,8 @@ def main():
 
     heatmap(data=p_val_df,
         column_categories=categories_map,
-        filename_base=filename_base)
+        filename_base=filename_base,
+        vmax=default_p_val)
 
 if __name__ == "__main__":
     main()
