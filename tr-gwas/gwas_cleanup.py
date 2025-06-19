@@ -14,6 +14,7 @@ import os
 import subprocess
 import sys
 import pandas as pd
+import numpy as np
 from google.cloud import storage
 
 def GetGWASPath(phenotype):
@@ -81,8 +82,11 @@ def Cleanupfile(file_path,outdir):
                     data.append(line.split())  # Split the line by whitespace or tab
     df = pd.DataFrame(data, columns=columns)
     df = df[df['TEST'] == 'ADD']
+    df['P'] = df['P'].replace('NA', np.nan)
+    df_cleaned = df.dropna(subset=['P'])
+    print(f'{df_cleaned.shape[0]} number of STRs are left after removing NA')
     phenoname = file_path.replace("_gwas.tab", "_gwas.tsv")
-    df.to_csv(f"{outdir}/{phenoname}", sep='\t', index=False)
+    df_cleaned.to_csv(f"{outdir}/{phenoname}", sep='\t', index=False)
     
     return phenoname
 
