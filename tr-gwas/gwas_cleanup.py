@@ -85,7 +85,7 @@ def Cleanupfile(file_path,outdir):
     df['P'] = df['P'].replace('NA', np.nan)
     df_cleaned = df.dropna(subset=['P'])
     print(f'{df_cleaned.shape[0]} number of STRs are left after removing NA')
-    phenoname = file_path.replace("_gwas.tab", "_gwas.tsv")
+    phenoname = file_path.replace(".tab", ".tsv")
     df_cleaned.to_csv(f"{outdir}/{phenoname}", sep='\t', index=False)
     
     return phenoname
