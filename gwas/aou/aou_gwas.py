@@ -89,6 +89,20 @@ def NormalizeData(data, norm):
     else:
         ERROR("No normalization method specified")
 
+def Variance_Standardize(data,columns=None):
+    # Standardize the phenotype and covariates same as plink2 flag --variance-standardize
+    # linearly transforms named quantitative phenotypes and covariates to mean-zero, variance 1
+
+    for col in columns:
+        mean = data[col].mean()
+        std = data[col].std 
+        if std == 0:
+            print(f"Warning: Column '{col}' has zero standard deviation. Skipping.")
+            continue
+        data[col] = (data[col] - mean) / std
+    
+    return data
+
 def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--phenotype", help="Phenotypes file path, or phenotype name", type=str, required=True)
@@ -105,6 +119,7 @@ def main():
     parser.add_argument("--norm-by-sex",
                         help="Apply the normalization for each sex separately. Default: False",
                         action="store_true")
+    parser.add_argument("--variance-standardize", help="Standardize the phenotype and covariates same as plink2 flag --variance-standardize", action="store_true",default=False)
     parser.add_argument("--sample-call-rate", help="Apply minimum sample call rate QC", type=float, default=0.90)
     parser.add_argument("--variant-call-rate", help="Apply minimum variant call rate QC", type=float, default=0.90)
     parser.add_argument("--MAF", help="Apply minor allele frequency QC", type=float, default=0.01)
@@ -129,6 +144,8 @@ def main():
         ERROR("Must specify --tr-vcf for associaTR")
     if args.norm_by_sex and args.norm is None:
         ERROR("Must specify --norm if using --norm-by-sex")
+    if args.norm is not None and args.variance_standardize:
+        ERROR("Cannot use --norm and --variance-standardize together")
 
     # Get covarlist
     pcols = ["PC_%s"%i for i in range(1, args.num_pcs+1)]
@@ -148,9 +165,13 @@ def main():
         female_data = data[data['sex_at_birth_Male'] == 0].copy()
         male_data = data[data['sex_at_birth_Male'] == 1].copy()
 
-        # Apply normalization on female and male dataframes separately.
-        female_data =NormalizeData(data=female_data, norm=args.norm)
-        male_data = NormalizeData(data=male_data, norm=args.norm)
+    # Apply normalization on female and male dataframes separately.
+        if args.variance_standardize:
+            female_data = Variance_Standardize(data=female_data, columns=["phenotype"] + covars)
+            male_data = Variance_Standardize(data=male_data, columns=["phenotype"] + covars)
+        if args.norm is not None:
+            female_data =NormalizeData(data=female_data, norm=args.norm)
+            male_data = NormalizeData(data=male_data, norm=args.norm)
 
         # Concatenate the female and male dataframes back into one
         # and sort the dataframe by original order.
@@ -158,6 +179,8 @@ def main():
         data = data.sort_index()
     else:
         # Apply normalization on the entire data.
+        if args.variance_standardize:
+            data = Variance_Standardize(data, columns=["phenotype"] + covars)
         if args.norm is not None:
             data = NormalizeData(data=data, norm=args.norm)
         
