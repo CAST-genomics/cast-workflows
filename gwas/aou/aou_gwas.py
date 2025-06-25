@@ -95,7 +95,7 @@ def Variance_Standardize(data,columns=None):
 
     for col in columns:
         mean = data[col].mean()
-        std = data[col].std 
+        std = data[col].std() 
         if std == 0:
             print(f"Warning: Column '{col}' has zero standard deviation. Skipping.")
             continue
