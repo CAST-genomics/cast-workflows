@@ -189,6 +189,7 @@ def main():
         if not os.path.isfile(sampfile):
             os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
     samples = pd.read_csv(sampfile)
+    samples = samples [["person_id"]]
     samples["person_id"] = samples["person_id"].apply(str)
     
     data = pd.merge(data, samples)
