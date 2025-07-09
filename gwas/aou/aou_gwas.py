@@ -78,17 +78,14 @@ def Inverse_Quantile_Normalization(M):
 def NormalizeData(data, norm, col):
     for c in col:
         if norm == "quantile":
-            data["c"] = Inverse_Quantile_Normalization(data[["c"]])
+            data[c] = Inverse_Quantile_Normalization(data[[c]])
             return data
-
         # Add z-score normalization
         elif norm == "zscore":
-            data["c"]  = stats.zscore(data[["c"]])
+            data[c]  = stats.zscore(data[[c]])
             return data
-
         else:
-            ERROR("No normalization method specified")
-                
+            ERROR("No normalization method specified")            
     return data
 
 
@@ -155,8 +152,8 @@ def main():
         male_data = data[data['sex_at_birth_Male'] == 1].copy()
     # Apply normalization on female and male dataframes separately.
         if args.norm is not None:
-            female_data =NormalizeData(data=female_data, norm=args.norm, col="phenotype")
-            male_data = NormalizeData(data=male_data, norm=args.norm, col="phenotype")
+            female_data =NormalizeData(data=female_data, norm=args.norm, col=["phenotype"])
+            male_data = NormalizeData(data=male_data, norm=args.norm, col=["phenotype"])
         # Concatenate the female and male dataframes back into one
         # and sort the dataframe by original order.
         data = pd.concat([female_data, male_data])
@@ -164,7 +161,7 @@ def main():
     else:
         # Apply normalization on the entire data.
         if args.norm is not None:
-            data = NormalizeData(data=data, norm=args.norm,col="phenotype")
+            data = NormalizeData(data=data, norm=args.norm,col=["phenotype"])
         
     # Add shared covars
     sampfile = args.samples
