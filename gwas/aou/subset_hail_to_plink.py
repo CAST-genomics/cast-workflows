@@ -22,7 +22,7 @@ mt = hl.filter_intervals(mt, [hl.parse_locus_interval(region,)])
 #mt = mt.filter_rows(hl.len(mt.alleles) == 2, keep=True)
 
 # Compute variant QC metrics to get MAF
-mt = hl.variant_qc(mt)
+#mt = hl.variant_qc(mt)
 
 # Filter to MAF > 5%
 #mt = mt.filter_rows(mt.variant_qc.AF[1] > 0.05, keep=True)
