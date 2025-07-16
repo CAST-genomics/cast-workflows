@@ -18,7 +18,7 @@ plink_file_prefix=gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aca
 plink_loc=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification
 plink_loc=/usr/bin
 scripts=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification
-common=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/susiex
+common=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/susiex_separate
 
 if [ ! -d "$common" ]; then
         mkdir -p "$common"
@@ -152,7 +152,7 @@ $susiex_loc/SuSiEx --n_sig $nc --sst_file=${gwas_file_s1_pre}_${chr}_${from}_${t
 nc=1
 $susiex_loc/SuSiEx --n_sig $nc --sst_file=${gwas_file_s1_pre}_${chr}_${from}_${to}.gwas.tab,${gwas_file_s2_pre}_${chr}_${from}_${to}.gwas.tab --n_gwas=$popsize1,$popsize2 --ld_file=s1,s2 --out_dir=./ --out_name=susiex_nc${nc}.cs80 --chr=$chr --bp=$from,$to --chr_col=1,1 --snp_col=2,2 --bp_col=3,3 --a1_col=4,4 --a2_col=5,5 --eff_col=6,6 --se_col=7,7 --pval_col=8,8 --threads=64 --level=0.8 --min_purity=0
 
-
+exit 0
 #cleanup all files
 rm *.tab
 rm $s1_samples_file
