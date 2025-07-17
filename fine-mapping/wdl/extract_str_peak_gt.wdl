@@ -46,7 +46,7 @@ task extract_peaks_str {
             --pfile ~{pfile_prefix} \
             --extract range ~{region} \
             --make-pfile \
-            --out "~{out_prefix}_str_peaks"
+            --out ~{out_prefix}
     >>>
     runtime {
         docker:"gcr.io/ucsd-medicine-cast/plink2:latest"
@@ -54,8 +54,8 @@ task extract_peaks_str {
     }
 
     output {
-        File pgen = "${out_prefix}_str_peaks.pgen"
-        File psam = "${out_prefix}_str_peaks.psam"
-        File pvar = "${out_prefix}_str_peaks.pvar"
+        File pgen = "${out_prefix}.pgen"
+        File psam = "${out_prefix}.psam"
+        File pvar = "${out_prefix}.pvar"
     }
 }
