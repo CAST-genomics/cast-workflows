@@ -22,6 +22,22 @@ from google.cloud import storage
 sys.path.append("../utils")
 import aou_utils
 
+
+def UploadGS(local_path, gcp_path):
+	"""
+	Upload a local file to GCP
+
+	Arguments
+	---------
+	local_path : str
+	   Local path
+	gcp_path : str
+	   GCP path to upload to
+	"""
+	cmd = "gsutil cp {src} {dest}".format(src=local_path, dest=gcp_path)
+	output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
+	print(output.decode("utf-8"))	
+
 def main():
 	parser = argparse.ArgumentParser(__doc__)
 	parser.add_argument("--chrom", help="Name of the chromsome file", required=True, type=str)
@@ -29,6 +45,17 @@ def main():
 	parser.add_argument("--region", help="Name of the region file", type=str, required=True)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	args = parser.parse_args()
+
+
+	bucket_name = os.getenv("WORKSPACE_BUCKET").replace("gs://", "")
+	gs_prefix = f"gs://{bucket_name}/"
+	# Upload region file
+	if args.region.startswith("gs://"):
+		region_gcs = args.region
+	else:
+		region_gcs = gs_prefix + args.name + "/" + args.tr
+		UploadGS(args.region,region_gcs)
+
 
 
 	# Set up workflow JSON
