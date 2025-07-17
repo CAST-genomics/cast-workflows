@@ -47,13 +47,13 @@ def main():
 	args = parser.parse_args()
 
 
-	bucket_name = os.getenv("WORKSPACE_BUCKET").replace("gs://", "")
-	gs_prefix = f"gs://{bucket_name}/"
+	bucket= os.getenv("WORKSPACE_BUCKET")
+
 	# Upload region file
 	if args.region.startswith("gs://"):
 		region_gcs = args.region
 	else:
-		region_gcs = gs_prefix + args.name + "/" + args.tr
+		region_gcs = bucket + args.region
 		UploadGS(args.region,region_gcs)
 
 
