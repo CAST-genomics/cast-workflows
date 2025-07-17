@@ -2,7 +2,7 @@
 """
 Script to launch 
  
-./run_extract_SNP.py \
+./run_extract_imputation_SNP.py \
 --name chr8 
 --ID 6262ecbb-543a-4d2e-aedd-7f0c872ef3bc
 
@@ -42,9 +42,9 @@ def main():
 
 	# Set up workflow JSON
 	json_dict = {}
-	json_dict["extract_imputation_SNP.vcf"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=vcfs) if blob.name.endswith('.vcf.gz')]
-	json_dict["extract_imputation_SNP.vcf_index"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=vcfs) if blob.name.endswith('.vcf.gz.tbi')]
-	json_dict["extract_imputation_SNP.out_prefix"] = args.name
+	json_dict["extract_SNP.vcf"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=vcfs) if blob.name.endswith('.vcf.gz')]
+	json_dict["extract_SNP.vcf_index"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=vcfs) if blob.name.endswith('.vcf.gz.tbi')]
+	json_dict["extract_SNP.out_prefix"] = args.name
 
 
 	# Convert to json and save as a file
