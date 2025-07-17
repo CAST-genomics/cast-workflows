@@ -3,7 +3,7 @@
 Script to launch 
  
 ./run_extract_SNP.py \
---chrom chr8 
+--name chr8 
 --ID 6262ecbb-543a-4d2e-aedd-7f0c872ef3bc
 
 """
@@ -22,7 +22,7 @@ import aou_utils
 
 def main():
 	parser = argparse.ArgumentParser(__doc__)
-	parser.add_argument("--chrom", help="Name of the chromsome outfile", required=True, type=str)
+	parser.add_argument("--name", help="Name of the chromsome outfile", required=True, type=str)
 	parser.add_argument("--ID", help="Name of the cromshell ID", type=str, required=True)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	args = parser.parse_args()
@@ -44,7 +44,7 @@ def main():
 	json_dict = {}
 	json_dict["extract_imputation_SNP.vcf"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=vcfs) if blob.name.endswith('.vcf.gz')]
 	json_dict["extract_imputation_SNP.vcf_index"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=vcfs) if blob.name.endswith('.vcf.gz.tbi')]
-	json_dict["extract_imputation_SNP.out_prefix"] = args.chrom
+	json_dict["extract_imputation_SNP.out_prefix"] = args.name
 
 
 	# Convert to json and save as a file
