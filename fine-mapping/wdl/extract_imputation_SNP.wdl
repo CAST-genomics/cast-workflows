@@ -7,17 +7,22 @@ workflow extract_SNP {
         String out_prefix 
     }
 
-    call extract_SNP {
-        input:
-            vcfs=vcfs,
-            vcfs_index=vcfs_index,
-            out_prefix=out_prefix
-    }
 
+    Int num_batches = length(vcfs)
+    scatter (i in range(num_batches)) {
+        File batch = vcfs[i]
+        File batch_index = vcfs[i]+".tbi"
+            call extract_SNP {
+                input:
+                    vcfs=batch,
+                    vcfs_index=batch_index,
+                    out_prefix=out_prefix+".BATCH"+i
+            }
+`   }
     call merge_batch {
         input:
-            vcfs=vcfs,
-            vcfs_index=vcfs_index,
+            vcfs=extract_SNP.outvcf,
+            vcfs_index=extract_SNP.outvcf_index,
             out_prefix=out_prefix
 
     }
