@@ -2,15 +2,15 @@ version 1.0
 
 workflow extract_SNP {
     input {
-        Array[File] vcf = [] 
-        Array[File] vcf_index = []  
+        Array[File] vcfs = [] 
+        Array[File] vcfs_index = []  
         String out_prefix 
     }
 
     call extract_SNP {
         input:
-            vcf=vcf,
-            vcf_index=vcf_index,
+            vcfs=vcfs,
+            vcfs_index=vcfs_index,
             out_prefix=out_prefix
     }
 
@@ -34,13 +34,13 @@ workflow extract_SNP {
 
 task extract_SNP {
     input {
-        File vcf = [] 
-        File vcf_index = []  
+        File vcfs 
+        File vcfs_index 
         String out_prefix 
     }
     command <<<
         set -e
-        bcftools view -i 'ID!~"EnsTR"' ~{vcf} -Oz -o ~{out_prefix}_SNP.vcf.gz
+        bcftools view -i 'ID!~"EnsTR"' ~{vcfs} -Oz -o ~{out_prefix}_SNP.vcf.gz
         tabix -p vcf ~{out_prefix}_SNP.vcf.gz
     >>>
     runtime {
@@ -57,8 +57,8 @@ task extract_SNP {
 
 task merge_batch {
     input {
-        Array[File] vcfs = []
-        Array[File] vcfs_index = []
+        Array[File] vcfs 
+        Array[File] vcfs_index 
         String out_prefix 
     }
 
