@@ -18,7 +18,7 @@ workflow extract_SNP {
                     vcfs_index=batch_index,
                     out_prefix=out_prefix+".BATCH"+i
             }
-`   }
+    }
     call merge_batch {
         input:
             vcfs=extract_SNP.outvcf,
