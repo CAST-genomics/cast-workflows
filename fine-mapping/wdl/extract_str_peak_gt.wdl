@@ -19,9 +19,9 @@ workflow extract_str_peak_gt {
             out_prefix=out_prefix
     }
     output {
-        File outfile_pgen = extract_peaks_str.pgen
-        File outfile_psam = extract_peaks_str.psam
-        File outfile_pvar = extract_peaks_str.pvar
+        File outfile_pgen = extract_peaks_str.outfile_pgen
+        File outfile_psam = extract_peaks_str.outfile_psam
+        File outfile_pvar = extract_peaks_str.outfile_pvar
     }
 
     meta {
@@ -39,9 +39,11 @@ task extract_peaks_str {
         String out_prefix
     }
 
-    String pfile_prefix = basename(~{pgen},".pgen")
+    String pfile_prefix = basename(pgen,".pgen")
 
     command <<<
+
+
         plink2 \
             --pfile ~{pfile_prefix} \
             --extract range ~{region} \
@@ -54,8 +56,8 @@ task extract_peaks_str {
     }
 
     output {
-        File pgen = "${out_prefix}.pgen"
-        File psam = "${out_prefix}.psam"
-        File pvar = "${out_prefix}.pvar"
+        File outfile_pgen = "${out_prefix}.pgen"
+        File outfile_psam = "${out_prefix}.psam"
+        File outfile_pvar = "${out_prefix}.pvar"
     }
 }
