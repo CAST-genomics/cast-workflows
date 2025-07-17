@@ -1,6 +1,6 @@
 version 1.0
 
-workflow find_peaks {
+workflow find_peaks_str {
     input {
         Array[File] pgens = [] 
         Array[File] psams = [] 

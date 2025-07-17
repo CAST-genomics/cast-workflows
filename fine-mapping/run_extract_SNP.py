@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
-Script to launch AOU TR imputation
+Script to launch 
  
-chrom=21
-./run_convert_to_pgen.py \
---name SNP_imputation_chr${chrom} \
---chrom ${chrom} 
+./run_extract_SNP.py \
+--chrom chr8 
+--ID 6262ecbb-543a-4d2e-aedd-7f0c872ef3bc
 
 """
 
@@ -15,18 +14,20 @@ import json
 import os
 import subprocess
 import sys
+from google.cloud import storage
+
 
 sys.path.append("../utils")
 import aou_utils
 
 def main():
 	parser = argparse.ArgumentParser(__doc__)
-	parser.add_argument("--name", help="Name of the output file", required=True, type=str)
-	parser.add_argument("--chrom", help="Which chromosome to process", type=str, required=True)
+	parser.add_argument("--chrom", help="Name of the chromsome outfile", required=True, type=str)
+	parser.add_argument("--ID", help="Name of the cromshell ID", type=str, required=True)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	args = parser.parse_args()
 
-	# Get token
+    # Get token
 	token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
 		capture_output=True, check=True, encoding='utf-8')
 	token = str.strip(token_fetch_command.stdout)
@@ -37,16 +38,13 @@ def main():
 	bucket = client.bucket(bucket_name)
     # Define the gs prefix
 	gs_prefix = f"gs://{bucket_name}/"
-	pfile = "tr_imputation/enstr-v3/results-250K/"
-	#pfile = "tr_imputation/enstr-v3/results-250K/reannotated/"
+	vcfs = f"cromwell-execution/batch_imputation/{args.ID}/call-beagle/"
 
 	# Set up workflow JSON
 	json_dict = {}
-	json_dict = {}
-	json_dict["find_peaks.pgens"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.pgen')]
-	json_dict["find_peaks.psams"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.psam')]
-	json_dict["find_peaks.pvars"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=pfile) if blob.name.endswith('.pvar')]
-	json_dict["find_peaks.out_prefix"] = args.name
+	json_dict["extract_imputation_SNP.vcf"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=vcfs) if blob.name.endswith('.vcf.gz')]
+	json_dict["extract_imputation_SNP.vcf_index"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=vcfs) if blob.name.endswith('.vcf.gz.tbi')]
+	json_dict["extract_imputation_SNP.out_prefix"] = args.chrom
 
 
 	# Convert to json and save as a file
@@ -61,7 +59,7 @@ def main():
 		json.dump(json_options_dict, f, indent=4)
 
 	# Run workflow on AoU using cromwell
-	aou_utils.RunWorkflow("wdl/convert_vcf_to_pgen.wdl", json_file, \
+	aou_utils.RunWorkflow("wdl/extract_imputation_SNP.wdl", json_file, \
 		json_options_file, dryrun=args.dryrun)
 
 if __name__ == "__main__":
