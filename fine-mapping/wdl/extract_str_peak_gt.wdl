@@ -39,7 +39,7 @@ task extract_peaks_str {
         String out_prefix
     }
 
-    String pfile_prefix = basename(pgen,".pgen")
+    String pfile_prefix = basename(~{pgen},".pgen")
 
     command <<<
         plink2 \
