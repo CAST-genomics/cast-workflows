@@ -42,9 +42,9 @@ def main():
 
 	# Set up workflow JSON
 	json_dict = {}
-	json_dict["extract_SNP.vcfs"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=vcfs) if blob.name.endswith('.vcf.gz')]
-	json_dict["extract_SNP.vcfs_index"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=vcfs) if blob.name.endswith('.vcf.gz.tbi')]
-	json_dict["extract_SNP.out_prefix"] = args.name
+	json_dict["extract_imputation_SNP.vcfs"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=vcfs) if blob.name.endswith('.vcf.gz')]
+	json_dict["extract_imputation_SNP.vcfs_index"] = [gs_prefix + blob.name for blob in bucket.list_blobs(prefix=vcfs) if blob.name.endswith('.vcf.gz.tbi')]
+	json_dict["extract_imputation_SNP.out_prefix"] = args.name
 
 
 	# Convert to json and save as a file

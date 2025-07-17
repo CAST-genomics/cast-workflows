@@ -1,6 +1,6 @@
 version 1.0
 
-workflow extract_SNP {
+workflow extract_imputation_SNP {
     input {
         Array[File] vcfs = [] 
         Array[File] vcfs_index = []  
