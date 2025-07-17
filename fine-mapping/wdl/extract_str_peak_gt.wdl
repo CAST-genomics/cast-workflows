@@ -39,11 +39,11 @@ task extract_peaks_str {
         String out_prefix
     }
 
-    String pfile_outprefix = basename(pgen,".pgen")
+    String pfile_prefix = basename(pgen,".pgen")
 
     command <<<
         plink2 \
-            --pfile ~{pfile_outprefix} \
+            --pfile ~{pfile_prefix} \
             --extract range ~{region} \
             --make-pfile \
             --out "~{out_prefix}_str_peaks"
