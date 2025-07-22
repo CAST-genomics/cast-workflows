@@ -45,13 +45,12 @@ task extract_peaks_str {
         String GCS_OAUTH_TOKEN = ""
     }
 
-    String pfile_prefix = basename(pgen,".pgen")
 
     command <<<
-
+        pfile_prefix=$(basename ~{pgen} .pgen)
 
         plink2 \
-            --pfile ~{pfile_prefix} \
+            --pfile ${pfile_prefix} \
             --extract range ~{region} \
             --make-pfile \
             --out ~{out_prefix}
