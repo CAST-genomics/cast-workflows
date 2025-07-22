@@ -64,7 +64,7 @@ def main():
 	json_dict["extract_str_peak_gt.pgen"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/results-250K/chr%s_annotated.pgen"%args.chrom
 	json_dict["extract_str_peak_gt.psam"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/results-250K/chr%s_annotated.psam"%args.chrom
 	json_dict["extract_str_peak_gt.pvar"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/results-250K/chr%s_annotated.pvar"%args.chrom
-	json_dict["extract_str_peak_gt.region"] = args.region
+	json_dict["extract_str_peak_gt.region"] = region_gcs
 	json_dict["extract_str_peak_gt.out_prefix"] = args.name
 
 
