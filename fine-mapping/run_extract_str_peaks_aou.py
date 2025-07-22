@@ -48,12 +48,13 @@ def main():
 
 
 	bucket= os.getenv("WORKSPACE_BUCKET")
+	
 
 	# Upload region file
 	if args.region.startswith("gs://"):
 		region_gcs = args.region
 	else:
-		region_gcs = bucket + args.region
+		region_gcs = bucket + "/" + args.name
 		UploadGS(args.region,region_gcs)
 
 
