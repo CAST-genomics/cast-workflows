@@ -47,6 +47,10 @@ def main():
 	args = parser.parse_args()
 
 
+	token_fetch_command = subprocess.run(['gcloud', 'auth', 'application-default', 'print-access-token'], \
+		capture_output=True, check=True, encoding='utf-8')
+	token = str.strip(token_fetch_command.stdout)
+	project = os.getenv("GOOGLE_PROJECT")
 	bucket= os.getenv("WORKSPACE_BUCKET")
 	
 
@@ -66,6 +70,8 @@ def main():
 	json_dict["extract_str_peak_gt.pvar"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/results-250K/chr%s_annotated.pvar"%args.chrom
 	json_dict["extract_str_peak_gt.region"] = region_gcs
 	json_dict["extract_str_peak_gt.out_prefix"] = args.name
+	json_dict["extract_str_peak_gt.GOOGLE_PROJECT"] = project
+	json_dict["extract_str_peak_gt.GCS_OAUTH_TOKEN"] = token
 
 
 	# Convert to json and save as a file

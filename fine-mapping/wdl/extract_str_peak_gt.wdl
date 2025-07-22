@@ -7,6 +7,8 @@ workflow extract_str_peak_gt {
         File pvar
         File region
         String out_prefix 
+        String GOOGLE_PROJECT = ""
+        String GCS_OAUTH_TOKEN = ""
 
     }
 
@@ -16,7 +18,9 @@ workflow extract_str_peak_gt {
             psam=psam,
             pvar=pvar,
             region=region,
-            out_prefix=out_prefix
+            out_prefix=out_prefix,
+            GOOGLE_PROJECT=GOOGLE_PROJECT,
+            GCS_OAUTH_TOKEN=GCS_OAUTH_TOKEN
     }
     output {
         File outfile_pgen = extract_peaks_str.outfile_pgen
@@ -37,6 +41,8 @@ task extract_peaks_str {
         File pvar
         File region
         String out_prefix
+        String GOOGLE_PROJECT = ""
+        String GCS_OAUTH_TOKEN = ""
     }
 
     String pfile_prefix = basename(pgen,".pgen")
