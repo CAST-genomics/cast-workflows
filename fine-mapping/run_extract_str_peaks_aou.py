@@ -54,7 +54,7 @@ def main():
 	if args.region.startswith("gs://"):
 		region_gcs = args.region
 	else:
-		region_gcs = bucket + "/" + args.name
+		region_gcs = bucket + "/" + args.name + "/" + args.region
 		UploadGS(args.region,region_gcs)
 
 
