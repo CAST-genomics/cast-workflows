@@ -27,6 +27,7 @@ class HailRunner:
         self.gwas = None
         self.data = None
         self.method = "hail"
+        self.exit = False
         self.setup()
 
     def setup(self):
@@ -49,6 +50,11 @@ class HailRunner:
         # Load phenotype and covariates
         ptcovar = hl.Table.from_pandas(self.ptcovar, key="person_id")
         data = data.annotate_cols(ptcovar = ptcovar[data.s])
+
+        print(f"Rows: {data.count_rows()}, Columns: {data.count_cols()}")
+        if data.count_rows() == 0:
+            self.exit = True
+            return
 
         # region-specific PCA
         eigenvalues, scores, loadings = hl.hwe_normalized_pca(data.GT, k=10)
@@ -74,6 +80,8 @@ class HailRunner:
         self.data = data
 
     def RunGWAS(self):
+        if self.exit:
+            return
         if self.isbinary:
             reg = hl.logistic_regression_rows(
                 test = 'wald',

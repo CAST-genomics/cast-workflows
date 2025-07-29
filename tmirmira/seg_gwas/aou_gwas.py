@@ -196,15 +196,17 @@ def main():
     # Set up GWAS method
     from hail_runner import HailRunner
     hl.init(default_reference = "GRCh38")
-    window_size = 100000
+    window_size = 1000000
     subregions = get_subregions(args.region, window_size)
+    print(subregions)
     all_subgwas = []
     for subregion in subregions:
         runner = HailRunner(data, isbinary=args.isbinary, region=subregion, covars=covars, sample_call_rate=args.sample_call_rate, variant_call_rate=args.variant_call_rate, MAF=args.MAF, HWE=args.HWE, GQ=args.GQ)
         # Run GWAS
         outpath = GetOutPath(args.phenotype, args.region, sampfile)
         runner.RunGWAS()
-        all_subgwas.append(runner.gwas)
+        if runner.gwas is not None:
+            all_subgwas.append(runner.gwas)
     
     full_gwas = pd.concat(all_subgwas, axis=0).reset_index(drop=True)
     WriteGWAS(full_gwas, outpath+".tab", covars)
