@@ -3,7 +3,7 @@ PHEN=$1
 LOCI=$2
 PFILE_PREFIX=$3
 
-while IFS=$' ' read -r -a locus
+while IFS=$' ' read -r -a LOCI
 do
     chr=${locus[0]}
     from=${locus[1]}
@@ -20,4 +20,4 @@ do
            --make-pgen \
            --out "${chr}_${from}_${to}_${PHEN}_str_plink"     
     fi
-done < $loci
+done < $LOCI
