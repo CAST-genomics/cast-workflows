@@ -3,7 +3,7 @@ PHEN=$1
 LOCI=$2
 PFILE_PREFIX=$3
 
-while IFS=$' ' read -r -a LOCI
+while IFS=$' ' read -r -a locus
 do
     chr=${locus[0]}
     from=${locus[1]}
