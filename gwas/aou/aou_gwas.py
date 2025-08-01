@@ -53,7 +53,7 @@ def LoadAncestry(ancestry_pred_path):
     ancestry = pd.read_csv(ancestry_pred_path, sep="\t")
     ancestry.rename({"research_id": "person_id"}, axis=1, inplace=True)
     num_pcs = len(ancestry["pca_features"].values[0].split(","))
-    pcols = ["PC_%s"%i for i in range(num_pcs)]
+    pcols = ["PC_%s"%i for i in range(1, num_pcs+1)]
     ancestry[pcols] = ancestry["pca_features"].str.split(",", expand=True)
     for p in pcols:
         ancestry[p] = ancestry[p].apply(lambda x: GetFloatFromPC(x), 1)
@@ -136,6 +136,7 @@ def main():
     shared_covars = [item for item in args.sharedcovars.split(",") if item != ""]
     pt_covars = [item for item in args.ptcovars.split(",") if item != ""]
     covars = pcols + pt_covars + shared_covars
+    print(covars)
 
     # Set up data frame with phenotype and covars
     data = pd.read_csv(ptcovar_path)
