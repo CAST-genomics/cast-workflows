@@ -136,7 +136,6 @@ def main():
     shared_covars = [item for item in args.sharedcovars.split(",") if item != ""]
     pt_covars = [item for item in args.ptcovars.split(",") if item != ""]
     covars = pcols + pt_covars + shared_covars
-    print(covars)
 
     # Set up data frame with phenotype and covars
     data = pd.read_csv(ptcovar_path)
