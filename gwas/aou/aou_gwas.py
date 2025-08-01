@@ -124,8 +124,8 @@ def main():
         ERROR("--method must be one of: %s"%",".join(GWAS_METHODS))
     if not CheckRegion(args.region):
         ERROR("Invalid region %s"%args.region)
-    if args.num_pcs > 10:
-        ERROR("Specify a maximum of 10 PCs")
+    if args.num_pcs > 16:
+        ERROR("Specify a maximum of 16 PCs")
     if args.method == "associaTR" and args.tr_vcf is None:
         ERROR("Must specify --tr-vcf for associaTR")
     if args.norm_by_sex and args.norm is None:
