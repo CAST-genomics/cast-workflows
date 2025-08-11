@@ -62,11 +62,10 @@ def get_alleles(record):
     ref_allele = record.REF
     alt_alleles = record.ALT
     info_fields = record.INFO
-    ru = info_fields["PERIOD"]
-    if ru is None:
+    ru_len = info_fields["PERIOD"]
+    if ru_len is None:
         print("Error: Repeat Unit (RU) not provided in the info field")
         return
-    ru_len = len(ru)
     #print("ru_len, ru, len ref allele", ru_len, ru, len(ref_allele))
     len_ref_allele = len(ref_allele)
     len_alt_alleles = [len(alt_allele) for alt_allele in alt_alleles]
