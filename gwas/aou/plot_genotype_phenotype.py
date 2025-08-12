@@ -136,24 +136,24 @@ def plot_genotype_phenotype_binary(data, genotype, phenotype, phenotype_label, o
                   odds_threshold[uniq_allele]))
     
     # Odds ratio nominal plot
-    line_plot(data_dict=odds_ratio_nominal,
+    #line_plot(data_dict=odds_ratio_nominal,
+    #          genotype=genotype,
+    #          phenotype_label=phenotype_label + " odds ratio == allele",
+    #          out=outpath.replace("genotype", "odds_ratio_nominal"))
+
+    # Odds ratio plot
+    line_plot(data_dict=odds_ratio_threshold_lte,
+               std_error=odds_ratio_threshold_lte_se,
+               genotype=genotype,
+               phenotype_label=phenotype_label + " odds ratio > allele",
+               out=outpath.replace("genotype", "odds_ratio_lte_se_error"))
+
+    # Odds ratio plot
+    line_plot(data_dict=odds_ratio_threshold,
+              std_error=odds_ratio_threshold_se,
               genotype=genotype,
-              phenotype_label=phenotype_label + " odds ratio == allele",
-              out=outpath.replace("genotype", "odds_ratio_nominal"))
-
-    # # Odds ratio plot
-    # line_plot(data_dict=odds_ratio_threshold_lte,
-    #           std_error=odds_ratio_threshold_lte_se,
-    #           genotype=genotype,
-    #           phenotype_label=phenotype_label + " odds ratio > allele",
-    #           out=outpath.replace("genotype", "odds_ratio_lte_se_error"))
-
-    # # Odds ratio plot
-    # line_plot(data_dict=odds_ratio_threshold,
-    #           std_error=odds_ratio_threshold_se,
-    #           genotype=genotype,
-    #           phenotype_label=phenotype_label + " odds ratio >= allele",
-    #           out=outpath.replace("genotype", "odds_ratio_se_error"))
+              phenotype_label=phenotype_label + " odds ratio >= allele",
+              out=outpath.replace("genotype", "odds_ratio_se_error"))
 
     # # Odds ratio plot with error bars
     # line_plot(data_dict=odds_ratio_threshold_lib,
