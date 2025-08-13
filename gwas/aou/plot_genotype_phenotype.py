@@ -9,6 +9,8 @@ python plot_genotype_phenotype.py --phenotype Hyperlipidemia \
                                   --binary \
                                   --annotations annotation_points.csv \
                                   --tr-vcf chr1_imputed.vcf.gz
+                                  --outdir gwas_plots \
+                                  --samples samples.csv 
 """
 
 import os
