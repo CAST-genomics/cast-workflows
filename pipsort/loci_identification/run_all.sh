@@ -14,10 +14,9 @@ do
  #echo ${myArray[3]}
  #bash analysis_pipeline.sh ${myArray[0]} ${myArray[1]} ${myArray[2]}
  #bash run_pipsort.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} EUR_WHITE.csv AFR_BLACK.csv platelet_count
- #bash run_pipsort.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} NOT_AFR_BLACK.csv AFR_BLACK.csv platelet_count
- #bash run_pipsort.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} NOT_AFR_BLACK.csv AFR_BLACK.csv egfr_ckdepi
- #bash run_pipsort.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} NOT_AFR_BLACK.csv AFR_BLACK.csv white_blood_cell_count
+ bash run_pipsort.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} NOT_AFR_BLACK.csv AFR_BLACK.csv platelet_count
+ #bash run_pipsort.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} ${myArray[3]} NOT_AFR_BLACK.csv AFR_BLACK.csv ldl_cholesterol
  #bash run_mesusie.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} NOT_AFR_BLACK.csv AFR_BLACK.csv ${myArray[3]}
- bash run_susiex.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} NOT_AFR_BLACK.csv AFR_BLACK.csv ${myArray[3]}
+ #bash run_susiex.sh ${myArray[0]} ${myArray[1]} ${myArray[2]} NOT_AFR_BLACK.csv AFR_BLACK.csv ${myArray[3]}
 
 done < $infile
