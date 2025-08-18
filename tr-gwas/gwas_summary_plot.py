@@ -180,7 +180,7 @@ def get_p_val_df(filename, verbose, default_val, is_continuous=False):
                 "PROVISIONAL_REF?", "A1", " OMITTED", "A1_FREQ", "FIRTH?",
                 "TEST", "OBS_CT", "OR", "LOG(OR)_SE", "Z_STAT",
                 "P", "ERRCODE"]
-    summary_df = pd.read_csv(filename, sep="\t", header=0, names=columns)
+    summary_df = pd.read_csv(filename, sep="\t", header=None, names=columns)
     summary_df["CHROM"] = summary_df["ID"].apply(lambda x: int(x.split("_")[0].replace("chr", "")))
     summary_df["POS"] = summary_df["POS"].astype(int)
     summary_df["Phenotype"] = summary_df["Phenotype"].apply(lambda x: x.replace("sara_", "")\
@@ -202,8 +202,8 @@ def get_p_val_df(filename, verbose, default_val, is_continuous=False):
     vntrs = summary_df["ID"].unique()
     vntrs = sorted(list(vntrs), key=cmp_to_key(vntr_order_comp))
 
-
-    print("Completed loading summary statistics. Now creating p-val df.")
+    print("Completed loading summary statistics for {} unique VNTRs and {} unique phenotypes.".format(
+            len(vntrs), len(phenotypes)))
     # Convert it to a dataframe with VNTRs as rows and phenotypes as columns and p-vals as cells.
     # Set the value for insignificant associations to the default value.
     # Defaualt value is 2 * max value, in order to have a mostly bright colored figure.
@@ -493,10 +493,10 @@ def replace_gene_names(data):
         'chr7_44036410': "RASA4CP",
         'chr10_59957799': "LINC01553",
         'chr19_40396555': "PRX",
-        'chr19_40396820': "PRX",
+        'chr19_40396820': "PRX_2",
         'chr19_53538674': "ZNF331",
         # Significant in EUR
-        'chr1_165725024': "TMCO1",
+        'chr1_165725024': "TMCO1_2",
         'chr1_165761972': "TMCO1",
         'chr2_21043882': "APOB",
         'chr6_30813385': "LINC00243",
@@ -557,6 +557,7 @@ def main():
             print(categories_map)
 
     print("p_val_df shape: ", np.shape(p_val_df))
+    print("default_p_val: ", default_p_val)
     print("Number of significant values in df: ", (p_val_df < default_p_val).sum().sum())
 
     filename_base = "figures/heatmap_{}".format(args.cohort)

@@ -139,6 +139,7 @@ task run_tr_gwas {
                 --covar ${covar_file} \
                 --keep ~{samples} \
                 --covar-variance-standardize \
+                --mac 21 \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
                 
                 gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.linear "
@@ -152,6 +153,7 @@ task run_tr_gwas {
                 --keep ~{samples} \
                 --1 \
                 --covar-variance-standardize \
+                --mac 21 \
                 --out "~{out_prefix}_${chrom_outprefix}_~{sample_name}"
                 
                 gwas_outfiles+="~{out_prefix}_${chrom_outprefix}_~{sample_name}.phenotype.glm.logistic.hybrid "
