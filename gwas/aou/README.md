@@ -49,6 +49,7 @@ Optional arguments:
 * `--sharedcovars <STR>`: Comma-separated list of shared covariates (besides PCs). Default: sex_at_birth_Male
 * `--plot`: Output Manhattan and QQ plots
 * `--norm`: Quantile or zscore normalize phenotype, type=str
+* `--covar-standadize`: Apply z-score normalization to all covariates
 * `--norm-by-sex`: Apply normalization by sex
 * `--sample-call-rate`: Apply min sample call rate QC. Default: 0.9
 * `--variant-call-rate`: Apply min sample call rate QC. Default: 0.9 

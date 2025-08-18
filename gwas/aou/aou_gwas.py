@@ -75,19 +75,19 @@ def Inverse_Quantile_Normalization(M):
     Q = Q.transpose() 
     return Q
 
-def NormalizeData(data, norm):
-    # Add normalization quantile
-    if norm == "quantile":
-        data["phenotype"] = Inverse_Quantile_Normalization(data[["phenotype"]])
-        return data
+def NormalizeData(data, norm, col):
+    for c in col:
+        if norm == "quantile":
+            data[c] = Inverse_Quantile_Normalization(data[[c]])
+            return data
+        # Add z-score normalization
+        elif norm == "zscore":
+            data[c]  = stats.zscore(data[[c]])
+            return data
+        else:
+            ERROR("No normalization method specified")            
+    return data
 
-    # Add z-score normalization
-    elif norm == "zscore":
-        data["phenotype"]  = stats.zscore(data[["phenotype"]])
-        return data
-
-    else:
-        ERROR("No normalization method specified")
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
@@ -106,6 +106,7 @@ def main():
     parser.add_argument("--norm-by-sex",
                         help="Apply the normalization for each sex separately. Default: False",
                         action="store_true")
+    parser.add_argument("--covar-standadize", help="Standardize covariates same as plink2 flag --variance-standardize, default=False", action="store_true")
     parser.add_argument("--sample-call-rate", help="Apply minimum sample call rate QC", type=float, default=0.90)
     parser.add_argument("--variant-call-rate", help="Apply minimum variant call rate QC", type=float, default=0.90)
     parser.add_argument("--MAF", help="Apply minor allele frequency QC", type=float, default=0.01)
@@ -143,16 +144,17 @@ def main():
     data = pd.merge(data, ancestry[["person_id"]+pcols], on=["person_id"])
     data["person_id"] = data["person_id"].apply(str)
 
+    if args.covar_standadize:
+        data = NormalizeData(data, norm="zscore", col=covars)
     # Add normalization. If indicated, normalize for each sex separately.
     if args.norm_by_sex:
         # Separate the data into two smaller dataframes based on sex at birth.
         female_data = data[data['sex_at_birth_Male'] == 0].copy()
         male_data = data[data['sex_at_birth_Male'] == 1].copy()
-
-        # Apply normalization on female and male dataframes separately.
-        female_data =NormalizeData(data=female_data, norm=args.norm)
-        male_data = NormalizeData(data=male_data, norm=args.norm)
-
+    # Apply normalization on female and male dataframes separately.
+        if args.norm is not None:
+            female_data =NormalizeData(data=female_data, norm=args.norm, col=["phenotype"])
+            male_data = NormalizeData(data=male_data, norm=args.norm, col=["phenotype"])
         # Concatenate the female and male dataframes back into one
         # and sort the dataframe by original order.
         data = pd.concat([female_data, male_data])
@@ -160,7 +162,7 @@ def main():
     else:
         # Apply normalization on the entire data.
         if args.norm is not None:
-            data = NormalizeData(data=data, norm=args.norm)
+            data = NormalizeData(data=data, norm=args.norm,col=["phenotype"])
         
     # Add shared covars
     sampfile = args.samples
@@ -169,6 +171,7 @@ def main():
         if not os.path.isfile(sampfile):
             os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
     samples = pd.read_csv(sampfile)
+    samples = samples [["person_id"]]
     samples["person_id"] = samples["person_id"].apply(str)
     
     data = pd.merge(data, samples)

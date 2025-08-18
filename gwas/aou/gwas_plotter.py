@@ -10,6 +10,30 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+
+
+def plot_histogram(data, xlabel, outpath, stat='percent', binwidth=0.5):
+    plot = sns.histplot(data, binwidth=binwidth, stat=stat)
+    plot.set_xlabel(xlabel)
+    plt.savefig(outpath, bbox_inches='tight')
+    plt.clf()
+
+
+def annotate_points(ax, gwas, annotations):
+    # Annotate points (target TRs) in the manhattan plot based on coordinates.
+    for point in annotations:
+        chrom, position, label = point
+        locus = gwas[(gwas["chrom"] == chrom) & \
+                 (gwas["pos"] < int(position) + 1) &\
+                 (gwas["pos"] > int(position) - 1)]
+        if len(locus) > 1:
+            print("multiple TRs or associatios within 1 bp for {}:{}".format(chrom, position))
+        elif len(locus) == 1:
+            x = locus["pos"].values[0]
+            y = locus["-log10pvalue"].values[0]
+            ax.text(x=x, y=y, s=label, fontsize="medium")
+
+
 def PlotManhattan(gwas, outpath):
     gwas["ind"] = range(gwas.shape[0])
     plot = sns.relplot(data=gwas, x="ind", y="-log10pvalue", \
