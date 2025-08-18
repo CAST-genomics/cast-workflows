@@ -93,3 +93,29 @@ do
 done
 ```
 
+### Fixing chr9
+
+chr9 last batch had failed so we used the following steps to manually fix:
+
+```
+# Fix the batch
+bcftools view -Oz -o tmp.vcf.gz -r chr9:130000000-138394717 ${WGS_ACAF_THRESHOLD_VCF_PATH}/acaf_threshold.chr9.vcf.bgz
+tabix -f -p vcf tmp.vcf.gz
+bcftools plugin split tmp.vcf.gz -G renamed_sample_groups.txt -Oz -o .
+
+for f in batch*.vcf.gz
+do
+	tabix -p vcf $f
+	gsutil cp $f ${WORKSPACE_BUCKET}/subset_vcf/fix_chr9/
+	gsutil cp $f.tbi ${WORKSPACE_BUCKET}/subset_vcf/fix_chr9/
+done
+
+# Update the chr9 concat json file
+./misc/fix_batches_chr9.py
+
+# Launch
+cromshell submit \
+	wdl/concatenate_batch_vcfs.wdl \
+	chr9concat.fix.aou.json \
+	-op chr9concat.aou.options.json
+```
