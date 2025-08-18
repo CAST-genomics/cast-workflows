@@ -80,6 +80,9 @@ def plot_genotype_phenotype_binary(data, genotype, phenotype, phenotype_label, o
     odds_ratio_threshold_se = {}
     fraction_threshold = {}
     uniq_alleles = sorted(data[genotype].unique())
+    if len(uniq_alleles) == 0:
+        print("0 unique alleles")
+        return
     min_allele = min(uniq_alleles)
     max_allele = max(uniq_alleles)
 
@@ -210,6 +213,9 @@ def plot_genotype_phenotype_continuous(data, genotype, phenotype, phenotype_labe
 
 def plot_alleles_histogram(data, genotype, out, epsilon, bin_width=0.5):
     counts = data[genotype].value_counts()
+    print("plotting allele histogram with allels ", counts)
+    if len(counts) < 2:
+        return
     plot = sns.histplot(data, x=genotype, stat="percent", binwidth=bin_width)
     plot.set_xlabel(genotype)
     # Center the x ticks
@@ -262,6 +268,12 @@ def plot_genotype_phenotype(data, genotype, phenotype,
 
     # If after filtering we have no polymorphism, return
     if len(counts) == 1:
+        data = plotted_data
+        print("Number of cases {} number of controls {} total {}".format(
+            len(data[data[phenotype] == 1]),
+            len(data[data[phenotype] == 0]),
+            len(data),
+        ))
         print("{} is non-polymorphic after filtering for rare genotypes".format(phenotype))
         return
         

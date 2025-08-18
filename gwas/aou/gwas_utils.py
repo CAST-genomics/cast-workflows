@@ -119,7 +119,7 @@ def set_genotypes(data, annotations, cohort, samples, tr_vcf, outdir):
                     data.at[idx, gene] = rc
             print("Number of samples where the genotype could not be loaded {}".format(len(ids_not_found)))
             print("For gene {} skipping {} samples".format(gene, len(ids_not_found)) +
-                  "4 most common genotypes: ", genotypes_df["rc"].value_counts().head(4))
+                  " most common genotypes: ", genotypes_df["rc"].value_counts().head(10))
             continue
 
         # Compute genotypes from VCF file        
@@ -132,7 +132,7 @@ def set_genotypes(data, annotations, cohort, samples, tr_vcf, outdir):
         samples_with_calls = set()
         print("Reading ref and alt alleles")
         ref_allele_len, alt_alleles_len, ru_len = get_alleles(variant)
-        print("Reading calls")
+        print("Reading {} calls".format(len(variant.genotypes)))
         counter = 0
         for i, sample_call in enumerate(variant.genotypes):
             counter += 1
@@ -147,7 +147,7 @@ def set_genotypes(data, annotations, cohort, samples, tr_vcf, outdir):
             samples_with_calls.add(sample)
             data.loc[data["person_id"]==sample, gene] = rc
             genotypes_df.loc[sample] = rc
-        print("Alleles count for the 4 most common alleles: ", Counter(all_alleles).most_common(4))
+        print("Alleles count for the 10 most common alleles: ", Counter(all_alleles).most_common(10))
         if no_calls + empty_calls > 0:
             print("Skipping {} empty calls and {} no calls for {} on vcf".format(
                     empty_calls, no_calls, gene))

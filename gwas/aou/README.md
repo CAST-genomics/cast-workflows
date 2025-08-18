@@ -131,3 +131,33 @@ Then run the following:
 `python combine_gwas_batches.py <phenotype_name> <gwas_file_prefix>`
 
 This will write out the gwas results across all chromosomes to a single file and copy it to `${WORKSPACE_BUCKET}/gwas/<phenotype_name>` as if you had run the full gwas described above (quickstart point 2). Note that the gwas file is likely to be on the order of 1GB and will take 5-10 min to copy over to the bucket.
+
+
+## Plotting genotype-phenotype plot or odds ratio plot
+
+We implemented a script to plot the phenotype-genotype plot (for continuous traits) or odds ratio plot (for binary traits) `plot_genotype_phenotype.py`. Before running the script, follow the next few steps:
+
+1. Copy the sample file e.g. `EUR_WHITE.csv` from the bucket to a `samples/` directory adjacent to the `plot_genotype_phenotype.py` python file
+
+2. Copy the phenocovar file from the bucket to a `phenocovars/` directory adjacent to the same python file.
+3. Create an annotation file to indicate which TRs you want to create the odds ratio plot. Check the `annotations_example.csv` for formatting. For every TR in the annotation file, there will be a new plot (unless the TR is not polymorphic after removing allele with < 20 counts). The first time you run the command, a dataframe will be created from the input VCF file (which can take up to half an hour). Any later calls will read directly from the dataframe and the expected runtime is a few minutes (no flag changes required).
+
+Here is an example command for **continuous traits**:
+```
+python plot_genotype_phenotype.py --phenotype $phenotype \
+                   --tr-vcf $imputed_vcf \
+                   --samples $samples \
+                   --outdir outputs/ \
+                   --annotations annotation_points.csv \
+```
+Here is an example command for **binary traits**:
+```
+python plot_genotype_phenotype.py --phenotype $phenotype \
+                   --tr-vcf $imputed_vcf \
+                   --samples $samples \
+                   --outdir outputs/ \
+                   --annotations annotation_points.csv \
+                   --binary
+```
+
+Please note that the inferred genotype for each individual is the average of the repeat counts in the two haplotypes where repeat counts are extracted based on dividing the alt allele length by repeat unit length provided in the VCF info field. If you plan to work with alelle length instead of repeat counts, please edit the `get_rc_from_allele` function in `gwas_utils.py` and review `set_genotypes` function for accuracy.
