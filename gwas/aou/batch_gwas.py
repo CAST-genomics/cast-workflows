@@ -1,3 +1,4 @@
+import re
 import subprocess
 import os
 import sys
@@ -20,12 +21,24 @@ gwas_cmd = f.readline()
 gwas_cmd = gwas_cmd.strip() #remove newline from cmd to concatenate region later
 f.close()
 
+
 for r in chr_regions:
     chrom = r.split(":")[0]
     full_cmd = gwas_cmd + " --region " + r
     subprocess.run(full_cmd, shell=True, check=True)
+    method = "hail"
+    pattern_true = re.search(r"--samples\s+(\S+)", gwas_cmd)
+    if pattern_true:
+    # take the filename without extension
+        cohort = pattern_true.group(1).split("/")[-1].removesuffix('.csv"')
+    else:
+        cohort = "ALL"
+
+    outprefix = "%s_%s_%s"%(phenotype, method, cohort)
+    outprefix += "_%s"%(r.replace(":", "_").replace("-","_"))
+
     files = os.listdir("./")
-    filtered_files = [file for file in files if chrom in file]
+    filtered_files = [file for file in files if outprefix in file]
     for f in filtered_files:
         copy_cmd = "gsutil cp " + f + " " + bucket+"/gwas/"+phenotype+"/"+f
         print(copy_cmd)
