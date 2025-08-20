@@ -18,7 +18,7 @@ def Inverse_Quantile_Normalization(M):
     return Q
 
 samples = pd.read_csv(f_samples)
-samples.rename(columns={'research_id': 'IID'}, inplace=True)
+samples.rename(columns={'person_id': 'IID'}, inplace=True)
 
 
 phen = pd.read_csv(f_phen)
@@ -26,6 +26,8 @@ phen.rename(columns={'person_id':'IID'},inplace=True)
 pcs = pd.read_csv(f_pcs, sep="\t")
 pcs.drop(columns='FID', inplace=True)
 
+print(samples)
+print(phen)
 
 merge1 = phen.merge(samples, on='IID', how='inner')
 merge2 = merge1.merge(pcs, on='IID', how='inner')
