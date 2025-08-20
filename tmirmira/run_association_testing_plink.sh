@@ -3,7 +3,11 @@ chr=$1
 from=$2
 to=$3
 phenname=$4
-#samples=$5
+samples=$5 #options are passing_samples_v7.1.csv, EUR_WHITE.csv, AFR_BLACK.csv, hispanic
+norm=False
+if [ $# -ge 6 ]; then
+  norm=$6
+fi
 
 scripts=/home/jupyter/workspaces/impactofglobalandlocalancestryongenomewideassociationv7v6studies/cast-workflows/pipsort/loci_identification/
 
@@ -25,8 +29,8 @@ if [ ! -f "AOU_10_PCS.tsv" ]; then
 fi
 
 # get all samples
-if [ ! -f "passing_samples_v7.1.csv" ]; then
-    gsutil cp "${WORKSPACE_BUCKET}/samples/passing_samples_v7.1.csv" .
+if [ ! -f "${samples}" ]; then
+    gsutil cp "${WORKSPACE_BUCKET}/samples/${samples}" .
 fi
 
 
@@ -34,17 +38,21 @@ fi
 phenocovar=${phenname}_phenocovar.csv
 
 
-python $scripts/localancestryanalysis/get_phenocovar.py passing_samples_v7.1.csv ${phenname}_phenocovar.csv "AOU_10_PCS.tsv" ${phenname}_plink.csv
-
-  # Run plink2
-  plink2 --bfile "${chr}_${from}_${to}_${phenname}_plink" \
-         --linear hide-covar \
-         --pheno "${phenname}_plink.csv" \
-         --pheno-name phenotype \
-         --covar "${phenname}_plink.csv" \
-         --covar-name age-pc10 \
-         --covar-variance-standardize
+python $scripts/localancestryanalysis/get_phenocovar.py $samples ${phenname}_phenocovar.csv "AOU_10_PCS.tsv" ${phenname}_plink.csv $norm
 
 
+# Run plink2
+plink2 --bfile "${chr}_${from}_${to}_${phenname}_plink" \
+       --linear hide-covar \
+       --pheno "${phenname}_plink.csv" \
+       --pheno-name phenotype \
+       --covar "${phenname}_plink.csv" \
+       --covar-name age-pc10 \
+       --covar-variance-standardize \
+       --maf 0.01 \
+       --vif 2000
+
+basename="${samples%.csv}"
+python plot_gwas_plink.py plink2.phenotype.glm.linear ${basename}_norm${norm}.png
 
 
