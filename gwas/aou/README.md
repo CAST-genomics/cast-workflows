@@ -67,6 +67,7 @@ Optional arguments:
 Available cohort options (edit 4/24/24: updated for v7.1):
 * `${WORKSPACE_BUCKET}/samples/EUR_WHITE.csv` (119184 samples) (self-reported race matches `ANCESTRY_PRED`)
 * `${WORKSPACE_BUCKET}/samples/AFR_BLACK.csv` (44386 samples) (self-reported race matches `ANCESTRY_PRED`)
+* `${WORKSPACE_BUCKET}/samples/AMR_HISPANIC.csv` (35003 samples) (self-reported race matches `ANCESTRY_PRED_OTH`)
 * `${WORKSPACE_BUCKET}/samples/NOT_AFR_BLACK.csv` (174828 samples) (all samples except where race is African American/Black or `ANCESTRY_PRED` is AFR)
 
 ## Setup
