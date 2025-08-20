@@ -9,7 +9,10 @@ f_pcs = sys.argv[3]
 outfile = sys.argv[4]
 norm = False
 if len(sys.argv) == 6:
-    norm = bool(sys.argv[5])
+    print(sys.argv[5])
+    norm = (sys.argv[5] == "True")
+
+print("norm is: ", norm)
 
 def Inverse_Quantile_Normalization(M):
     print("***")
@@ -36,5 +39,6 @@ merge1 = phen.merge(samples, on='IID', how='inner')
 merge2 = merge1.merge(pcs, on='IID', how='inner')
 merge2.insert(0, 'FID', 0)
 if norm:
+    print("normalizing")
     merge2['phenotype'] = Inverse_Quantile_Normalization(merge2['phenotype'].values)
 merge2.to_csv(outfile, sep="\t", index=False)
