@@ -25,6 +25,7 @@ def Inverse_Quantile_Normalization(M):
 
 samples = pd.read_csv(f_samples)
 samples.rename(columns={'person_id': 'IID'}, inplace=True)
+samples = samples.drop(columns='sex_at_birth_Male')
 
 
 phen = pd.read_csv(f_phen)
