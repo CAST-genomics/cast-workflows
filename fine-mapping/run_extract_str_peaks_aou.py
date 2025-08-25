@@ -6,7 +6,7 @@ Example:
 ./run_extract_str_peaks_aou.py \
 --name hdl_chrom8_str_peaks \
 --chrom 8 \
---region test_hdl_chrom8_region.txt 
+--region test_hdl_chrom8_region
 
 """
 
@@ -42,7 +42,7 @@ def main():
 	parser = argparse.ArgumentParser(__doc__)
 	parser.add_argument("--chrom", help="Name of the chromsome file", required=True, type=str)
 	parser.add_argument("--name", help="Name of the output file", required=True, type=str)
-	parser.add_argument("--region", help="Name of the region file", type=str, required=True)
+	parser.add_argument("--tr-list", help="Name of the region file", type=str, required=True)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
 	args = parser.parse_args()
 

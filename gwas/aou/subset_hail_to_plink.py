@@ -16,23 +16,15 @@ mt_wgs_path = os.getenv("WGS_ACAF_THRESHOLD_MULTI_HAIL_PATH")
 mt = hl.read_matrix_table(mt_wgs_path)
 mt = hl.filter_intervals(mt, [hl.parse_locus_interval(region,)])
 
-
-
 # Keep only bi-allelic variants
-#mt = mt.filter_rows(hl.len(mt.alleles) == 2, keep=True)
+mt = mt.filter_rows(hl.len(mt.alleles) == 2, keep=True)
 
-# Compute variant QC metrics to get MAF
-#mt = hl.variant_qc(mt)
-
+#Add other QC filters for compare plink and hail 
 # Filter to MAF > 5%
-#mt = mt.filter_rows(mt.variant_qc.AF[1] > 0.05, keep=True)
-
-
-#Add other QC filters
+mt = mt.filter_rows(mt.variant_qc.AF[1] > 0.05, keep=True)
 mt = mt.annotate_entries(FT = hl.coalesce(mt.FT,'PASS'))
 mt = mt.filter_entries(mt.FT =='PASS')
 mt = mt.filter_entries(mt.GQ >= 20) #20
-
  # Locus and Sample QC
 mt = hl.variant_qc(mt)
 mt = hl.sample_qc(mt)
