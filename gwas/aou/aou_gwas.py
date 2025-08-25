@@ -18,7 +18,7 @@ import numpy as np
 import scipy.stats as stats
 import warnings
 
-GWAS_METHODS = ["hail", "associaTR"]
+GWAS_METHODS = ["hail", "associaTR", "hail_eur_afr"]
 ANCESTRY_PRED_PATH = "gs://fc-aou-datasets-controlled/v7/wgs/short_read/snpindel/aux/ancestry/ancestry_preds.tsv"
 SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
     "passing_samples_v7.1.csv")
@@ -187,6 +187,9 @@ def main():
     elif args.method == "associaTR":
         from associatr_runner import AssociaTRRunner
         runner = AssociaTRRunner(data, args.tr_vcf, region=args.region, covars=covars)
+    elif args.method == "hail_eur_afr":
+        from hail_runner_EUR_AFR import HailRunner
+        runner = HailRunner(data, isbinary=args.isbinary, region=args.region, covars=covars, sample_call_rate=args.sample_call_rate, variant_call_rate=args.variant_call_rate, MAF=args.MAF, HWE=args.HWE, GQ=args.GQ)
     else:
         ERROR("GWAS method %s not implemented" % args.method)
 
