@@ -57,8 +57,8 @@ def main():
     reordered_gwas["clean_ID"].to_csv(f"{args.out}_reordered.txt",index=False,header=None)
     reordered_gwas.to_csv(f"{args.out}_sorted.tsv", sep='\t', index=False)
 
-    print(f"summary for BETA is {reordered_gwas["BETA"].describe()}")
-    print(f"summary for SE is {reordered_gwas["SE"].describe()}")
+    print(f"summary for BETA is {reordered_gwas['BETA'].describe()}")
+    print(f"summary for SE is {reordered_gwas['SE'].describe()}")
     print(f"Number of variants in pvar: {len(pvar)}")
     print(f"Number of variants in GWAS: {len(gwas)}")
     print(f"Number of common variants: {len(common_variants)}")
