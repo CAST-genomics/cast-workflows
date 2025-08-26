@@ -4,9 +4,9 @@ Script to launch AOU TR imputation
  
 Example:
 ./run_extract_str_peaks_aou.py \
---name hdl_chrom8_str_peaks \
+--phenotye hdl \
 --chrom 8 \
---region test_hdl_chrom8_region
+--tr-list test_hdl_chrom8_region
 
 """
 
@@ -41,9 +41,10 @@ def UploadGS(local_path, gcp_path):
 def main():
 	parser = argparse.ArgumentParser(__doc__)
 	parser.add_argument("--chrom", help="Name of the chromsome file", required=True, type=str)
-	parser.add_argument("--name", help="Name of the output file", required=True, type=str)
 	parser.add_argument("--tr-list", help="Name of the region file", type=str, required=True)
+	parser.add_argument("--phenotype", help="Name of the phenotyoe", type=str, required=True)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
+
 	args = parser.parse_args()
 
 
@@ -55,11 +56,11 @@ def main():
 	
 
 	# Upload region file
-	if args.region.startswith("gs://"):
-		region_gcs = args.region
+	if args.tr_list.startswith("gs://"):
+		tr_list_gcs = args.tr_list
 	else:
-		region_gcs = bucket + "/" + args.name + "/" + args.region
-		UploadGS(args.region,region_gcs)
+		tr_list_gcs = bucket + "/" + args.phenotype + "/" + args.tr_list
+		UploadGS(args.tr_list,tr_list_gcs)
 
 
 
@@ -68,20 +69,20 @@ def main():
 	json_dict["extract_str_peak_gt.pgen"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/results-250K/chr%s_annotated.pgen"%args.chrom
 	json_dict["extract_str_peak_gt.psam"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/results-250K/chr%s_annotated.psam"%args.chrom
 	json_dict["extract_str_peak_gt.pvar"] = os.environ.get("WORKSPACE_BUCKET") + "/tr_imputation/enstr-v3/results-250K/chr%s_annotated.pvar"%args.chrom
-	json_dict["extract_str_peak_gt.region"] = region_gcs
-	json_dict["extract_str_peak_gt.out_prefix"] = args.name
+	json_dict["extract_str_peak_gt.tr_list"] = tr_list_gcs 
+	json_dict["extract_str_peak_gt.pheno"] = args.phenotype
 	json_dict["extract_str_peak_gt.GOOGLE_PROJECT"] = project
 	json_dict["extract_str_peak_gt.GCS_OAUTH_TOKEN"] = token
 
 
 	# Convert to json and save as a file
-	json_file = args.name+".aou.json"
+	json_file = args.phenotype + args.chrom + "tr_finemapped.aou.json"
 	with open(json_file, "w") as f:
 		json.dump(json_dict, f, indent=4)
 
 	# Set up json options
 	json_options_dict = {}
-	json_options_file = args.name+".options.aou.json"
+	json_options_file = args.phenotype + args.chrom + "tr_finemapped.options.aou.json"
 	with open(json_options_file, "w") as f:
 		json.dump(json_options_dict, f, indent=4)
 
