@@ -50,15 +50,20 @@ task extract_peaks_str {
         set -e
         pfile_outprefix="${pgen%.pgen}"
 
-        while IFS=$' ' read -r chr from to; do
-            plink2 --pfile "${pfile_outprefix}" \
+        while IFS=$' ' read -r -a locus
+        do
+            chr=${locus[0]}
+            from=${locus[1]}
+            to=${locus[2]}
+            
+            plink2 --pfile "${pfile_outprefix}"  \
                 --chr "$chr" \
                 --from-bp "$from" \
                 --to-bp "$to" \
                 --make-pgen \
-                --out "${pheno}_${chr}_${from}_${to}"
-         done < "~{tr_list}"
-        
+                --out "${pheno}_${chr}_${from}_${to}_str"     
+            
+        done < ~{tr_list}
 
     >>>
     runtime {
