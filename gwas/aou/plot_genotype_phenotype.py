@@ -408,7 +408,9 @@ def main():
         phenotype_label = "skin cancer"
 
     # Plot genotype phenotype
-    for chrom, pos, gene in annotations:
+    for chrom, pos, gene, variant in annotations:
+        if variant == "snp":
+            continue
         plot_genotype_phenotype(data=data,
                             genotype=gene,
                             phenotype="phenotype",
