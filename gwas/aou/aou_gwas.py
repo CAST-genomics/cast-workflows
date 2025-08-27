@@ -265,7 +265,9 @@ def main():
             annotate = True
             p_value_threshold = -np.log10(5*10**-8)
             if args.plot_genotype_phenotype:
-                for chrom, pos, gene in annotations:
+                for chrom, pos, gene, variant in annotations:
+                    if variant == "snp":
+                        continue
                     plot_genotype_phenotype(data=data,
                         genotype=gene,
                         phenotype="phenotype",

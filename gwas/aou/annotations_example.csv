@@ -1,2 +1,2 @@
-chrom,position,name
-chr1,165761972,TMCO1
+chrom,position,name,variant
+chr1,165761972,TMCO1,VNTR

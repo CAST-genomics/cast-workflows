@@ -54,8 +54,8 @@ def read_annotations(filename):
             if line.startswith("chrom"):
                 # Header line
                 continue
-            chrom, start, gene = line.strip().split(",")[:3]
-            annotations.append((str(chrom), str(start), str(gene)))
+            chrom, start, gene, variant = line.strip().split(",")[:4]
+            annotations.append((str(chrom), str(start), str(gene), str(variant).lower()))
     return annotations
 
 def get_alleles(record):
@@ -94,11 +94,16 @@ def set_genotypes(data, annotations, cohort, samples, tr_vcf, outdir):
     relevant_annotations = []
 
     # Focus on a few loci of interest
-    for chrom, start, gene in annotations:
+    for chrom, start, gene, variant in annotations:
         if chrom != vcf_chrom:
             continue
 
-        relevant_annotations.append((chrom, start, gene))
+        relevant_annotations.append((chrom, start, gene, variant))
+        if variant == "snp":
+            # No need to extract the genotypes for SNPs.
+            # But we need them later for annotating the plots.
+            continue
+
         if not os.path.exists("genotypes/"):
             os.mkdir("genotypes")
         # Check if genotypes are extracted before
@@ -119,7 +124,7 @@ def set_genotypes(data, annotations, cohort, samples, tr_vcf, outdir):
                     data.at[idx, gene] = rc
             print("Number of samples where the genotype could not be loaded {}".format(len(ids_not_found)))
             print("For gene {} skipping {} samples".format(gene, len(ids_not_found)) +
-                  " most common genotypes: ", genotypes_df["rc"].value_counts().head(10))
+                  " most common genotypes: ", genotypes_df["rc"].value_counts().head(4))
             continue
 
         # Compute genotypes from VCF file        
@@ -147,7 +152,7 @@ def set_genotypes(data, annotations, cohort, samples, tr_vcf, outdir):
             samples_with_calls.add(sample)
             data.loc[data["person_id"]==sample, gene] = rc
             genotypes_df.loc[sample] = rc
-        print("Alleles count for the 10 most common alleles: ", Counter(all_alleles).most_common(10))
+        print("Alleles count for the 10 most common alleles: ", Counter(all_alleles).most_common(4))
         if no_calls + empty_calls > 0:
             print("Skipping {} empty calls and {} no calls for {} on vcf".format(
                     empty_calls, no_calls, gene))

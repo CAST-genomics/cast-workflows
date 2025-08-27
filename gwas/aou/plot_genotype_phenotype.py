@@ -21,6 +21,7 @@ from scipy.stats.contingency import odds_ratio
 from gwas_plotter import plot_histogram
 from gwas_utils import SAMPLEFILE, GetPTCovarPath, GetCohort, CheckRegion, NormalizeData, \
                         read_annotations, set_genotypes, load_snp_gwas_df, load_gwas_tab
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 # Scale the size of all texts in the plots including xlabel, ylabel, annotations and legend.
 #scale_factor = 2
@@ -213,7 +214,6 @@ def plot_genotype_phenotype_continuous(data, genotype, phenotype, phenotype_labe
 
 def plot_alleles_histogram(data, genotype, out, epsilon, bin_width=0.5):
     counts = data[genotype].value_counts()
-    print("plotting allele histogram with allels ", counts)
     if len(counts) < 2:
         return
     plot = sns.histplot(data, x=genotype, stat="percent", binwidth=bin_width)
