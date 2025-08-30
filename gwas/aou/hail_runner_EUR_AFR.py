@@ -45,72 +45,70 @@ class HailRunner:
         eur_tbl = hl.Table.from_pandas(pd.DataFrame(eur_sample_ids), key="person_id")
         afr_tbl = hl.Table.from_pandas(pd.DataFrame(afr_sample_ids), key="person_id")
 
-        data = mt.filter_cols(hl.is_defined(eur_tbl[mt.s]) | hl.is_defined(afr_tbl[mt.s]))
-
+        # Restrict MT to samples in either group (for MAF/HW filtering only)
+        ref_mt = mt.filter_cols(hl.is_defined(eur_tbl[mt.s]) | hl.is_defined(afr_tbl[mt.s]))
 
         # filter multiallelics
-        data = data.filter_rows(hl.len(data.alleles) == 2)
-
-        # Load phenotype and covariates
-        ptcovar = hl.Table.from_pandas(self.ptcovar, key="person_id")
-        data = data.annotate_cols(ptcovar = ptcovar[data.s])
-
-
-        # Genotype QC
-        data = data.annotate_entries(FT = hl.coalesce(data.FT,'PASS'))
-        data = data.filter_entries(data.FT =='PASS')
-        data = data.filter_entries(data.GQ >= self.GQ) #20
-
+        ref_mt = ref_mt.filter_rows(hl.len(ref_mt.alleles) == 2)
         
         # Run variant_qc separately for each group
-        data = data.annotate_cols(
-            eur_cohort = hl.is_defined(eur_tbl[data.s]),
-            afr_cohort = hl.is_defined(afr_tbl[data.s])
+        ref_mt = ref_mt.annotate_cols(
+            eur_cohort = hl.is_defined(eur_tbl[ref_mt.s]),
+            afr_cohort = hl.is_defined(afr_tbl[ref_mt.s])
         )
 
-        eur_qc = hl.variant_qc(data.filter_cols(data.eur_cohort))
-        afr_qc = hl.variant_qc(data.filter_cols(data.afr_cohort))
+        eur_qc = hl.variant_qc(ref_mt.filter_cols(ref_mt.eur_cohort))
+        afr_qc = hl.variant_qc(ref_mt.filter_cols(ref_mt.afr_cohort))
 
-        # Annotate per-group QC back to the main MT
         eur_rows = eur_qc.rows()
         afr_rows = afr_qc.rows()
 
-        data = data.annotate_rows(
-            eur_AF = eur_rows[data.row_key].variant_qc.AF,
-            eur_HWE = eur_rows[data.row_key].variant_qc.p_value_hwe,
 
-            afr_AF = afr_rows[data.row_key].variant_qc.AF,
-            afr_HWE = afr_rows[data.row_key].variant_qc.p_value_hwe,
+        # Annotate per-group QC back to the main MT
+        mt = mt.annotate_rows(
+            eur_AF = eur_rows[mt.row_key].variant_qc.AF,
+            eur_HWE = eur_rows[mt.row_key].variant_qc.p_value_hwe,
+
+            afr_AF = afr_rows[mt.row_key].variant_qc.AF,
+            afr_HWE = afr_rows[mt.row_key].variant_qc.p_value_hwe,
         )
 
         # Variant filter: keep if either group passes all thresholds
-        data = data.filter_rows(
+        mt = mt.filter_rows(
             (
-                (hl.min(data.eur_AF) >= self.MAF) &
-                (data.eur_HWE > self.HWE)
+                (hl.min(mt.eur_AF) >= self.MAF) &
+                (mt.eur_HWE > self.HWE)
             )
             |
             (
-                (hl.min(data.afr_AF) >= self.MAF) &
-                (data.afr_HWE > self.HWE)
+                (hl.min(mt.afr_AF) >= self.MAF) &
+                (mt.afr_HWE > self.HWE)
             )
         )
         
+        # Load phenotype and covariates
+        ptcovar = hl.Table.from_pandas(self.ptcovar, key="person_id")
+        mt = mt.annotate_cols(ptcovar = ptcovar[mt.s])
 
         # now filter samples to given cohort
         ids = pd.DataFrame(self.ptcovar['person_id'])
         sample_tbl = hl.Table.from_pandas(ids, key="person_id")
-        data = data.filter_cols(hl.is_defined(sample_tbl[data.s]))
+        mt = mt.filter_cols(hl.is_defined(sample_tbl[mt.s]))
+
+        # Genotype QC
+        mt = mt.annotate_entries(FT = hl.coalesce(mt.FT,'PASS'))
+        mt = mt.filter_entries(mt.FT =='PASS')
+        mt = mt.filter_entries(mt.GQ >= self.GQ) #20
 
         # sample QC
-        data = hl.sample_qc(data)
-        data = data.filter_cols(data.sample_qc.call_rate >= self.sample_call_rate, keep = True) #0.9
+        mt = hl.sample_qc(mt)
+        mt = mt.filter_cols(mt.sample_qc.call_rate >= self.sample_call_rate, keep = True) #0.9
         # remaining variant QC
-        data = hl.variant_qc(data)
-        data = data.filter_rows(data.variant_qc.call_rate >= self.variant_call_rate, keep = True) #0.9
+        mt = hl.variant_qc(mt)
+        mt = mt.filter_rows(mt.variant_qc.call_rate >= self.variant_call_rate, keep = True) #0.9
 
          # Keep track of data
-        self.data = data
+        self.data = mt
 
     def RunGWAS(self):
         if self.isbinary:
