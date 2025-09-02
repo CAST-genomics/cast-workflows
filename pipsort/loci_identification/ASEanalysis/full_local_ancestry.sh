@@ -5,6 +5,8 @@ snppos=$4
 snpposhg19=$5
 phenname=$6
 phen=$7
+pop=afr
+popcode=3 #0 for eur, 3 for afr
 
 gnomix="${WORKSPACE_BUCKET}/gnomix/outputs/gnomix-chr${chr}.msp"
 
@@ -24,7 +26,7 @@ cat temp >> region.txt
 rm temp
 rm temp2
 
-python gnomix_to_local_ancestry.py region.txt region_lancestry.tsv eur
+python gnomix_to_local_ancestry.py region.txt region_lancestry.tsv $pop $popcode
 
 gsutil -q stat ${WORKSPACE_BUCKET}/pipsort/plink/${chr}_${from}_${to}_${phenname}_plink.bed
 status=$?
@@ -36,6 +38,12 @@ else
 fi
 gsutil cp "${WORKSPACE_BUCKET}/pipsort/plink/${chr}_${from}_${to}_${phenname}_plink.*" ./
 
+gsutil cp "${WORKSPACE_BUCKET}/phenotypes/${phenname}_phenocovar.csv" ./
+gsutil cp "${WORKSPACE_BUCKET}/samples/AFR_BLACK.csv" ./
+gsutil cp "${WORKSPACE_BUCKET}/samples/EUR_WHITE.csv" ./
+gsutil cp "${WORKSPACE_BUCKET}/samples/NOT_AFR_BLACK.csv" ./
+gsutil cp "${WORKSPACE_BUCKET}/samples/passing_samples_v7.1.csv" ./
+gsutil cp "${WORKSPACE_BUCKET}/tmirmira/data/covariates/v7/AOU_10_PCS.tsv" ./
 
 lancestry_codes=(0 1 2)
 samples_list=("AFR_BLACK" "EUR_WHITE" "NOT_AFR_BLACK" "passing_samples_v7.1")
@@ -49,7 +57,7 @@ for lancestry_code in "${lancestry_codes[@]}"; do
     echo "Processing lancestry_code=${lancestry_code}, samples=${samples}..."
 
     # Run the Python script
-    python get_local_ancestry_phencovar.py "${samples}.csv" "$phen" "AOU_10_PCS.tsv" "region_lancestry.tsv" "${lancestry_code}" "eur"
+    python get_local_ancestry_phencovar.py "${samples}.csv" "$phen" "AOU_10_PCS.tsv" "region_lancestry.tsv" "${lancestry_code}" "${pop}"
 
     # Get SNP ID
 
@@ -57,9 +65,9 @@ for lancestry_code in "${lancestry_codes[@]}"; do
     plink2 --bfile "${chr}_${from}_${to}_${phenname}_plink" \
            --snp "$snpvid" \
            --linear hide-covar \
-           --pheno "${samples}_eur_${lancestry_code}" \
+           --pheno "${samples}_${pop}_${lancestry_code}" \
            --pheno-name phenotype \
-           --covar "${samples}_eur_${lancestry_code}" \
+           --covar "${samples}_${pop}_${lancestry_code}" \
            --covar-name age-pc10 \
            --covar-variance-standardize \
            --vif 2000
@@ -67,12 +75,13 @@ for lancestry_code in "${lancestry_codes[@]}"; do
     label="${lancestry_code},$samples"
     # Extract fields from the output file
     if [[ -f plink2.phenotype.glm.linear ]]; then
+      cat plink2.phenotype.glm.linear
       awk -v label="$label" 'NR > 1 {print label "," $11 "," $12 "," $13 "," $15}' plink2.phenotype.glm.linear >> $resultsfile
       rm plink2.phenotype.glm.linear
     else
       echo "plink2.phenotype.glm.linear not found for lancestry_code=${lancestry_code}, samples=${samples}"
     fi
-    rm ${samples}_eur_${lancestry_code}
+    #rm ${samples}_${pop}_${lancestry_code}
   done
 done
 
