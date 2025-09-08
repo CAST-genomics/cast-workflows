@@ -163,7 +163,7 @@ def ZipWDL(wdl_dependencies_file):
 	files = ["longtr_multi.wdl", "merge_longtr.wdl", "dumpstr.wdl"]
 	dirname = tempfile.mkdtemp()
 	for f in files:
-		shutil.copyfile("../wdl/%s"%f, dirname+"/"+f)
+		shutil.copyfile("wdl/%s"%f, dirname+"/"+f)
 	shutil.make_archive(os.path.splitext(wdl_dependencies_file)[0], "zip", root_dir=dirname)
 	
 
