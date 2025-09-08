@@ -114,7 +114,7 @@ def RunWorkflow(json_file, json_options_file, wdl_dependencies_file="", dryrun=F
 	dryrun : bool
 	    Just print the command, don't actually run cromshell
 	"""
-	cmd = "cromshell submit ../wdl/target_longtr.wdl {json} -op {options}".format(json=json_file, options=json_options_file)
+	cmd = "cromshell submit wdl/target_longtr.wdl {json} -op {options}".format(json=json_file, options=json_options_file)
 	if wdl_dependencies_file.strip() != "":
 		cmd += " -d {otherwdl}".format(otherwdl=wdl_dependencies_file)
 	if dryrun:
