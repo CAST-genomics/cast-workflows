@@ -46,7 +46,7 @@ task mergestr {
     
     runtime {
         docker: "gcr.io/ucsd-medicine-cast/trtools-6.1.0:lates"
-        memory: 4GB
+        memory: "4G"
     }
 
     output {
