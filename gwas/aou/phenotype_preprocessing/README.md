@@ -58,3 +58,21 @@ The file `quantitative_phenotypes.csv` is a csv file with named columns:
 * `drugcovars`
 
 The script above will run phenotype preprocessing on each one, store results of each one at `${WORKSPACE_BUCKET}/phenotypes/${phenotype}_phenocovar.csv`, and output the file `quantitative_phenotypes.manifest.csv` which can be used to update the master manifest file in the above directory.
+
+
+## Generating binary phenotype
+
+```
+./aou_phenotype_preprocessing.py \
+--concept-id MB_280.8 
+--phecode-cohort-file my_phecode_counts.csv 
+--phecode-count 2  
+--phenotype MB_280.8 
+--outdir MB280.8 
+--cohort-file covariates.csv
+--verbose 
+--outdir MB280.8 
+
+```
+
+This script run phenotype preprocessing on an example phenotype, --phecode-cohort-file and --cohort-file are files from pheTK
