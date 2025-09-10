@@ -195,7 +195,7 @@ def parse_phecode_cohort_file(samples, demog, age_df, args):
         print("Num samples with phecode data: ", len(phecode_df))
 
     # Rename and infer columns.
-    data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
+    #data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
     
     filename = os.path.join(args.outdir, args.phenotype + "_phenocovar.csv")
     data[['person_id', 'phenotype',
@@ -211,7 +211,7 @@ def parse_lab_measurements(samples, demog, age_df, args):
         print("Error: --units is required.")
         exit(1)
     data = pd.merge(ptdata, demog, on="person_id", how="inner")
-    data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
+    #data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
     if args.cohort_file:
         data = pd.merge(data, age_df, on="person_id", how="left")
     MSG("After merge, have %s data points"%data.shape[0])
