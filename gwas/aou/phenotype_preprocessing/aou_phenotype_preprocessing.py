@@ -17,6 +17,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import sys
+import datetime
+import warnings
+
+# Supress this warning
+warnings.filterwarnings("ignore", message=".*Unable to represent RANGE schema as struct using pandas ArrowDtype.*")
+
+
+# To avoid the SettingWithCopyWarning
+pd.options.mode.chained_assignment = None
 
 SAMPLEFILE = os.path.join(os.environ["WORKSPACE_BUCKET"], "samples", \
     "passing_samples_v7.csv")
@@ -137,43 +146,81 @@ def my_median(series):
         my_median = sorted(series)[int(len(series)/2)]
         return my_median
 
-def main():
-    parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument("--phenotype", help="Phenotype ID", type=str, required=True)
-    parser.add_argument("--samples", help="List of sample IDs,sex to keep", type=str, default=SAMPLEFILE)
-    parser.add_argument("--concept-id", help="Concept ID for phenotype", type=str, required=True)
-    parser.add_argument("--drugexposure-covariate-concept-ids", help="Comma-separated list of conceptid:conceptname to use as drug exposure covariates", type=str)
-    parser.add_argument("--units", help="Comma-separated list of acceptable units. Accepted shorthands: blood", type=str, required=True)
-    parser.add_argument("--range", help="min, max acceptable phenotype values", type=str)
-    parser.add_argument("--ppi", help="Whether or not the phenotype is from the PPI measurements " + \
-                                      "as opposed to LOINC. Only physical measurements (e.g. height) " + \
-                                      "are in PPI.",
-                                      action="store_true", default=False)
-    parser.add_argument("--outlier-sd", help="filter samples with phenotype values exceeding this number of SDs",
-                                        type=int, required=False)
+def get_age_df(cohort_filename):
+    cohort_df = pd.read_csv(cohort_filename)
+    age_df = cohort_df[["person_id", "age_at_last_event"]]
+    age_df = age_df.rename(columns={"age_at_last_event": "age"})
+    return age_df
 
-    args = parser.parse_args()
-    MSG("Processing %s"%args.phenotype)
+def parse_phecode_cohort_file(samples, demog, age_df, args):
+    # Create a samples and demog df
+    all_samples_data = pd.merge(samples, demog, on="person_id", how="left")
+    if args.cohort_file:
+        all_samples_data = pd.merge(all_samples_data, age_df, on="person_id", how="left")
+    
+    # Set the age to the current age
+    for idx, row in all_samples_data.iterrows():
+        if np.isnan(row["age"]):
+            cur_age = datetime.date.today().year - \
+                row["date_of_birth"].year
+            all_samples_data.at[idx, "age"] = cur_age
+            #print("replacing empty age for {} to {}".format(row["person_id"],  cur_age))
 
-    # Set up dataframes
-    demog = SQLToDF(aou_queries.demographics_sql)
+    # Load the phecode cohort into a dataframe
+    phecode_df = pd.read_csv(args.phecode_cohort_file)
+    
+    # Select the concept id of interest
+    phecode_df = phecode_df[phecode_df["phecode"].astype(str) == str(args.concept_id)]
+    cases = phecode_df[phecode_df["count"].astype(int) >= args.phecode_count]
+    
+    # Merge cases with sample data
+    case_data = all_samples_data[all_samples_data["person_id"].isin(cases["person_id"])]
+    case_data["phenotype"] = 1
+    case_data = case_data[['person_id', 'phenotype', "age", "sex_at_birth"]]
+
+    # Gather controls
+    # For controls we exclude all sample that have any phecode count in the phecode_count file.
+    # This means the phecode_count for all control samples and this phenotype is zero.
+    # This is consistent with how PheTK defines controls.
+    excluded_from_controls = phecode_df["person_id"]
+    controls = all_samples_data[~all_samples_data["person_id"].isin(excluded_from_controls)]
+    controls["phenotype"] = 0
+    control_data = controls[['person_id', 'phenotype', "age", "sex_at_birth"]]
+    
+    data = pd.concat([case_data, control_data])
+    if args.verbose:
+        print("Num cases: ", len(case_data))
+        print("Num controls: ", len(control_data))
+        print("Num samples: ", len(samples))
+        print("Num samples with phecode data: ", len(phecode_df))
+
+    # Rename and infer columns.
+    data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
+    
+    filename = os.path.join(args.outdir, args.phenotype + "_phenocovar.csv")
+    data[['person_id', 'phenotype',
+          "age",
+          "sex_at_birth_Male"]].to_csv(
+        filename,
+        index=False, sep=",")
+
+def parse_lab_measurements(samples, demog, age_df, args):
+    # Process lab measurements
     ptdata = SQLToDF(aou_queries.ConstructTraitSQL(args.concept_id, args.ppi))
+    if args.units is None:
+        print("Error: --units is required.")
+        exit(1)
     data = pd.merge(ptdata, demog, on="person_id", how="inner")
+    data["sex_at_birth_Male"] = data["sex_at_birth"].apply(lambda x: 1 if x == "Male" else 0)
+    if args.cohort_file:
+        data = pd.merge(data, age_df, on="person_id", how="left")
     MSG("After merge, have %s data points"%data.shape[0])
 
-    # Restrict to samples we want to keep
-    sampfile = args.samples
-    if sampfile.startswith("gs://"):
-        sampfile = sampfile.split("/")[-1]
-        if not os.path.isfile(sampfile):
-            os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
-    samples = pd.read_csv(sampfile)
-    data = pd.merge(data, samples)
-    MSG("After filter samples, have %s data points"%data.shape[0])
 
     # Filtering
     data.dropna(axis=0, subset=['value_as_number'],inplace=True)
     MSG("After filter NA, have %s data points"%data.shape[0])
+    print("units:", ptdata["unit_concept_name"].unique())
     MSG("  Allowable units: %s"%str(aou_queries.GetUnits(args.units)))
     MSG("  Unique units observed: %s"%(str(set(data["unit_concept_name"]))))
     data = data[data["unit_concept_name"].isin(aou_queries.GetUnits(args.units))]
@@ -211,9 +258,11 @@ def main():
     plt.hist(filtered["value_as_number"])
     plt.savefig(args.phenotype+"_histogram.png", dpi=300)
 
-    # Record age info
-    filtered["age"] = filtered['measurement_datetime'].dt.year - \
-        filtered["date_of_birth"].dt.year
+    # Set the age to the current age if not present
+    for idx, row in filtered.iterrows():
+        if row["age"].isnull():
+            filtered.at[idx, "age"] = datetime.date.today().year - \
+                row["date_of_birth"].year
 
     # Optionally add any trait specific drugexposure covariates
     covar_cols = []
@@ -233,8 +282,79 @@ def main():
     # Output final phenotype value
     MSG("Final file has %s data points"%filtered.shape[0])
     filtered.rename({"value_as_number": "phenotype"}, inplace=True, axis=1)
-    filtered[["person_id", "phenotype", "age", "sex_at_birth_Male"]+covar_cols].to_csv(args.phenotype+"_phenocovar.csv", index=False)
+    filename = os.path.join(args.outdir, args.phenotype + "_phenocovar.csv")
+    filtered[["person_id", "phenotype", "age", "sex_at_birth_Male"]+covar_cols].to_csv(filename, index=False)
+
+
+def main():
+    parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument("--phenotype", help="Phenotype ID", type=str, required=True)
+    parser.add_argument("--samples", help="List of sample IDs,sex to keep", type=str, default=SAMPLEFILE)
+    parser.add_argument("--concept-id", help="Concept ID or comma separated IDs for phenotype.",
+                        type=str)
+    parser.add_argument("--drugexposure-covariate-concept-ids",
+                        help="Comma-separated list of conceptid:conceptname to use as drug exposure covariates", type=str)
+    parser.add_argument("--units", help="Comma-separated list of acceptable units. Accepted shorthands: blood", type=str)
+    parser.add_argument("--range", help="min, max acceptable phenotype values", type=str)
+    parser.add_argument("--ppi", help="Whether or not the phenotype is from the PPI measurements " + \
+                                      "as opposed to LOINC. Only physical measurements (e.g. height) " + \
+                                      "are in PPI.",
+                                      action="store_true", default=False)
+    parser.add_argument("--phecode-cohort-file", help="File with phenocodes and counts for each sample." + \
+                            "If provided, no queries will be made for phenotype extraction and only the phecode " + \
+                            "file is used. --phecode-count should be set to use this file.")
+    parser.add_argument("--cohort-file", help="File with cohort information generated by PheTK." + \
+                            "If provided, this file is used to extract age covariate based on age at last event " + \
+                            "instead of the default age until now",
+                            required=False)
+    parser.add_argument("--phecode-count", help="Used only in the case that --phecode-cohort-file is present." + \
+                            "Minimum number of phecode counts present for each sample to be considered a case.",
+                        type=int)
+    parser.add_argument("--verbose", help="Adjust verbosity.",
+                                      action="store_true", default=False)
+    parser.add_argument("--outlier-sd", help="filter samples with phenotype values exceeding this number of SDs",
+                                        type=int, required=False)
+    parser.add_argument("--outdir", help="Path to where the pheno_covar file is saved.", type=str)
+
+    args = parser.parse_args()
+    
+    if not os.path.exists(args.outdir):
+        os.mkdir(args.outdir)
+
+    if (args.phecode_count is not None and args.phecode_cohort_file is None) or \
+        (args.phecode_count is None and args.phecode_cohort_file is not None):
+        print("Error: Both --phecode-cohort-file and --phecode-count should be provided.")
+        exit(1)
+        
+    MSG("Processing %s"%args.phenotype)
+    # Set up dataframes
+    demog = SQLToDF(aou_queries.demographics_sql)
+    age_df = None
+    if args.cohort_file:
+        age_df = get_age_df(args.cohort_file)
+
+    # Restrict to samples we want to keep
+    sampfile = args.samples
+    if sampfile.startswith("gs://"):
+        sampfile = sampfile.split("/")[-1]
+        if not os.path.isfile(sampfile):
+            os.system("gsutil -u ${GOOGLE_PROJECT} cp %s ."%(args.samples))
+    samples = pd.read_csv(sampfile)
+
+    if args.concept_id and args.phecode_cohort_file is None:
+        parse_lab_measurements(
+                    samples=samples,
+                    demog=demog,
+                    age_df=age_df,
+                    args=args,
+                    )
+    elif args.concept_id and args.phecode_cohort_file:
+        parse_phecode_cohort_file(
+                    samples=samples,
+                    demog=demog,
+                    age_df=age_df,
+                    args=args,
+                    )
 
 if __name__ == "__main__":
     main()
-
