@@ -201,6 +201,8 @@ def main():
 	parser.add_argument("--batch-num", help="Number of batches. Default: -1 (all)", required=False, default=-1)
 	parser.add_argument("--file-list", help="List of crams and indices to process (manifest.csv) for longread", type=str, required=False, \
 		default="gs://fc-aou-datasets-controlled/v7/wgs/long_read/manifest.csv")
+	#parser.add_argument("--file-list", help="List of crams and indices to process (manifest.csv) for longread", type=str, required=False, \
+		#default="gs://fc-aou-datasets-controlled/v8/wgs/long_read/manifest.csv")
 	parser.add_argument("--genome-id", help="File id of ref genome", type=str, default="gs://genomics-public-data/references/hg38/v0/Homo_sapiens_assembly38.fasta")
 	parser.add_argument("--genome-idx-id", help="File id of ref genome index", type=str, default="gs://genomics-public-data/references/hg38/v0/Homo_sapiens_assembly38.fasta.fai")
 	parser.add_argument("--action", help="Options: create-batches, run-batches, both", type=str, required=True)
@@ -234,7 +236,7 @@ def main():
 	# Set up batches of files
 	cram_batches_paths, cram_idx_batches_paths = \
 		GetFileBatches(formatted_filelist, int(args.batch_size), int(args.batch_num), \
-			gsprefix = bucket + "/" + "targetTRv7" +"/" + str(args.batch_size), action=args.action)
+			gsprefix = bucket + "/" + "longTRv7" +"/" + str(args.batch_size), action=args.action)
 	if args.action == "create-batches":
 		# We're done! quit before running jobs
 		sys.exit(1)
