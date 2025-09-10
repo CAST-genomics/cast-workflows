@@ -176,7 +176,7 @@ def parse_phecode_cohort_file(samples, demog, age_df, args):
     # Merge cases with sample data
     case_data = all_samples_data[all_samples_data["person_id"].isin(cases["person_id"])]
     case_data["phenotype"] = 1
-    case_data = case_data[['person_id', 'phenotype', "age", "sex_at_birth"]]
+    case_data = case_data[['person_id', 'phenotype', "age", "sex_at_birth_Male"]]
 
     # Gather controls
     # For controls we exclude all sample that have any phecode count in the phecode_count file.
@@ -185,7 +185,7 @@ def parse_phecode_cohort_file(samples, demog, age_df, args):
     excluded_from_controls = phecode_df["person_id"]
     controls = all_samples_data[~all_samples_data["person_id"].isin(excluded_from_controls)]
     controls["phenotype"] = 0
-    control_data = controls[['person_id', 'phenotype', "age", "sex_at_birth"]]
+    control_data = controls[['person_id', 'phenotype', "age", "sex_at_birth_Male"]]
     
     data = pd.concat([case_data, control_data])
     if args.verbose:
