@@ -236,12 +236,12 @@ def main():
 		DownloadGS(args.file_list)
 		file_list = os.path.basename(args.file_list)
 	else: file_list = args.file_list
-	formatted_filelist = FormatLR(file_list, v8=args.v8)
+	formatted_filelist = FormatLR(file_list)
 
 	# Set up batches of files
 	cram_batches_paths, cram_idx_batches_paths = \
 		GetFileBatches(formatted_filelist, int(args.batch_size), int(args.batch_num), \
-			gsprefix = bucket + "/" + "longTRv7" +"/" + str(args.batch_size), action=args.action)
+			gsprefix = bucket + "/" + "longTRv8" +"/" + str(args.batch_size), action=args.action)
 	if args.action == "create-batches":
 		# We're done! quit before running jobs
 		sys.exit(1)
