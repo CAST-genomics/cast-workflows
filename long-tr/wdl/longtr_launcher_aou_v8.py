@@ -167,7 +167,7 @@ def ZipWDL(wdl_dependencies_file):
 	shutil.make_archive(os.path.splitext(wdl_dependencies_file)[0], "zip", root_dir=dirname)
 	
 
-def FormatLR(manifest_file,output_file="formatted_lr_manifest.csv",v8=False):
+def FormatLR(manifest_file,output_file="formatted_lr_manifest.csv"):
 	"""
 	Convert long read manifest file to "person_id,cram_uri,cram_index_uri"
 
@@ -180,24 +180,17 @@ def FormatLR(manifest_file,output_file="formatted_lr_manifest.csv",v8=False):
 		String output file name
 	"""
 	df = pd.read_csv(manifest_file)
-	if v8:
-		selected_columns = ["research_id", "grch38_bam", "grch38_bai"]
-	else:
-		selected_columns = ["research_id", "grch38-bam", "grch38-bai"]
+
+	selected_columns = ["research_id", "grch38_bam", "grch38_bai"]
+
 	selected_columns = ["research_id", "cram", "cram_index"]
 	selected = df[selected_columns]
-	if v8:
-		selected= selected.rename(columns={
-							"research_id" : "person_id",
-							"grch38_bam" : "cram_uri",
-							"grch38_bai" : "cram_index_uri",
-							})
-	else:
-		selected= selected.rename(columns={
-								"research_id" : "person_id",
-								"grch38-bam" : "cram_uri",
-								"grch38-bai" : "cram_index_uri",
-								})
+
+	selected= selected.rename(columns={
+						"research_id" : "person_id",
+						"grch38_bam" : "cram_uri",
+						"grch38_bai" : "cram_index_uri",
+						})
 	
 	selected.to_csv(output_file, index=False)
 
@@ -210,15 +203,14 @@ def main():
 	parser.add_argument("--name", help="Name of the TR job", required=True, type=str)
 	parser.add_argument("--batch-size", help="HipSTR batch size", required=False, type=int, default=300)
 	parser.add_argument("--batch-num", help="Number of batches. Default: -1 (all)", required=False, default=-1)
-	parser.add_argument("--file-list", help="List of crams and indices to process (manifest.csv) for longread", type=str, required=False, \
-		default="gs://fc-aou-datasets-controlled/v7/wgs/long_read/manifest.csv")
 	#parser.add_argument("--file-list", help="List of crams and indices to process (manifest.csv) for longread", type=str, required=False, \
-		#default="gs://fc-aou-datasets-controlled/v8/wgs/long_read/manifest.csv")
+	#	default="gs://fc-aou-datasets-controlled/v7/wgs/long_read/manifest.csv")
+	parser.add_argument("--file-list", help="List of crams and indices to process (manifest.csv) for longread", type=str, required=False, \
+		default="gs://fc-aou-datasets-controlled/v8/wgs/long_read/manifest.csv")
 	parser.add_argument("--genome-id", help="File id of ref genome", type=str, default="gs://genomics-public-data/references/hg38/v0/Homo_sapiens_assembly38.fasta")
 	parser.add_argument("--genome-idx-id", help="File id of ref genome index", type=str, default="gs://genomics-public-data/references/hg38/v0/Homo_sapiens_assembly38.fasta.fai")
 	parser.add_argument("--action", help="Options: create-batches, run-batches, both", type=str, required=True)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
-	parser.add_argument("--v8", help="Run on v8 data",action="store_true")
 	parser.add_argument("--extra-longtr-args", help="Add more longtr command", required=False, type=str, default="--min-reads 10")
 	parser.add_argument("--separate-longtr-runs", help="Run a separate lingtr call per STR", action="store_true")
 
