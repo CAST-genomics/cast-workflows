@@ -167,7 +167,7 @@ def ZipWDL(wdl_dependencies_file):
 	shutil.make_archive(os.path.splitext(wdl_dependencies_file)[0], "zip", root_dir=dirname)
 	
 
-def FormatLR(manifest_file,output_file="formatted_lr_manifest.csv"):
+def FormatLR(manifest_file,output_file="formatted_lr_manifest.csv",v8=False):
 	"""
 	Convert long read manifest file to "person_id,cram_uri,cram_index_uri"
 
@@ -180,13 +180,24 @@ def FormatLR(manifest_file,output_file="formatted_lr_manifest.csv"):
 		String output file name
 	"""
 	df = pd.read_csv(manifest_file)
-	selected_columns = ["research_id", "grch38-bam", "grch38-bai"]
+	if v8:
+		selected_columns = ["research_id", "grch38_bam", "grch38_bai"]
+	else:
+		selected_columns = ["research_id", "grch38-bam", "grch38-bai"]
+	selected_columns = ["research_id", "cram", "cram_index"]
 	selected = df[selected_columns]
-	selected= selected.rename(columns={
-                            "research_id" : "person_id",
-                            "grch38-bam" : "cram_uri",
-                            "grch38-bai" : "cram_index_uri",
-                            })
+	if v8:
+		selected= selected.rename(columns={
+							"research_id" : "person_id",
+							"grch38_bam" : "cram_uri",
+							"grch38_bai" : "cram_index_uri",
+							})
+	else:
+		selected= selected.rename(columns={
+								"research_id" : "person_id",
+								"grch38-bam" : "cram_uri",
+								"grch38-bai" : "cram_index_uri",
+								})
 	
 	selected.to_csv(output_file, index=False)
 
@@ -207,8 +218,10 @@ def main():
 	parser.add_argument("--genome-idx-id", help="File id of ref genome index", type=str, default="gs://genomics-public-data/references/hg38/v0/Homo_sapiens_assembly38.fasta.fai")
 	parser.add_argument("--action", help="Options: create-batches, run-batches, both", type=str, required=True)
 	parser.add_argument("--dryrun", help="Don't actually run the workflow. Just set up", action="store_true")
+	parser.add_argument("--v8", help="Run on v8 data",action="store_true")
 	parser.add_argument("--extra-longtr-args", help="Add more longtr command", required=False, type=str, default="--min-reads 10")
 	parser.add_argument("--separate-longtr-runs", help="Run a separate lingtr call per STR", action="store_true")
+
 	args = parser.parse_args()
 
 	# Check if action is valid
@@ -231,7 +244,7 @@ def main():
 		DownloadGS(args.file_list)
 		file_list = os.path.basename(args.file_list)
 	else: file_list = args.file_list
-	formatted_filelist = FormatLR(file_list)
+	formatted_filelist = FormatLR(file_list, v8=args.v8)
 
 	# Set up batches of files
 	cram_batches_paths, cram_idx_batches_paths = \
