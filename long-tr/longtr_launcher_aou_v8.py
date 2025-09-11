@@ -182,8 +182,6 @@ def FormatLR(manifest_file,output_file="formatted_lr_manifest.csv"):
 	df = pd.read_csv(manifest_file)
 
 	selected_columns = ["research_id", "grch38_bam", "grch38_bai"]
-
-	selected_columns = ["research_id", "cram", "cram_index"]
 	selected = df[selected_columns]
 
 	selected= selected.rename(columns={
