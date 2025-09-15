@@ -100,7 +100,7 @@ task longtr {
         --fasta  ~{genome} \
         ${samps_flags} \
         --phased-bam  \
-        --indel-flan-len 0 \
+        --indel-flank-len 0 \
         --tr-vcf  ~{out_prefix}.vcf.gz
 
     else
@@ -118,7 +118,7 @@ task longtr {
             --fasta  ~{genome} \
             ${samps_flags} \
             --phased-bam  \
-            --indel-flan-len 0 \
+            --indel-flank-len 0 \
             --tr-vcf  ~{out_prefix}.vcf.gz
           counter=$((counter+1))
           sleep ~{sleep_seconds}
