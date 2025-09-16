@@ -180,13 +180,21 @@ def FormatLR(manifest_file,output_file="formatted_lr_manifest.csv"):
 		String output file name
 	"""
 	df = pd.read_csv(manifest_file)
-	selected_columns = ["research_id", "grch38-haplotagged-bam", "grch38-haplotagged-bai"]
+	#selected_columns = ["research_id", "grch38-haplotagged-bam", "grch38-haplotagged-bai"]
+	#selected = df[selected_columns]
+	#selected= selected.rename(columns={
+	#						"research_id" : "person_id",
+	#						"grch38-haplotagged-bam" : "cram_uri",
+	#						"grch38-haplotagged-bai" : "cram_index_uri",
+	#						})
+	
+	selected_columns = ["research_id", "grch38-bam", "grch38-bai"]
 	selected = df[selected_columns]
 	selected= selected.rename(columns={
-							"research_id" : "person_id",
-							"grch38-haplotagged-bam" : "cram_uri",
-							"grch38-haplotagged-bai" : "cram_index_uri",
-							})
+                            "research_id" : "person_id",
+                            "grch38-bam" : "cram_uri",
+                            "grch38-bai" : "cram_index_uri",
+                            })
 	
 	selected.to_csv(output_file, index=False)
 
