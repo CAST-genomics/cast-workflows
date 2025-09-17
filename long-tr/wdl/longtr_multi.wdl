@@ -143,6 +143,7 @@ task longtr {
         docker: "gcr.io/ucsd-medicine-cast/hipstr-longtr:latest"
         memory: "20G"
         cpu: 2
+        disk:"local-disk 60 SSD"
       	maxRetries: 3
         preemptible: 3
     }
