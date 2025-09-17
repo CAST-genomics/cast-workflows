@@ -141,9 +141,9 @@ task longtr {
     
     runtime {
         docker: "gcr.io/ucsd-medicine-cast/hipstr-longtr:latest"
-        memory: "60G"
-        cpu: 10
-        disk:"local-disk 300 SSD"
+        memory: "100G"
+        cpu: 15
+        disk:"local-disk 400 SSD"
       	maxRetries: 3
         preemptible: 3
     }
